@@ -34,7 +34,7 @@ jobs:
         steps:
             # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
             - name: Checkout
-              uses: actions/checkout@v4
+              uses: actions/checkout@v5
 
             - name: Setup .NET Core
               uses: actions/setup-dotnet@v4
@@ -52,7 +52,7 @@ jobs:
                 (cd ${{env.BUILD_OUTPUT_BASEDIR}} && zip $OLDPWD/bin-winforms.zip -r .)
 
             - name: Publish binaries
-              uses: softprops/action-gh-release@v1
+              uses: softprops/action-gh-release@v2
               with:
                 files: "bin-winforms.zip"
               env:
