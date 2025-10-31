@@ -25,8 +25,9 @@ namespace GuacShim.ControllerHost
         public MainForm(string startUrl)
         {
             this.StartUrl = startUrl;
+            InitializeComponent();
 
-            Text = "GuacamoleClient";
+            Text = $"GuacamoleClient v{Application.ProductVersion}";
             Width = 1280;
             Height = 800;
             KeyPreview = true;
@@ -46,6 +47,20 @@ namespace GuacShim.ControllerHost
             Load += MainForm_Load;
             _hostPanel.Resize += (_, __) => UpdateControllerBounds();
             _closeTimer.Tick += (_, __) => { _closeTimer.Stop(); Close(); };
+        }
+
+        private void InitializeComponent()
+        {
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(MainForm));
+            SuspendLayout();
+            // 
+            // MainForm
+            // 
+            ClientSize = new Size(844, 425);
+            Icon = (Icon)resources.GetObject("$this.Icon");
+            Name = "MainForm";
+            ResumeLayout(false);
+
         }
 
         private async void MainForm_Load(object? sender, EventArgs e)
@@ -194,20 +209,6 @@ namespace GuacShim.ControllerHost
             // Minimalprüfung: Abfrage per GetKeyState (links/rechts) – optional.
             short GetKeyState(int vk) => NativeMethods.GetKeyState(vk);
             return (GetKeyState(0x5B) < 0) || (GetKeyState(0x5C) < 0); // VK_LWIN, VK_RWIN
-        }
-
-        private void InitializeComponent()
-        {
-            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(MainForm));
-            SuspendLayout();
-            // 
-            // MainForm
-            // 
-            ClientSize = new Size(844, 425);
-            Icon = (Icon)resources.GetObject("$this.Icon");
-            Name = "MainForm";
-            ResumeLayout(false);
-
         }
 
         private void ShowHint(string text)
