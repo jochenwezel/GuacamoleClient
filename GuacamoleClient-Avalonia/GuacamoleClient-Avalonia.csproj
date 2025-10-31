@@ -29,6 +29,18 @@
     <IncludeSymbols>True</IncludeSymbols>
     <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
     <PackageRequireLicenseAcceptance>True</PackageRequireLicenseAcceptance>
+    <!-- Unterstützte Runtime-Identifikatoren für die Veröffentlichung 
+    <RuntimeIdentifiers>any;win-x64;linux-x64;osx-x64;osx-arm64</RuntimeIdentifiers>
+    -->
+
+    <!-- Wir bauen plattformübergreifend, aber deklarieren RIDs -->
+    <RuntimeIdentifiers>win-x64;linux-x64;osx-arm64</RuntimeIdentifiers>
+
+    <!-- CEF ist auf Windows x64, deshalb auf Windows x64 zwingen -->
+    <!-- a) Wenn lokal (ohne RID) unter Windows gebaut wird -->
+    <PlatformTarget Condition="'$(RuntimeIdentifier)'=='' and '$(OS)'=='Windows_NT'">x64</PlatformTarget>
+    <!-- b) Wenn explizit mit RID gebaut wird -->
+    <PlatformTarget Condition="'$(RuntimeIdentifier)'=='win-x64'">x64</PlatformTarget>
   </PropertyGroup>
 
   <ItemGroup>
@@ -58,7 +70,6 @@
     
     <!-- WebView + Windows-Runtime -->
     <PackageReference Include="WebViewControl-Avalonia" Version="2.*" />
-    <PackageReference Include="Microsoft.Web.WebView2" Version="1.*" />
 
     <!-- Optional: Tools für XAML Previewer -->
     <PackageReference Include="Avalonia.Diagnostics" Version="11.1.*" Condition="'$(Configuration)' == 'Debug'" />

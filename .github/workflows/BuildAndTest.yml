@@ -65,5 +65,18 @@ jobs:
               run: dotnet restore
 
             - name: Build
+              if: matrix.os != 'macos-latest'
               run: dotnet build --configuration=${{env.BUILD_CONFIGURATION}} --no-restore
+
+            # macOS: RID-Publish für die Avalonia-App (zieht CEF-Natives)
+            - name: Publish Avalonia (macOS, osx-arm64)
+              if: matrix.os == 'macos-latest'
+              run: >
+                dotnet publish
+                GuacamoleClient-Avalonia/GuacamoleClient-Avalonia.csproj
+                -c Debug
+                -r osx-arm64
+                --self-contained false
+                /p:PublishSingleFile=false
+                /p:IncludeNativeLibrariesForSelfExtract=false
 
