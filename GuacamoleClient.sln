@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.14.36603.0
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GuacamoleClient-WinForms", "GuacamoleClient\GuacamoleClient-WinForms.csproj", "{84C57181-7C19-1558-EB2F-2E7F8A4D17A2}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GuacamoleClient-WinForms", "GuacamoleClient-WinForms\GuacamoleClient-WinForms.csproj", "{84C57181-7C19-1558-EB2F-2E7F8A4D17A2}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Projektmappenelemente", "Projektmappenelemente", "{84D27F74-D2BA-6C25-2661-968F101900D9}"
 	ProjectSection(SolutionItems) = preProject

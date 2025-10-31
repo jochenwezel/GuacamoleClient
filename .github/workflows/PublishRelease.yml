@@ -20,10 +20,9 @@ env:
 
   # Name of project configuration for build as well as name of the bin output subdirectory (both must match for "dotnet pack" to find compiled files!)
   BUILD_CONFIGURATION: CI_CD
-  # Name of build project which creates required output for packaging/deployment
-  BUILD_PROJECT: GuacamoleClient/GuacamoleClient.vbproj
   # Name of directory (e.g. "bin") containing the subdirectory (e.g. "CI_CD") with all output files (*.dll)
-  BUILD_OUTPUT_BASEDIR: GuacamoleClient/bin/Debug/net8.0-windows
+  BUILD_OUTPUT_BASEDIR1: GuacamoleClient-WinForms/bin/Debug/net8.0-windows
+  BUILD_OUTPUT_BASEDIR2: GuacamoleClient-Avalonia/bin/Debug/net8.0
 
 
 jobs:
@@ -44,16 +43,22 @@ jobs:
             - name: Install dependencies
               run: dotnet restore
 
-            - name: Build
+            - name: Build - WinForms + Avalonia
               run: dotnet build --configuration=${{env.BUILD_CONFIGURATION}} --no-restore
 
-            - name: Pack binaries
+            - name: Pack binaries - WinForms
               run: |
-                (cd ${{env.BUILD_OUTPUT_BASEDIR}} && zip $OLDPWD/bin-winforms.zip -r .)
+                (cd ${{env.BUILD_OUTPUT_BASEDIR1}} && zip $OLDPWD/bin-winforms.zip -r .)
+
+            - name: Pack binaries - Avalonia
+              run: |
+                (cd ${{env.BUILD_OUTPUT_BASEDIR2}} && zip $OLDPWD/bin-avalonia.zip -r .)
 
             - name: Publish binaries
               uses: softprops/action-gh-release@v2
               with:
-                files: "bin-winforms.zip"
+                files: |
+                  - "bin-winforms.zip"
+                  - "bin-avalonia.zip"
               env:
                 GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
