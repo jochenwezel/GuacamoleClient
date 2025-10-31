@@ -1,0 +1,7 @@
+﻿This application bundles the Chromium Embedded Framework (CEF),
+licensed under the BSD license.
+See LICENSE.chromium and LICENSES.chromium.html for details.
+
+No modifications have been made to CEF.
+Source code for CEF is available at https://bitbucket.org/chromiumembedded/cef
+and for Chromium at https://chromium.googlesource.com/chromium/src

@@ -1,0 +1,14 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="GuacClient.UrlInputDialog"
+        Width="520" Height="170" CanResize="False" WindowStartupLocation="CenterOwner"
+        Title="Start-URL festlegen">
+  <StackPanel Margin="16" Spacing="8">
+    <TextBlock Text="Bitte geben Sie die Start-URL für Apache Guacamole ein:"/>
+    <TextBox x:Name="Input" Watermark="https://remote.example.com/guacamole/" />
+    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="8">
+      <Button Content="Abbrechen" IsCancel="True"/>
+      <Button Content="OK" IsDefault="True" Click="Ok_Click"/>
+    </StackPanel>
+  </StackPanel>
+</Window>

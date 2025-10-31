@@ -1,0 +1,74 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+
+    <!-- Optional: Ihr App-Icon -->
+    <ApplicationIcon>guac.ico</ApplicationIcon>
+
+    <!-- Versionsinfos -->
+    <Version>2025.10.31.0</Version>
+    <IncludeSourceRevisionInInformationalVersion>false</IncludeSourceRevisionInInformationalVersion>
+
+    <Description>
+      This GuacamoleClient app is more or less a browser control but catching as keyboard shortcuts as much as possible.
+      This prevents e.g. accidential closing of browser tab (Ctrl+F4) with your guacamole session or the whole browser app (Alt+F4).
+    </Description>
+    <Company>CompuMaster GmbH</Company>
+    <Product>GuacamoleClient</Product>
+    <Copyright>2025 CompuMaster GmbH</Copyright>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <ApplicationIcon>guac.ico</ApplicationIcon>
+    <PackageIcon>apple-touch-icon.png</PackageIcon>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <RepositoryUrl>https://github.com/jochenwezel/GuacamoleClient</RepositoryUrl>
+    <PackageTags>Guacamole;Client;</PackageTags>
+    <IncludeSymbols>True</IncludeSymbols>
+    <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
+    <PackageRequireLicenseAcceptance>True</PackageRequireLicenseAcceptance>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Remove="NOTICE" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="guac.ico" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="..\logos\favicon-guac-classic-logo\apple-touch-icon.png">
+      <Pack>True</Pack>
+      <PackagePath>\</PackagePath>
+    </None>
+    <None Include="..\README.md">
+      <Pack>True</Pack>
+      <PackagePath>\</PackagePath>
+    </None>
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Avalonia Core + Desktop -->
+    <PackageReference Include="Avalonia" Version="11.1.*" />
+    <PackageReference Include="Avalonia.Desktop" Version="11.1.*" />
+    <PackageReference Include="Avalonia.Themes.Fluent" Version="11.1.*" />
+    
+    <!-- WebView + Windows-Runtime -->
+    <PackageReference Include="WebViewControl-Avalonia" Version="2.*" />
+    <PackageReference Include="Microsoft.Web.WebView2" Version="1.*" />
+
+    <!-- Optional: Tools für XAML Previewer -->
+    <PackageReference Include="Avalonia.Diagnostics" Version="11.1.*" Condition="'$(Configuration)' == 'Debug'" />
+  </ItemGroup>
+
+  <!-- Start-Datei -->
+  <ItemGroup>
+    <Compile Update="Program.cs">
+      <DependentUpon></DependentUpon>
+    </Compile>
+  </ItemGroup>
+
+</Project>
