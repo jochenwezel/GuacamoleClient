@@ -1,64 +1,73 @@
 ﻿name: Publish/Upload dotnet package on release
 
 # PLEASE NOTE: PUBLISHING/DEPLOYMENT
-# Release is to be created manually at GitHub releases management page
-# - release name usually contains "v1.2.3"
-# After creating a GitHub release, following actions will automatically run:
-# 1. NuGet package (version as defined in VS.Net project property "package version")
-# 2. Attaching of compiled binaries to GitHub release
+#   * Release is to be created manually at GitHub releases management page
+#     * release name usually contains "1.2.3.4" (also supported: "v1.2.3.4")
+#   * After creating a GitHub release, following actions will automatically run:
+#     * Attaching of compiled binaries to GitHub release
 
 on:
   release:
     types: [created]
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
 
-    # Allows you to run this workflow manually from the Actions tab
-    workflow_dispatch:
+permissions:
+  contents: write  # nötig fürs Anhängen von Assets an eine Release
 
 env:
-  # Path to the solution file relative to the root of the project.
-  SOLUTION_FILE_PATH: .
-
-  # Name of project configuration for build as well as name of the bin output subdirectory (both must match for "dotnet pack" to find compiled files!)
   BUILD_CONFIGURATION: CI_CD
-  # Name of directory (e.g. "bin") containing the subdirectory (e.g. "CI_CD") with all output files (*.dll)
   BUILD_OUTPUT_BASEDIR1: GuacamoleClient-WinForms/bin/Debug/net8.0-windows
   BUILD_OUTPUT_BASEDIR2: GuacamoleClient-Avalonia/bin/Debug/net8.0
 
-
 jobs:
-    publish:
-        runs-on: ubuntu-latest
-        #if: false # always skip job
+  publish:
+    runs-on: ubuntu-latest
 
-        steps:
-            # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
-            - name: Checkout
-              uses: actions/checkout@v5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
 
-            - name: Setup .NET Core
-              uses: actions/setup-dotnet@v4
-              with:
-                dotnet-version: 8.0.x
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
 
-            - name: Install dependencies
-              run: dotnet restore
+      - name: Extract version from release tag
+        shell: bash
+        run: |
+          RAW_TAG="${{ github.event.release.tag_name || github.ref_name }}"
+          VER="${RAW_TAG#v}"       # führendes "v" streichen, falls vorhanden
+          echo "VERSION=$VER" >> $GITHUB_ENV
+          echo "Resolved VERSION=$VER"
 
-            - name: Build - WinForms + Avalonia
-              run: dotnet build --configuration=${{env.BUILD_CONFIGURATION}} --no-restore
+      - name: Restore
+        run: dotnet restore
 
-            - name: Pack binaries - WinForms
-              run: |
-                (cd ${{env.BUILD_OUTPUT_BASEDIR1}} && zip $OLDPWD/bin-winforms.zip -r .)
+      - name: Build (WinForms + Avalonia) with version
+        run: >
+          dotnet build
+          --configuration ${{ env.BUILD_CONFIGURATION }}
+          --no-restore
+          -p:Version=${{ env.VERSION }}
+          -p:FileVersion=${{ env.VERSION }}
+          -p:AssemblyVersion=${{ env.VERSION }}
+          -p:InformationalVersion=${{ env.VERSION }}
 
-            - name: Pack binaries - Avalonia
-              run: |
-                (cd ${{env.BUILD_OUTPUT_BASEDIR2}} && zip $OLDPWD/bin-avalonia.zip -r .)
+      - name: Pack binaries - WinForms
+        run: |
+          (cd "${{ env.BUILD_OUTPUT_BASEDIR1 }}" && zip "$GITHUB_WORKSPACE/bin-winforms-${{ env.VERSION }}.zip" -r .)
 
-            - name: Publish binaries
-              uses: softprops/action-gh-release@v2
-              with:
-                files: |
-                  - "bin-winforms.zip"
-                  - "bin-avalonia.zip"
-              env:
-                GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Pack binaries - Avalonia
+        run: |
+          (cd "${{ env.BUILD_OUTPUT_BASEDIR2 }}" && zip "$GITHUB_WORKSPACE/bin-avalonia-${{ env.VERSION }}.zip" -r .)
+
+      - name: Publish binaries to the release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            bin-winforms-${{ env.VERSION }}.zip
+            bin-avalonia-${{ env.VERSION }}.zip
+          tag_name: ${{ github.event.release.tag_name || github.ref_name }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
