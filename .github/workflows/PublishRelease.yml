@@ -54,6 +54,6 @@ jobs:
             - name: Publish binaries
               uses: softprops/action-gh-release@v1
               with:
-                files: "bin.zip"
+                files: "bin-winforms.zip"
               env:
                 GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
