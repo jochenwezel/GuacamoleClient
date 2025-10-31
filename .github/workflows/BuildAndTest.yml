@@ -1,0 +1,69 @@
+﻿name: Build and Test
+
+# PREREQUISITES FOR PUSH-BACK OF TEST RESULTS
+# Please note: test project usually required nuget package JUnitTestLogger 
+# to be able to provide JUnit compatible test results XML file (required 
+# for pushing back details on succeeded/failed tests)
+# 
+# NuGet install command:
+# - Install-Package JUnitTestLogger
+
+# Controls when the action will run.
+on:
+    # Triggers the workflow on push or pull request events but only for the master branch
+    push:
+        branches: [main]
+    pull_request:
+        branches: [main]
+
+    # Allows you to run this workflow manually from the Actions tab
+    workflow_dispatch:
+
+env:
+  # Path to the solution file relative to the root of the project
+  SOLUTION_FILE_PATH: .
+
+  # Configuration type to build
+  BUILD_CONFIGURATION: CI_CD
+
+  BUILD_OUTPUT: GuacamoleClient/bin/Debug
+  
+jobs:
+
+    test:
+        #needs: build
+        runs-on: ${{ matrix.os }}
+
+        strategy:
+          fail-fast: false
+          matrix:
+            os: [windows-latest, ubuntu-latest, macos-latest]
+            include: 
+              - os: macos-latest
+                runNetExe: mono
+
+        # the build-and-test job might be skipped, we don't need to run this job then
+        #if: success() || failure()
+
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v4
+
+            - name: Setup .NET Core
+              uses: actions/setup-dotnet@v4
+              with:
+                 dotnet-version: 8.0.x
+
+            - name: Dir Listing (Win)
+              if: startsWith(matrix.os, 'windows')
+              run: dir
+            - name: Dir Listing (Linux/Mac)
+              if: (!startsWith(matrix.os, 'windows'))
+              run: ls -la
+
+            - name: Install dependencies
+              run: dotnet restore
+
+            - name: Build
+              run: dotnet build --configuration=${{env.BUILD_CONFIGURATION}} --no-restore
+
