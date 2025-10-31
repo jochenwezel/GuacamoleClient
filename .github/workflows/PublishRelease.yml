@@ -23,7 +23,7 @@ env:
   # Name of build project which creates required output for packaging/deployment
   BUILD_PROJECT: GuacamoleClient/GuacamoleClient.vbproj
   # Name of directory (e.g. "bin") containing the subdirectory (e.g. "CI_CD") with all output files (*.dll)
-  BUILD_OUTPUT_BASEDIR: Console/bin
+  BUILD_OUTPUT_BASEDIR: GuacamoleClient/bin/Debug/net8.0-windows
 
 
 jobs:
