@@ -20,6 +20,8 @@ namespace GuacShim.ControllerHost
 
         public string StartUrl { get; set; }
 
+        [Obsolete("For designer support only", true)]
+        [System.ComponentModel.EditorBrowsable(System.ComponentModel.EditorBrowsableState.Never)]
         public MainForm() : this("https://guacamole.apache.org/") { }
 
         public MainForm(string startUrl)
