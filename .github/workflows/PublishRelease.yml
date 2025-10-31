@@ -49,7 +49,7 @@ jobs:
 
             - name: Pack binaries
               run: |
-                (cd ${{env.BUILD_OUTPUT_BASEDIR}}/${{env.BUILD_CONFIGURATION}} && zip $OLDPWD/bin.zip -r .)
+                (cd ${{env.BUILD_OUTPUT_BASEDIR}} && zip $OLDPWD/bin-winforms.zip -r .)
 
             - name: Publish binaries
               uses: softprops/action-gh-release@v1
