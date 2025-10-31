@@ -33,7 +33,7 @@ namespace GuacShim.ControllerHost
             _trustedHosts.Add(startUrl.Host);
             InitializeComponent();
 
-            Text = $"GuacamoleClient v{Application.ProductVersion}";
+            Text = $"GuacamoleClient v{Application.ProductVersion} - {startUrl.ToString()}";
             Width = 1280;
             Height = 800;
             KeyPreview = true;
