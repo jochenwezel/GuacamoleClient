@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
@@ -9,6 +9,7 @@
 
     <Version>2025.10.31.0</Version>
     <IncludeSourceRevisionInInformationalVersion>false</IncludeSourceRevisionInInformationalVersion>
+
     <Description>
       This GuacamoleClient app is more or less a browser control but catching as keyboard shortcuts as much as possible.
       This prevents e.g. accidential closing of browser tab (Ctrl+F4) with your guacamole session or the whole browser app (Alt+F4).
@@ -17,7 +18,7 @@
     <Product>GuacamoleClient</Product>
     <Copyright>2025 CompuMaster GmbH</Copyright>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-    <ApplicationIcon>favicon.ico</ApplicationIcon>
+    <ApplicationIcon>guac.ico</ApplicationIcon>
     <PackageIcon>apple-touch-icon.png</PackageIcon>
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <RepositoryUrl>https://github.com/jochenwezel/GuacamoleClient</RepositoryUrl>
@@ -28,7 +29,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Content Include="favicon.ico" />
+    <Content Include="guac.ico" />
   </ItemGroup>
 
   <ItemGroup>

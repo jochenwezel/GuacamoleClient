@@ -14,7 +14,7 @@ namespace GuacShim.ControllerHost
             string startUrl = GuacConfig.GetOrAskStartUrl();
             if (startUrl == null) return; // Benutzer hat abgebrochen
 
-            Application.Run(new MainForm(startUrl));
+            Application.Run(new MainForm(new Uri(startUrl)));
         }
     }
 }

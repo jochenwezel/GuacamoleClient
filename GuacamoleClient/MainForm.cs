@@ -1,8 +1,9 @@
-﻿using System;
+﻿using Microsoft.Web.WebView2.Core;
+using System;
+using System.Collections.Generic;
 using System.Drawing;
-using System.Windows.Forms;
 using System.Threading.Tasks;
-using Microsoft.Web.WebView2.Core;
+using System.Windows.Forms;
 
 namespace GuacShim.ControllerHost
 {
@@ -18,15 +19,18 @@ namespace GuacShim.ControllerHost
 
         private bool _altF4Detected;
 
-        public string StartUrl { get; set; }
+        public string StartUrl { get; init; }
+        private readonly HashSet<string> _trustedHosts = new HashSet<string>();
+
 
         [Obsolete("For designer support only", true)]
         [System.ComponentModel.EditorBrowsable(System.ComponentModel.EditorBrowsableState.Never)]
-        public MainForm() : this("https://guacamole.apache.org/") { }
+        public MainForm() : this(new Uri("https://guacamole.apache.org/")) { }
 
-        public MainForm(string startUrl)
+        public MainForm(Uri startUrl)
         {
-            this.StartUrl = startUrl;
+            this.StartUrl = startUrl.ToString();
+            _trustedHosts.Add(startUrl.Host);
             InitializeComponent();
 
             Text = $"GuacamoleClient v{Application.ProductVersion}";
@@ -69,6 +73,7 @@ namespace GuacShim.ControllerHost
         {
             if (this.DesignMode) return;
             await InitWebView2Async();
+            _core.PermissionRequested += CoreWebView2_PermissionRequested;
         }
 
         private async Task InitWebView2Async()
@@ -87,6 +92,27 @@ namespace GuacShim.ControllerHost
 
             _core.Navigate(StartUrl);
             _controller.MoveFocus(CoreWebView2MoveFocusReason.Programmatic);
+        }
+
+        private void CoreWebView2_PermissionRequested(object? sender, CoreWebView2PermissionRequestedEventArgs e)
+        {
+            // Nur für vertrauenswürdige Origins und nur für die Zwischenablage erlauben
+            var uri = new Uri(e.Uri);
+            bool isTrusted = uri.Scheme == Uri.UriSchemeHttps && _trustedHosts.Contains(uri.Host);
+
+            if (isTrusted && (
+                e.PermissionKind == CoreWebView2PermissionKind.ClipboardRead
+            // Manche SDKs haben zusätzlich/alternativ:
+            // || e.PermissionKind == CoreWebView2PermissionKind.ClipboardReadWrite
+            ))
+            {
+                e.State = CoreWebView2PermissionState.Allow;
+                e.Handled = true; // verhindert den Standard-Dialog
+                return;
+            }
+
+            // Für alles andere: explizit ablehnen (oder ignorieren → Standardverhalten)
+            // e.State = CoreWebView2PermissionState.Deny; e.Handled = true;
         }
 
         private void UpdateControllerBounds()
