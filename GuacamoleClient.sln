@@ -15,6 +15,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Projektmappenelemente", "Pr
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GuacamoleClient-Avalonia", "GuacamoleClient-Avalonia\GuacamoleClient-Avalonia.csproj", "{23A3D3EC-CA5B-6324-5D6D-092247027D53}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GuacamoleCommon", "GuacamoleCommon\GuacamoleCommon.csproj", "{B03BF4BB-2B9E-4D19-B955-EE96D82DA151}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		CI_CD|Any CPU = CI_CD|Any CPU
@@ -34,6 +36,12 @@ Global
 		{23A3D3EC-CA5B-6324-5D6D-092247027D53}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{23A3D3EC-CA5B-6324-5D6D-092247027D53}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{23A3D3EC-CA5B-6324-5D6D-092247027D53}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B03BF4BB-2B9E-4D19-B955-EE96D82DA151}.CI_CD|Any CPU.ActiveCfg = Debug|Any CPU
+		{B03BF4BB-2B9E-4D19-B955-EE96D82DA151}.CI_CD|Any CPU.Build.0 = Debug|Any CPU
+		{B03BF4BB-2B9E-4D19-B955-EE96D82DA151}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B03BF4BB-2B9E-4D19-B955-EE96D82DA151}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B03BF4BB-2B9E-4D19-B955-EE96D82DA151}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B03BF4BB-2B9E-4D19-B955-EE96D82DA151}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
