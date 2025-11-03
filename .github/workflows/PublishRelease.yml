@@ -74,12 +74,23 @@ jobs:
           -p:InformationalVersion=${{ env.VERSION }}
       
       - name: Pack binaries - WinForms (Windows)
-        if: runner.os == 'windows'
+        if: runner.os == 'Windows'
+        shell: pwsh
         run: |
-          (cd "${{ env.BUILD_OUTPUT_BASEDIR1 }}" && zip "$GITHUB_WORKSPACE/bin-winforms-${{ env.VERSION }}.zip" -r .)
-
-      - name: Pack binaries - Avalonia (Linux + Windows)
-        if: runner.os != 'macOS'
+          $src = Join-Path $env:BUILD_OUTPUT_BASEDIR1 '*'
+          $dst = Join-Path $env:GITHUB_WORKSPACE "bin-winforms-$($env:VERSION).zip"
+          Compress-Archive -Path $src -DestinationPath $dst -Force
+      
+      - name: Pack binaries - Avalonia (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $src = Join-Path $env:BUILD_OUTPUT_BASEDIR2 '*'
+          $dst = Join-Path $env:GITHUB_WORKSPACE "bin-avalonia-$($env:RUNNER_OS)-$($env:VERSION).zip"
+          Compress-Archive -Path $src -DestinationPath $dst -Force
+      
+      - name: Pack binaries - Avalonia (Linux)
+        if: runner.os == 'ubuntu'
         run: |
           (cd "${{ env.BUILD_OUTPUT_BASEDIR2 }}" && zip "$GITHUB_WORKSPACE/bin-avalonia-${{ runner.os }}-${{ env.VERSION }}.zip" -r .)
 
