@@ -67,19 +67,45 @@
     <PackageReference Include="Avalonia" Version="11.3.8" />
     <PackageReference Include="Avalonia.Desktop" Version="11.3.8" />
     <PackageReference Include="Avalonia.Themes.Fluent" Version="11.3.8" />
-    <PackageReference Include="cef.redist.linux64" Version="134.3.9" />
-    <PackageReference Include="cef.redist.linuxarm64" Version="134.3.9" />
-    <PackageReference Include="cef.redist.osx.arm64" Version="134.3.9" />
-    <PackageReference Include="cef.redist.osx64" Version="134.3.9" />
-    <PackageReference Include="CefGlue.Avalonia" Version="120.6099.211" />
-    <PackageReference Include="CefGlue.Common" Version="120.6099.211" />
     <PackageReference Include="System.Text.Json" Version="6.0.11" />
-    <PackageReference Include="WebViewControl-Avalonia" Version="3.120.10" />
 
     <!-- Optional: Tools für XAML Previewer -->
     <PackageReference Include="Avalonia.Diagnostics" Version="11.3.8" Condition="'$(Configuration)' == 'Debug'" />
   </ItemGroup>
 
+  <PropertyGroup>
+    <!-- Ein Channel für die komplette CEF-Stack -->
+    <CefChannel>121.3</CefChannel>
+    <!-- Alle Pakete bleiben in dieser Linie (z. B. 120.6099.*) -->
+    <CefVersion>[$(CefChannel).0,$(CefChannel).999]</CefVersion>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Wrapper -->
+    <PackageReference Include="WebViewControl-Avalonia" Version="3.120.10" />
+    <PackageReference Include="CefGlue.Avalonia" Version="120.6099.211" />
+    <PackageReference Include="CefGlue.Common" Version="120.6099.211" />
+
+    <!-- Redists (pro RID) -->
+    <!--
+      <PackageVersion Include="cef.redist.x64"           Version="$(CefVersion)" />
+      <PackageVersion Include="cef.redist.linux.x64"     Version="$(CefVersion)" />
+      <PackageVersion Include="cef.redist.osx.arm64"     Version="$(CefVersion)" />
+      -->
+
+    <!-- Redists (pro RID) -->
+    <!--
+    <PackageReference Include="cef.redist.linux64" />
+    <PackageReference Include="cef.redist.linuxarm64" />
+    <PackageReference Include="cef.redist.osx.arm64" />
+    <PackageReference Include="cef.redist.osx64" />
+    -->
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(RuntimeIdentifier)'=='osx-arm64'">
+    <PackageReference Include="cef.redist.osx.arm64" />
+  </ItemGroup>
+  
   <!-- Start-Datei -->
   <ItemGroup>
     <Compile Update="Program.cs">
