@@ -2,7 +2,6 @@
 using System;
 using System.Collections.Generic;
 using System.Drawing;
-using System.Resources;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
@@ -10,7 +9,8 @@ namespace GuacamoleClient.WinForms
 {
     public partial class MainForm : Form
     {
-        private readonly Panel _hostPanel;
+        private const bool TEST_MENU_ENABLED = false;
+
         private readonly ToolTip _tip;
         private readonly Timer _closeTimer = new() { Interval = 1200 }; // sanftes Close nach Hinweis
 
@@ -19,6 +19,15 @@ namespace GuacamoleClient.WinForms
         private CoreWebView2? _core;
 
         private bool _altF4Detected;
+        private MenuStrip menuStrip1;
+        private ToolStripMenuItem fileToolStripMenuItem;
+        private ToolStripMenuItem quitToolStripMenuItem;
+        private ToolStripMenuItem connectionHomeToolStripMenuItem;
+        private ToolStripSeparator toolStripSeparator1;
+        private ToolStripMenuItem testToolStripMenuItem;
+        private ToolStripMenuItem viewToolStripMenuItem;
+        private ToolStripMenuItem fullScreenToolStripMenuItem;
+        private Panel WebBrowserHostPanel;
 
         public string StartUrl { get; init; }
         private readonly HashSet<string> _trustedHosts = new HashSet<string>();
@@ -35,12 +44,9 @@ namespace GuacamoleClient.WinForms
             InitializeComponent();
 
             Text = $"GuacamoleClient v{Application.ProductVersion} - {startUrl.ToString()}";
-            Width = 1280;
-            Height = 800;
             KeyPreview = true;
-
-            _hostPanel = new Panel { Dock = DockStyle.Fill };
-            Controls.Add(_hostPanel);
+            SetMenuStripBackgroundColorRecursive(menuStrip1!, Color.Red);
+            testToolStripMenuItem!.Available = TEST_MENU_ENABLED;
 
             _tip = new ToolTip
             {
@@ -51,26 +57,141 @@ namespace GuacamoleClient.WinForms
                 ShowAlways = true
             };
 
-            Load += MainForm_Load;
-            _hostPanel.Resize += (_, __) => UpdateControllerBounds();
+            this.WebBrowserHostPanel!.Resize += (_, __) => UpdateControllerBounds();
             _closeTimer.Tick += (_, __) => { _closeTimer.Stop(); Close(); };
+        }
+
+        private void SetMenuStripBackgroundColorRecursive(MenuStrip item, Color newColor)
+        {
+            item.BackColor = newColor;
+            foreach (ToolStripItem child in item.Items)
+                if (child is ToolStripMenuItem m2) 
+                    SetMenuStripBackgroundColorRecursive(m2, newColor);
+                else
+                    child.BackColor = newColor;
+        }
+
+        private void SetMenuStripBackgroundColorRecursive(ToolStripMenuItem item, Color newColor)
+        {
+            item.BackColor = newColor;
+            foreach (ToolStripItem child in item.DropDownItems)
+                if (child is ToolStripMenuItem m2)
+                    SetMenuStripBackgroundColorRecursive(m2, newColor);
+                else
+                    child.BackColor = newColor;
         }
 
         private void InitializeComponent()
         {
+            menuStrip1 = new MenuStrip();
+            fileToolStripMenuItem = new ToolStripMenuItem();
+            connectionHomeToolStripMenuItem = new ToolStripMenuItem();
+            toolStripSeparator1 = new ToolStripSeparator();
+            quitToolStripMenuItem = new ToolStripMenuItem();
+            testToolStripMenuItem = new ToolStripMenuItem();
+            viewToolStripMenuItem = new ToolStripMenuItem();
+            fullScreenToolStripMenuItem = new ToolStripMenuItem();
+            WebBrowserHostPanel = new Panel();
+            menuStrip1.SuspendLayout();
             SuspendLayout();
+            // 
+            // menuStrip1
+            // 
+            menuStrip1.Items.AddRange(new ToolStripItem[] { fileToolStripMenuItem, testToolStripMenuItem, viewToolStripMenuItem });
+            menuStrip1.Location = new Point(0, 0);
+            menuStrip1.Name = "menuStrip1";
+            menuStrip1.Size = new Size(1264, 24);
+            menuStrip1.TabIndex = 0;
+            menuStrip1.Text = "menuStrip1";
+            // 
+            // fileToolStripMenuItem
+            // 
+            fileToolStripMenuItem.DropDownItems.AddRange(new ToolStripItem[] { connectionHomeToolStripMenuItem, toolStripSeparator1, quitToolStripMenuItem });
+            fileToolStripMenuItem.Name = "fileToolStripMenuItem";
+            fileToolStripMenuItem.Size = new Size(81, 20);
+            fileToolStripMenuItem.Text = "&Connection";
+            // 
+            // connectionHomeToolStripMenuItem
+            // 
+            connectionHomeToolStripMenuItem.Name = "connectionHomeToolStripMenuItem";
+            connectionHomeToolStripMenuItem.ShortcutKeyDisplayString = "Ctrl+Alt+Pos1";
+            connectionHomeToolStripMenuItem.Size = new Size(254, 22);
+            connectionHomeToolStripMenuItem.Text = "Connection Home";
+            connectionHomeToolStripMenuItem.Click += connectionHomeToolStripMenuItem_Click;
+            // 
+            // toolStripSeparator1
+            // 
+            toolStripSeparator1.Name = "toolStripSeparator1";
+            toolStripSeparator1.Size = new Size(251, 6);
+            // 
+            // quitToolStripMenuItem
+            // 
+            quitToolStripMenuItem.Name = "quitToolStripMenuItem";
+            quitToolStripMenuItem.Size = new Size(254, 22);
+            quitToolStripMenuItem.Text = "&Quit";
+            quitToolStripMenuItem.Click += quitToolStripMenuItem_Click;
+            // 
+            // testToolStripMenuItem
+            // 
+            testToolStripMenuItem.Name = "testToolStripMenuItem";
+            testToolStripMenuItem.Size = new Size(40, 20);
+            testToolStripMenuItem.Text = "Test";
+            testToolStripMenuItem.Click += testToolStripMenuItem_Click;
+            // 
+            // viewToolStripMenuItem
+            // 
+            viewToolStripMenuItem.DropDownItems.AddRange(new ToolStripItem[] { fullScreenToolStripMenuItem });
+            viewToolStripMenuItem.Name = "viewToolStripMenuItem";
+            viewToolStripMenuItem.Size = new Size(44, 20);
+            viewToolStripMenuItem.Text = "&View";
+            // 
+            // fullScreenToolStripMenuItem
+            // 
+            fullScreenToolStripMenuItem.Name = "fullScreenToolStripMenuItem";
+            fullScreenToolStripMenuItem.ShortcutKeyDisplayString = "Ctrl+Alt+Insert";
+            fullScreenToolStripMenuItem.Size = new Size(219, 22);
+            fullScreenToolStripMenuItem.Text = "Full-Screen";
+            fullScreenToolStripMenuItem.Click += fullScreenToolStripMenuItem_Click;
+            // 
+            // WebBrowserHostPanel
+            // 
+            WebBrowserHostPanel.Dock = DockStyle.Fill;
+            WebBrowserHostPanel.Location = new Point(0, 24);
+            WebBrowserHostPanel.Name = "WebBrowserHostPanel";
+            WebBrowserHostPanel.Size = new Size(1264, 737);
+            WebBrowserHostPanel.TabIndex = 1;
             // 
             // MainForm
             // 
-            ClientSize = new Size(844, 425);
+            ClientSize = new Size(1264, 761);
+            Controls.Add(WebBrowserHostPanel);
+            Controls.Add(menuStrip1);
+            MainMenuStrip = menuStrip1;
             Name = "MainForm";
+            Load += MainForm_Load;
+            ResizeEnd += MainForm_ResizeEnd;
+            menuStrip1.ResumeLayout(false);
+            menuStrip1.PerformLayout();
             ResumeLayout(false);
+            PerformLayout();
 
+        }
+
+        private void MainForm_ResizeEnd(object? sender, EventArgs e)
+        {
+            if (!fullScreenToolStripMenuItem.Checked && this.WindowState == FormWindowState.Normal)
+            {
+                _previousBounds = this.Bounds;
+            }
         }
 
         private async void MainForm_Load(object? sender, EventArgs e)
         {
             if (this.DesignMode) return;
+            if (!fullScreenToolStripMenuItem.Checked && this.WindowState == FormWindowState.Normal)
+                _previousBounds = this.Bounds;
+            else
+                _previousBounds = new Rectangle(0, 0, 1280, 800);
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(MainForm));
             Icon = (Icon)resources.GetObject("$this.Icon")!;
             await InitWebView2Async();
@@ -80,7 +201,7 @@ namespace GuacamoleClient.WinForms
         private async Task InitWebView2Async()
         {
             _env = await CoreWebView2Environment.CreateAsync();
-            _controller = await _env.CreateCoreWebView2ControllerAsync(_hostPanel.Handle);
+            _controller = await _env.CreateCoreWebView2ControllerAsync(this.WebBrowserHostPanel!.Handle);
             _controller.IsVisible = true;
             UpdateControllerBounds();
 
@@ -119,7 +240,7 @@ namespace GuacamoleClient.WinForms
         private void UpdateControllerBounds()
         {
             if (_controller == null) return;
-            var r = _hostPanel.ClientRectangle;
+            var r = this.WebBrowserHostPanel!.ClientRectangle;
             _controller.Bounds = new Rectangle(r.X, r.Y, r.Width, r.Height);
         }
 
@@ -200,6 +321,34 @@ namespace GuacamoleClient.WinForms
                 return;
             }
 
+            if (fullScreenToolStripMenuItem.Checked && e.VirtualKey == (uint)Keys.Cancel && alt && ctrl)
+            {
+                e.Handled = true;
+                SwitchFullScreenMode(false);
+                ShowHint("Hinweis: Strg+Alt+Break >> Full Screen wird deaktiviert");
+                return;
+            }
+
+            // Restore window state from fullscreen on Strg+Break
+            if (e.VirtualKey == (uint)Keys.Insert && alt && ctrl)
+            {
+                e.Handled = true;
+                SwitchFullScreenMode(!fullScreenToolStripMenuItem.Checked);
+                if (!fullScreenToolStripMenuItem.Checked)
+                    ShowHint("Hinweis: Strg+Alt+Insert >> Full Screen wird deaktiviert");
+                else 
+                    ShowHint("Hinweis: Strg+Alt+Insert >> Full Screen wird aktiviert");
+                return;
+            }
+
+            // Go to guacamole home screen
+            if (e.VirtualKey == (uint)Keys.Home && alt && ctrl)
+            {
+                e.Handled = true;
+                connectionHomeToolStripMenuItem.PerformClick();
+                return;
+            }
+
             // Standard: Alles andere mit Ctrl/Alt/Shift/AltGr durchlassen
             e.Handled = false;
         }
@@ -256,6 +405,113 @@ namespace GuacamoleClient.WinForms
         {
             [System.Runtime.InteropServices.DllImport("user32.dll")]
             public static extern short GetKeyState(int nVirtKey);
+        }
+
+        public async Task<string?> GetGuacamoleAuthTokenAsync()
+        {
+            var cookieManager = _core!.CookieManager;
+            var cookies = await cookieManager.GetCookiesAsync(this.StartUrl).ConfigureAwait(false);
+            foreach (var c in cookies)
+            {
+                Console.WriteLine($"{c.Name} = {c.Value} ; HttpOnly={c.IsHttpOnly} ; Secure={c.IsSecure} ; SameSite={c.SameSite}");
+                if (c.Name == "GUAC_AUTH" || c.Name == "guac.token")
+                {
+                    string token = c.Value;
+                    // token verwenden
+                    return token;
+                }
+            }
+            return null;
+        }
+
+        private void quitToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            Close();
+        }
+
+        private void connectionHomeToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            _core?.Navigate(StartUrl);
+            _controller?.MoveFocus(CoreWebView2MoveFocusReason.Programmatic);
+        }
+
+        private async void testToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            string json = await TestAsync();
+            MessageBox.Show(this, $"Guacamole Auth Token:\n{json}", "Test", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            var token = await GetGuacamoleAuthTokenAsync();
+            MessageBox.Show(this, $"Guacamole Auth Token:\n{token}", "Test", MessageBoxButtons.OK, MessageBoxIcon.Information);
+        }
+
+        private async Task<string> TestAsync()
+        {
+            var json = await _core!.ExecuteScriptAsync(@"
+(() => JSON.stringify({
+  keys: Object.keys(localStorage),
+  guac_auth: localStorage.getItem('GUAC_AUTH') || null
+}))()");
+            //            MessageBox.Show(this, $"Guacamole Auth Token:\n{json}", "Test", MessageBoxButtons.OK, MessageBoxIcon.Information);
+
+            // Dump aller Keys + GUAC_AUTH anzeigen
+            var script = @"
+(() => {
+  const ls = (typeof localStorage !== 'undefined') ? localStorage : null;
+  const ss = (typeof sessionStorage !== 'undefined') ? sessionStorage : null;
+  const res = {
+    origin: location.origin,
+    path: location.pathname,
+    localKeys: ls ? Object.keys(ls) : [],
+    sessionKeys: ss ? Object.keys(ss) : [],
+    guacLocal: ls ? ls.getItem('GUAC_AUTH') : null,
+    guacSession: ss ? ss.getItem('GUAC_AUTH') : null
+  };
+  return JSON.stringify(res);
+})()";
+            var json2 = await _core!.ExecuteScriptAsync(script);
+            // json ist ein C#-String mit Anführungszeichen – ggf. unescapen/parsen:
+            var payload = System.Text.Json.JsonDocument.Parse(json2.Trim('"').Replace("\\\"", "\""));
+            // -> payload.RootElement.GetProperty("guacLocal").GetString()
+            //            MessageBox.Show(this, $"Guacamole Auth Token:\n{json2}", "Test", MessageBoxButtons.OK, MessageBoxIcon.Information);
+
+            return json2;
+        }
+
+        private void fullScreenToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            SwitchFullScreenMode(!fullScreenToolStripMenuItem.Checked);
+        }
+
+        private Rectangle _previousBounds;
+        private void SwitchFullScreenMode(bool fullScreen)
+        {
+            if (!fullScreenToolStripMenuItem.Checked && this.WindowState==FormWindowState.Normal)
+            {
+                _previousBounds = this.Bounds; //take note of current size
+            }
+            fullScreenToolStripMenuItem.Checked = fullScreen;
+            if (fullScreen)
+            {
+                this.FormBorderStyle = FormBorderStyle.None;
+                //this.StartPosition = FormStartPosition.CenterScreen;
+                this.TopMost = true;
+                //this.TopLevel = true;
+                Screen screen = Screen.FromControl(this);
+                Rectangle r = screen.Bounds;
+                this.WindowState = FormWindowState.Normal;
+                this.SetDesktopBounds(r.X, r.Y, r.Width, r.Height);
+            }
+            else
+            {
+                this.StartPosition = FormStartPosition.CenterScreen;
+                this.TopMost = false;
+                //this.TopLevel = true;
+                this.FormBorderStyle = FormBorderStyle.Sizable;
+
+                this.WindowState = FormWindowState.Normal;
+                this.Bounds = _previousBounds;
+                //Screen screen = Screen.FromControl(this);
+                //Rectangle r = screen.Bounds;
+            }
         }
     }
 }
