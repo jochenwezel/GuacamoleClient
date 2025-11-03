@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Drawing;
+using System.Resources;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
@@ -57,13 +58,11 @@ namespace GuacamoleClient.WinForms
 
         private void InitializeComponent()
         {
-            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(MainForm));
             SuspendLayout();
             // 
             // MainForm
             // 
             ClientSize = new Size(844, 425);
-            Icon = (Icon)resources.GetObject("$this.Icon")!;
             Name = "MainForm";
             ResumeLayout(false);
 
@@ -72,6 +71,8 @@ namespace GuacamoleClient.WinForms
         private async void MainForm_Load(object? sender, EventArgs e)
         {
             if (this.DesignMode) return;
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(MainForm));
+            Icon = (Icon)resources.GetObject("$this.Icon")!;
             await InitWebView2Async();
             _core!.PermissionRequested += CoreWebView2_PermissionRequested;
         }
