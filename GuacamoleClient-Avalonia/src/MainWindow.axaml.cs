@@ -19,10 +19,27 @@ namespace GuacClient
             InitializeComponent();
 
             // XAML: <wv:WebView x:Name="Web" />
-            _web = this.FindControl<WebView>("Web");
+            _web = this.FindControl<WebView>("Web")!;
 
             // Beim Öffnen URL prüfen und laden
             this.Opened += async (_, __) => await EnsureAndLoadUrlAsync();
+
+            // TODO: Key-Event-Handler mit Modifier-Erkennung
+            if (false) this.AddHandler(KeyDownEvent, (sender, e) =>
+            {
+                var mods = e.KeyModifiers;
+                bool ctrl = (mods & KeyModifiers.Control) != 0;
+                bool alt = (mods & KeyModifiers.Alt) != 0;
+                bool shift = (mods & KeyModifiers.Shift) != 0;
+
+                // Wichtig:
+                // - Unter macOS entspricht ⌘ Command dem "Meta"-Modifier
+                // - Unter Windows ist "Windows" die Super/Windows-Taste
+                bool meta = (mods & KeyModifiers.Meta) != 0;     // ⌘ auf macOS
+                //bool win = (mods & KeyModifiers.Windows) != 0;     // ⊞ auf Windows
+
+                // TODO: Ihre Logik …
+            });
 
             // Shortcuts: Ctrl+U (URL zurücksetzen), Ctrl+Q (Beenden)
             this.KeyDown += async (s, e) =>

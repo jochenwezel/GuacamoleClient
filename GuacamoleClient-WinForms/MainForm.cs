@@ -63,7 +63,7 @@ namespace GuacShim.ControllerHost
             // MainForm
             // 
             ClientSize = new Size(844, 425);
-            Icon = (Icon)resources.GetObject("$this.Icon");
+            Icon = (Icon)resources.GetObject("$this.Icon")!;
             Name = "MainForm";
             ResumeLayout(false);
 
@@ -73,7 +73,7 @@ namespace GuacShim.ControllerHost
         {
             if (this.DesignMode) return;
             await InitWebView2Async();
-            _core.PermissionRequested += CoreWebView2_PermissionRequested;
+            _core!.PermissionRequested += CoreWebView2_PermissionRequested;
         }
 
         private async Task InitWebView2Async()
@@ -133,14 +133,21 @@ namespace GuacShim.ControllerHost
                 return;
 
             // VK-Konstanten
-            const int VK_F4 = 0x73;
-            const int VK_END = 0x23;
-            const int VK_ESC = 0x1B;
-            const int VK_R = 0x52;
+            const uint VK_F4 = (uint)Keys.F4;
+            const uint VK_END = (uint)Keys.End;
+            const uint VK_ESC = (uint)Keys.Escape;
+            const uint VK_R = (uint)Keys.R;
+            //const int VK_F4 = 0x73;
+            //const int VK_END = 0x23;
+            //const int VK_ESC = 0x1B;
+            //const int VK_R = 0x52; 
 
             bool ctrl = (Control.ModifierKeys & Keys.Control) == Keys.Control;
             bool alt = (Control.ModifierKeys & Keys.Alt) == Keys.Alt;     // AltGr erscheint hier als Ctrl+Alt
             bool shift = (Control.ModifierKeys & Keys.Shift) == Keys.Shift;
+            bool lwin = (Control.ModifierKeys & Keys.LWin) == Keys.LWin;
+            bool rwin = (Control.ModifierKeys & Keys.RWin) == Keys.RWin;
+            bool win = (lwin || rwin);
 
             // --- App-Policy: Ctrl+Alt+F4 schließt die App ---
             if (e.VirtualKey == VK_F4 && ctrl && alt)

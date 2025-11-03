@@ -1,4 +1,4 @@
-using Avalonia.Controls;
+﻿using Avalonia.Controls;
 using Avalonia.Layout;
 using System.Threading.Tasks;
 
@@ -32,7 +32,9 @@ public static class MessageBoxSimple
             }
         };
         if (owner != null) w.Icon = owner.Icon;
+#pragma warning disable CS8604 // Mögliches Nullverweisargument.
         w.ShowDialog(owner);
+#pragma warning restore CS8604 // Mögliches Nullverweisargument.
         return Task.CompletedTask;
     }
 }
