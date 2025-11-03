@@ -27,8 +27,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-latest]
-        #os: [windows-latest, ubuntu-latest, macos-latest]
+        #os: [ubuntu-latest, macos-latest]
+        os: [windows-latest, ubuntu-latest, macos-latest]
 
     steps:
       - name: Checkout
@@ -50,7 +50,7 @@ jobs:
       - name: Restore
         run: dotnet restore
 
-      - name: Build (WinForms + Avalonia) with version
+      - name: Build (WinForms + Avalonia) (Linux + Windows)
         if: runner.os != 'macOS'
         run: >
           dotnet build
@@ -61,7 +61,7 @@ jobs:
           -p:AssemblyVersion=${{ env.VERSION }}
           -p:InformationalVersion=${{ env.VERSION }}
 
-      - name: Publish Avalonia (macOS bundle)
+      - name: Publish Avalonia (macOS)
         if: runner.os == 'macOS'
         run: >
           dotnet publish GuacamoleClient-Avalonia/GuacamoleClient-Avalonia.csproj
@@ -73,27 +73,23 @@ jobs:
           -p:AssemblyVersion=${{ env.VERSION }}
           -p:InformationalVersion=${{ env.VERSION }}
       
-      - name: Pack Avalonia macOS artifact
+      - name: Pack binaries - WinForms (Windows)
+        if: runner.os == 'windows'
+        run: |
+          (cd "${{ env.BUILD_OUTPUT_BASEDIR1 }}" && zip "$GITHUB_WORKSPACE/bin-winforms-${{ env.VERSION }}.zip" -r .)
+
+      - name: Pack binaries - Avalonia (Linux + Windows)
+        if: runner.os != 'macOS'
+        run: |
+          (cd "${{ env.BUILD_OUTPUT_BASEDIR2 }}" && zip "$GITHUB_WORKSPACE/bin-avalonia-${{ runner.os }}-${{ env.VERSION }}.zip" -r .)
+
+      - name: Pack binaries - Avalonia - MacOS ARM64
         if: runner.os == 'macOS'
         run: |
           (cd "$BUILD_OUTPUT_BASEDIR3" && zip "$GITHUB_WORKSPACE/bin-avalonia-osx-arm64-${{ env.VERSION }}.zip" -r .)
 
-      - name: Pack binaries - WinForms
-        if: runner.os != 'macOS'
-        run: |
-          (cd "${{ env.BUILD_OUTPUT_BASEDIR1 }}" && zip "$GITHUB_WORKSPACE/bin-winforms-${{ env.VERSION }}.zip" -r .)
-
-      - name: Pack binaries - Avalonia
-        if: runner.os != 'macOS'
-        run: |
-          (cd "${{ env.BUILD_OUTPUT_BASEDIR2 }}" && zip "$GITHUB_WORKSPACE/bin-avalonia-${{ env.VERSION }}.zip" -r .)
-
-      - name: Pack binaries - Avalonia - MacOS
-        if: runner.os == 'macOS'
-        run: |
-          (cd "${{ env.BUILD_OUTPUT_BASEDIR2 }}" && zip "$GITHUB_WORKSPACE/bin-avalonia-${{ env.VERSION }}.zip" -r .)
-
-      - name: Publish binaries to the release
+      - name: Publish binaries to the release (Windows)
+        if: runner.os == 'windows'
         uses: softprops/action-gh-release@v2
         with:
           files: |
@@ -103,7 +99,18 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Publish binaries to the release (Linux)
+        if: runner.os == 'ubuntu'
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            bin-avalonia-${{ env.VERSION }}.zip
+          tag_name: ${{ github.event.release.tag_name || github.ref_name }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Publish binaries to the release (macOS)
+        if: runner.os == 'macOS'
         uses: softprops/action-gh-release@v2
         with:
           files: |
