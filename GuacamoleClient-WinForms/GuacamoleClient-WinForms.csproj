@@ -26,6 +26,7 @@
     <IncludeSymbols>False</IncludeSymbols>
     <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
     <PackageRequireLicenseAcceptance>True</PackageRequireLicenseAcceptance>
+    <RootNamespace>GuacamoleClient.WinForms</RootNamespace>
   </PropertyGroup>
 
   <ItemGroup>

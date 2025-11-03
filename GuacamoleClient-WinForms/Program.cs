@@ -1,8 +1,7 @@
-﻿using CompuMaster.GuacLauncher;
-using System;
+﻿using System;
 using System.Windows.Forms;
 
-namespace GuacShim.ControllerHost
+namespace GuacamoleClient.WinForms
 {
     internal static class Program
     {
@@ -11,8 +10,8 @@ namespace GuacShim.ControllerHost
         {
             ApplicationConfiguration.Initialize();
 
-            string startUrl = GuacConfig.GetOrAskStartUrl();
-            if (startUrl == null) return; // Benutzer hat abgebrochen
+            string? startUrl = GuacConfig.GetOrAskStartUrl();
+            if (string.IsNullOrWhiteSpace(startUrl)) return; // Benutzer hat abgebrochen
 
             Application.Run(new MainForm(new Uri(startUrl)));
         }

@@ -2,7 +2,7 @@
 using System.Windows.Forms;
 using Microsoft.Win32;
 
-namespace CompuMaster.GuacLauncher
+namespace GuacamoleClient.WinForms
 {
     public static class GuacConfig
     {
@@ -13,11 +13,11 @@ namespace CompuMaster.GuacLauncher
         /// Liest die Start-URL aus HKCU; fragt per InputBox, wenn nicht vorhanden/ungültig.
         /// Gibt null zurück, wenn der Benutzer abbricht.
         /// </summary>
-        public static string GetOrAskStartUrl()
+        public static string? GetOrAskStartUrl()
         {
-            string url = ReadStartUrlFromRegistry();
+            string? url = ReadStartUrlFromRegistry();
 
-            if (!IsValidUrl(url))
+            if ((string.IsNullOrWhiteSpace(url)) || !IsValidUrl(url))
             {
                 while (true)
                 {
@@ -60,7 +60,7 @@ namespace CompuMaster.GuacLauncher
             return url;
         }
 
-        private static string ReadStartUrlFromRegistry()
+        private static string? ReadStartUrlFromRegistry()
         {
             try
             {

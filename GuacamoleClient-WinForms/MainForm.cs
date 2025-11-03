@@ -5,7 +5,7 @@ using System.Drawing;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
-namespace GuacShim.ControllerHost
+namespace GuacamoleClient.WinForms
 {
     public partial class MainForm : Form
     {

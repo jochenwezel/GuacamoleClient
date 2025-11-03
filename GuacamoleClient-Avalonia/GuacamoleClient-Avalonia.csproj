@@ -29,6 +29,7 @@
     <IncludeSymbols>True</IncludeSymbols>
     <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
     <PackageRequireLicenseAcceptance>True</PackageRequireLicenseAcceptance>
+    <RootNamespace>GuacamoleClient.Avalonia</RootNamespace>
     <!-- Unterstützte Runtime-Identifikatoren für die Veröffentlichung 
     <RuntimeIdentifiers>any;win-x64;linux-x64;osx-x64;osx-arm64</RuntimeIdentifiers>
     -->
