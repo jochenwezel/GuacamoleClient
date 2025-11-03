@@ -10,7 +10,6 @@
     <ApplicationIcon>guac.ico</ApplicationIcon>
 
     <!-- Versionsinfos -->
-    <Version>2025.10.31.0</Version>
     <IncludeSourceRevisionInInformationalVersion>false</IncludeSourceRevisionInInformationalVersion>
 
     <Description>
@@ -73,25 +72,11 @@
     <PackageReference Include="Avalonia.Diagnostics" Version="11.3.8" Condition="'$(Configuration)' == 'Debug'" />
   </ItemGroup>
 
-  <PropertyGroup>
-    <!-- Ein Channel für die komplette CEF-Stack -->
-    <CefChannel>121.3</CefChannel>
-    <!-- Alle Pakete bleiben in dieser Linie (z. B. 120.6099.*) -->
-    <CefVersion>[$(CefChannel).0,$(CefChannel).999]</CefVersion>
-  </PropertyGroup>
-
   <ItemGroup>
     <!-- Wrapper -->
     <PackageReference Include="WebViewControl-Avalonia" Version="3.120.10" />
     <PackageReference Include="CefGlue.Avalonia" Version="120.6099.211" />
     <PackageReference Include="CefGlue.Common" Version="120.6099.211" />
-
-    <!-- Redists (pro RID) -->
-    <!--
-      <PackageVersion Include="cef.redist.x64"           Version="$(CefVersion)" />
-      <PackageVersion Include="cef.redist.linux.x64"     Version="$(CefVersion)" />
-      <PackageVersion Include="cef.redist.osx.arm64"     Version="$(CefVersion)" />
-      -->
 
     <!-- Redists (pro RID) -->
     <!--
