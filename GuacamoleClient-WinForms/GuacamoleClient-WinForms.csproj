@@ -17,13 +17,13 @@
     <Company>CompuMaster GmbH</Company>
     <Product>GuacamoleClient</Product>
     <Copyright>2025 CompuMaster GmbH</Copyright>
-    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <GeneratePackageOnBuild>False</GeneratePackageOnBuild>
     <ApplicationIcon>guac.ico</ApplicationIcon>
     <PackageIcon>apple-touch-icon.png</PackageIcon>
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <RepositoryUrl>https://github.com/jochenwezel/GuacamoleClient</RepositoryUrl>
     <PackageTags>Guacamole;Client;</PackageTags>
-    <IncludeSymbols>True</IncludeSymbols>
+    <IncludeSymbols>False</IncludeSymbols>
     <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
     <PackageRequireLicenseAcceptance>True</PackageRequireLicenseAcceptance>
   </PropertyGroup>

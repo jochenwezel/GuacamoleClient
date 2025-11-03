@@ -20,7 +20,7 @@
     <Company>CompuMaster GmbH</Company>
     <Product>GuacamoleClient</Product>
     <Copyright>2025 CompuMaster GmbH</Copyright>
-    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <GeneratePackageOnBuild>False</GeneratePackageOnBuild>
     <ApplicationIcon>guac.ico</ApplicationIcon>
     <PackageIcon>apple-touch-icon.png</PackageIcon>
     <PackageReadmeFile>README.md</PackageReadmeFile>
