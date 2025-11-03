@@ -35,7 +35,7 @@
     -->
 
     <!-- Wir bauen plattformübergreifend, aber deklarieren RIDs -->
-    <RuntimeIdentifiers>win-x64;linux-x64;osx-arm64</RuntimeIdentifiers>
+    <RuntimeIdentifiers>win-x64;linux-x64;osx-arm64;osx-x64</RuntimeIdentifiers>
 
     <!-- CEF ist auf Windows x64, deshalb auf Windows x64 zwingen -->
     <!-- a) Wenn lokal (ohne RID) unter Windows gebaut wird -->
@@ -103,9 +103,12 @@
   </ItemGroup>
 
   <ItemGroup Condition="'$(RuntimeIdentifier)'=='osx-arm64'">
-    <PackageReference Include="cef.redist.osx.arm64" />
+    <PackageReference Include="cef.redist.osx.arm64" Version="120.1.8" />
   </ItemGroup>
-  
+  <ItemGroup Condition="'$(RuntimeIdentifier)'=='osx-x64'">
+    <PackageReference Include="cef.redist.osx64" Version="120.1.8" />
+  </ItemGroup>
+
   <!-- Start-Datei -->
   <ItemGroup>
     <Compile Update="Program.cs">
