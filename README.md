@@ -1,5 +1,7 @@
 ﻿# GuacamoleClient
 
+![GuacamoleClient Logo](./logos/guac-client-app_banner_1280x640.png)
+
 ## What is GuacamoleClient? Why we need it?
 
 Apache Guacamole is a free, clientless remote desktop gateway. It supports standard protocols like VNC, RDP, and SSH. see https://guacamole.apache.org/
