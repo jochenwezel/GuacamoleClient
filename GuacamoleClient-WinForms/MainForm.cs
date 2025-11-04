@@ -65,7 +65,7 @@ namespace GuacamoleClient.WinForms
         {
             item.BackColor = newColor;
             foreach (ToolStripItem child in item.Items)
-                if (child is ToolStripMenuItem m2) 
+                if (child is ToolStripMenuItem m2)
                     SetMenuStripBackgroundColorRecursive(m2, newColor);
                 else
                     child.BackColor = newColor;
@@ -170,6 +170,7 @@ namespace GuacamoleClient.WinForms
             Name = "MainForm";
             Load += MainForm_Load;
             ResizeEnd += MainForm_ResizeEnd;
+            KeyDown += MainForm_KeyDown;
             menuStrip1.ResumeLayout(false);
             menuStrip1.PerformLayout();
             ResumeLayout(false);
@@ -336,7 +337,7 @@ namespace GuacamoleClient.WinForms
                 SwitchFullScreenMode(!fullScreenToolStripMenuItem.Checked);
                 if (!fullScreenToolStripMenuItem.Checked)
                     ShowHint("Hinweis: Strg+Alt+Insert >> Full Screen wird deaktiviert");
-                else 
+                else
                     ShowHint("Hinweis: Strg+Alt+Insert >> Full Screen wird aktiviert");
                 return;
             }
@@ -484,7 +485,7 @@ namespace GuacamoleClient.WinForms
         private Rectangle _previousBounds;
         private void SwitchFullScreenMode(bool fullScreen)
         {
-            if (!fullScreenToolStripMenuItem.Checked && this.WindowState==FormWindowState.Normal)
+            if (!fullScreenToolStripMenuItem.Checked && this.WindowState == FormWindowState.Normal)
             {
                 _previousBounds = this.Bounds; //take note of current size
             }
@@ -512,6 +513,112 @@ namespace GuacamoleClient.WinForms
                 //Screen screen = Screen.FromControl(this);
                 //Rectangle r = screen.Bounds;
             }
+        }
+
+        private void MainForm_KeyDown(object? sender, KeyEventArgs e)
+        {
+
+            // Nur KeyDown / SystemKeyDown interessieren
+            if (e.Handled)
+                return;
+
+            // VK-Konstanten
+            const Keys VK_F4 = Keys.F4;
+            const Keys VK_END = Keys.End;
+            const Keys VK_ESC = Keys.Escape;
+            const Keys VK_R = Keys.R;
+            //const int VK_F4 = 0x73;
+            //const int VK_END = 0x23;
+            //const int VK_ESC = 0x1B;
+            //const int VK_R = 0x52; 
+
+            bool ctrl = (Control.ModifierKeys & Keys.Control) == Keys.Control;
+            bool alt = (Control.ModifierKeys & Keys.Alt) == Keys.Alt;     // AltGr erscheint hier als Ctrl+Alt
+            bool shift = (Control.ModifierKeys & Keys.Shift) == Keys.Shift;
+            bool lwin = (Control.ModifierKeys & Keys.LWin) == Keys.LWin;
+            bool rwin = (Control.ModifierKeys & Keys.RWin) == Keys.RWin;
+            bool win = (lwin || rwin);
+
+            // --- App-Policy: Ctrl+Alt+F4 schließt die App ---
+            if (e.KeyCode == VK_F4 && ctrl && alt)
+            {
+                e.Handled = true;
+                ShowHint("STRG+ALT+F4: Anwendung wird geschlossen …");
+                _closeTimer.Start();
+                return;
+            }
+
+            // --- Alt+F4 blocken (App bleibt offen) ---
+            if (e.KeyCode == VK_F4 && alt && !ctrl)
+            {
+                e.Handled = true;
+                ShowHint("ALT+F4 wurde abgefangen (App bleibt offen).");
+                return;
+            }
+
+            // --- Ctrl+F4 durchlassen ---
+            if (e.KeyCode == VK_F4 && ctrl && !alt)
+            {
+                e.Handled = false; // weiter an WebView/Seite
+                return;
+            }
+
+            // --- Ctrl+Shift+Esc (lokaler Task-Manager) -> NICHT weiterleitbar ---
+            if (e.KeyCode == VK_ESC && ctrl && shift)
+            {
+                e.Handled = true; // lokal abfangen
+                ShowHint("STRG+UMSCHALT+ESC wurde abgefangen (lokaler Task-Manager). Nicht an Remote weiterleitbar. Tipp: In Guacamole-Menü „Strg+Alt+Entf“ nutzen.");
+                return;
+            }
+
+            // --- Ctrl+Alt+End: in WebView2/Guacamole typischerweise ohne Wirkung ---
+            if (e.KeyCode == VK_END && ctrl && alt)
+            {
+                // Wir lassen es durch – aber informieren, dass es i. d. R. nichts bewirkt.
+                e.Handled = false;
+                ShowHint("Hinweis: STRG+ALT+ENDE hat in diesem Setup üblicherweise keine Wirkung (mstsc-Sonderfall).");
+                return;
+            }
+
+            // --- Win+R (OS-reserviert) -> abfangen ---
+            // Windows-Taste selbst kommt hier i. d. R. nicht an; falls doch, verhindern wir lokal.
+            if ((IsWinPressed() && e.KeyCode == VK_R))
+            {
+                e.Handled = true;
+                ShowHint("WIN+R wurde abgefangen. Nicht an Remote weiterleitbar. Workaround: STRG+ESC öffnen und dort „Ausführen“ suchen.");
+                return;
+            }
+
+            if (fullScreenToolStripMenuItem.Checked && e.KeyCode == Keys.Cancel && alt && ctrl)
+            {
+                e.Handled = true;
+                SwitchFullScreenMode(false);
+                ShowHint("Hinweis: Strg+Alt+Break >> Full Screen wird deaktiviert");
+                return;
+            }
+
+            // Restore window state from fullscreen on Strg+Break
+            if (e.KeyCode == Keys.Insert && alt && ctrl)
+            {
+                e.Handled = true;
+                SwitchFullScreenMode(!fullScreenToolStripMenuItem.Checked);
+                if (!fullScreenToolStripMenuItem.Checked)
+                    ShowHint("Hinweis: Strg+Alt+Insert >> Full Screen wird deaktiviert");
+                else
+                    ShowHint("Hinweis: Strg+Alt+Insert >> Full Screen wird aktiviert");
+                return;
+            }
+
+            // Go to guacamole home screen
+            if (e.KeyCode == Keys.Home && alt && ctrl)
+            {
+                e.Handled = true;
+                connectionHomeToolStripMenuItem.PerformClick();
+                return;
+            }
+
+            // Standard: Alles andere mit Ctrl/Alt/Shift/AltGr durchlassen
+            e.Handled = false;
         }
     }
 }
