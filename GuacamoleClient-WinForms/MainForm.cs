@@ -127,6 +127,7 @@ namespace GuacamoleClient.WinForms
             // quitToolStripMenuItem
             // 
             quitToolStripMenuItem.Name = "quitToolStripMenuItem";
+            quitToolStripMenuItem.ShortcutKeyDisplayString = "Ctrl+Alt+F4";
             quitToolStripMenuItem.Size = new Size(254, 22);
             quitToolStripMenuItem.Text = "&Quit";
             quitToolStripMenuItem.Click += quitToolStripMenuItem_Click;
