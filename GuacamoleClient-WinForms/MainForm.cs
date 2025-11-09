@@ -83,6 +83,7 @@ namespace GuacamoleClient.WinForms
 
         private void InitializeComponent()
         {
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(MainForm));
             menuStrip1 = new MenuStrip();
             fileToolStripMenuItem = new ToolStripMenuItem();
             connectionHomeToolStripMenuItem = new ToolStripMenuItem();
@@ -114,21 +115,21 @@ namespace GuacamoleClient.WinForms
             // connectionHomeToolStripMenuItem
             // 
             connectionHomeToolStripMenuItem.Name = "connectionHomeToolStripMenuItem";
-            connectionHomeToolStripMenuItem.ShortcutKeyDisplayString = "Ctrl+Alt+Pos1";
-            connectionHomeToolStripMenuItem.Size = new Size(254, 22);
+            connectionHomeToolStripMenuItem.ShortcutKeyDisplayString = "Ctrl+Alt+Pos1 / Alt-Gr+Pos1";
+            connectionHomeToolStripMenuItem.Size = new Size(330, 22);
             connectionHomeToolStripMenuItem.Text = "Connection Home";
             connectionHomeToolStripMenuItem.Click += connectionHomeToolStripMenuItem_Click;
             // 
             // toolStripSeparator1
             // 
             toolStripSeparator1.Name = "toolStripSeparator1";
-            toolStripSeparator1.Size = new Size(251, 6);
+            toolStripSeparator1.Size = new Size(327, 6);
             // 
             // quitToolStripMenuItem
             // 
             quitToolStripMenuItem.Name = "quitToolStripMenuItem";
-            quitToolStripMenuItem.ShortcutKeyDisplayString = "Ctrl+Alt+F4";
-            quitToolStripMenuItem.Size = new Size(254, 22);
+            quitToolStripMenuItem.ShortcutKeyDisplayString = "Ctrl+Alt+F4 / Alt-Gr+F4";
+            quitToolStripMenuItem.Size = new Size(330, 22);
             quitToolStripMenuItem.Text = "&Quit";
             quitToolStripMenuItem.Click += quitToolStripMenuItem_Click;
             // 
@@ -149,8 +150,8 @@ namespace GuacamoleClient.WinForms
             // fullScreenToolStripMenuItem
             // 
             fullScreenToolStripMenuItem.Name = "fullScreenToolStripMenuItem";
-            fullScreenToolStripMenuItem.ShortcutKeyDisplayString = "Ctrl+Alt+Insert";
-            fullScreenToolStripMenuItem.Size = new Size(219, 22);
+            fullScreenToolStripMenuItem.ShortcutKeyDisplayString = "Ctrl+Alt+Insert / Alt-Gr+Insert";
+            fullScreenToolStripMenuItem.Size = new Size(299, 22);
             fullScreenToolStripMenuItem.Text = "Full-Screen";
             fullScreenToolStripMenuItem.Click += fullScreenToolStripMenuItem_Click;
             // 
@@ -167,6 +168,7 @@ namespace GuacamoleClient.WinForms
             ClientSize = new Size(1264, 761);
             Controls.Add(WebBrowserHostPanel);
             Controls.Add(menuStrip1);
+            Icon = (Icon)resources.GetObject("$this.Icon");
             MainMenuStrip = menuStrip1;
             Name = "MainForm";
             Load += MainForm_Load;
