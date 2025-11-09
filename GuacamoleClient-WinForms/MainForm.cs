@@ -28,6 +28,7 @@ namespace GuacamoleClient.WinForms
         private ToolStripMenuItem viewToolStripMenuItem;
         private ToolStripMenuItem fullScreenToolStripMenuItem;
         private Panel WebBrowserHostPanel;
+        private ToolStripMenuItem stopFullScreenModeToolStripMenuItem;
 
         public string StartUrl { get; init; }
         private readonly HashSet<string> _trustedHosts = new HashSet<string>();
@@ -92,6 +93,7 @@ namespace GuacamoleClient.WinForms
             testToolStripMenuItem = new ToolStripMenuItem();
             viewToolStripMenuItem = new ToolStripMenuItem();
             fullScreenToolStripMenuItem = new ToolStripMenuItem();
+            stopFullScreenModeToolStripMenuItem = new ToolStripMenuItem();
             WebBrowserHostPanel = new Panel();
             menuStrip1.SuspendLayout();
             SuspendLayout();
@@ -142,7 +144,7 @@ namespace GuacamoleClient.WinForms
             // 
             // viewToolStripMenuItem
             // 
-            viewToolStripMenuItem.DropDownItems.AddRange(new ToolStripItem[] { fullScreenToolStripMenuItem });
+            viewToolStripMenuItem.DropDownItems.AddRange(new ToolStripItem[] { fullScreenToolStripMenuItem, stopFullScreenModeToolStripMenuItem });
             viewToolStripMenuItem.Name = "viewToolStripMenuItem";
             viewToolStripMenuItem.Size = new Size(44, 20);
             viewToolStripMenuItem.Text = "&View";
@@ -151,9 +153,17 @@ namespace GuacamoleClient.WinForms
             // 
             fullScreenToolStripMenuItem.Name = "fullScreenToolStripMenuItem";
             fullScreenToolStripMenuItem.ShortcutKeyDisplayString = "Ctrl+Alt+Insert / Alt-Gr+Insert";
-            fullScreenToolStripMenuItem.Size = new Size(299, 22);
+            fullScreenToolStripMenuItem.Size = new Size(360, 22);
             fullScreenToolStripMenuItem.Text = "Full-Screen";
             fullScreenToolStripMenuItem.Click += fullScreenToolStripMenuItem_Click;
+            // 
+            // stopFullScreenModeToolStripMenuItem
+            // 
+            stopFullScreenModeToolStripMenuItem.Name = "stopFullScreenModeToolStripMenuItem";
+            stopFullScreenModeToolStripMenuItem.ShortcutKeyDisplayString = "Ctrl+Alt+Break / Alt-Gr+Break";
+            stopFullScreenModeToolStripMenuItem.Size = new Size(360, 22);
+            stopFullScreenModeToolStripMenuItem.Text = "Stop Full-Screen Mode";
+            stopFullScreenModeToolStripMenuItem.Click += stopFullScreenModeToolStripMenuItem_Click;
             // 
             // WebBrowserHostPanel
             // 
@@ -196,6 +206,7 @@ namespace GuacamoleClient.WinForms
                 _previousBounds = this.Bounds;
             else
                 _previousBounds = new Rectangle(0, 0, 1280, 800);
+            SwitchFullScreenMode(fullScreenToolStripMenuItem.Checked);
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(MainForm));
             Icon = (Icon)resources.GetObject("$this.Icon")!;
             await InitWebView2Async();
@@ -516,6 +527,7 @@ namespace GuacamoleClient.WinForms
                 //Screen screen = Screen.FromControl(this);
                 //Rectangle r = screen.Bounds;
             }
+            this.stopFullScreenModeToolStripMenuItem.Available = fullScreen;
         }
 
         private void MainForm_KeyDown(object? sender, KeyEventArgs e)
@@ -622,6 +634,11 @@ namespace GuacamoleClient.WinForms
 
             // Standard: Alles andere mit Ctrl/Alt/Shift/AltGr durchlassen
             e.Handled = false;
+        }
+
+        private void stopFullScreenModeToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            this.SwitchFullScreenMode(false);
         }
     }
 }
