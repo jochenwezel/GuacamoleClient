@@ -497,7 +497,7 @@ namespace GuacamoleClient.WinForms
             {
                 this.FormBorderStyle = FormBorderStyle.None;
                 //this.StartPosition = FormStartPosition.CenterScreen;
-                this.TopMost = true;
+                //this.TopMost = true;
                 //this.TopLevel = true;
                 Screen screen = Screen.FromControl(this);
                 Rectangle r = screen.Bounds;
