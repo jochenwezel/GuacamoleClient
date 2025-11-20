@@ -1,7 +1,9 @@
 ﻿using Microsoft.Web.WebView2.Core;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Drawing;
+using System.IO;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
@@ -19,7 +21,7 @@ namespace GuacamoleClient.WinForms
         private CoreWebView2? _core;
 
         private bool _altF4Detected;
-        private MenuStrip menuStrip1;
+        private MenuStrip mainMenuStrip;
         private ToolStripMenuItem fileToolStripMenuItem;
         private ToolStripMenuItem quitToolStripMenuItem;
         private ToolStripMenuItem connectionHomeToolStripMenuItem;
@@ -29,24 +31,32 @@ namespace GuacamoleClient.WinForms
         private ToolStripMenuItem fullScreenToolStripMenuItem;
         private Panel WebBrowserHostPanel;
         private ToolStripMenuItem stopFullScreenModeToolStripMenuItem;
+        private ToolStripMenuItem guacamoleUserSettingsToolStripMenuItem;
+        private ToolStripMenuItem guacamoleConnectionConfigurationsToolStripMenuItem;
+        private ToolStripMenuItem toolStripMenuItem1;
+        private ToolStripMenuItem newWindowToolStripMenuItem;
+        private Timer formTitleRefreshTimer;
+        private System.ComponentModel.IContainer components;
 
-        public string StartUrl { get; init; }
+        public Uri HomeUrl { get; init; }
+        public Uri StartUrl { get; init; }
         private readonly HashSet<string> _trustedHosts = new HashSet<string>();
 
 
         [Obsolete("For designer support only", true)]
         [System.ComponentModel.EditorBrowsable(System.ComponentModel.EditorBrowsableState.Never)]
-        public MainForm() : this(new Uri("https://guacamole.apache.org/")) { }
+        public MainForm() : this(new Uri("https://guacamole.apache.org/"), new Uri("https://guacamole.apache.org/")) { }
 
-        public MainForm(Uri startUrl)
+        public MainForm(Uri homeUrl, Uri startUrl)
         {
-            this.StartUrl = startUrl.ToString();
-            _trustedHosts.Add(startUrl.Host);
+            this.HomeUrl = homeUrl;
+            this.StartUrl = startUrl;
+            _trustedHosts.Add(homeUrl.Host);
             InitializeComponent();
 
-            Text = $"GuacamoleClient v{Application.ProductVersion} - {startUrl.ToString()}";
+            this.UpdateFormTitle(startUrl);
             KeyPreview = true;
-            SetMenuStripBackgroundColorRecursive(menuStrip1!, Color.Red);
+            SetMenuStripBackgroundColorRecursive(mainMenuStrip!, Color.Red);
             testToolStripMenuItem!.Available = TEST_MENU_ENABLED;
 
             _tip = new ToolTip
@@ -58,8 +68,42 @@ namespace GuacamoleClient.WinForms
                 ShowAlways = true
             };
 
+            this.WebBrowserHostPanel!.LocationChanged += (_, __) => UpdateLocationUrl();
             this.WebBrowserHostPanel!.Resize += (_, __) => UpdateControllerBounds();
             _closeTimer.Tick += (_, __) => { _closeTimer.Stop(); Close(); };
+        }
+
+        private void NewWindowRequested(object? sender, CoreWebView2NewWindowRequestedEventArgs e)
+        {
+            // Öffne neuen MainForm mit der Ziel-URL
+            var form = new MainForm(this.HomeUrl, new Uri(e.Uri));
+            form.Show();
+            // Verhindere das Öffnen im aktuellen WebView
+            e.Handled = true;
+        }
+
+        public void UpdateFormTitle(Uri currentUrl) => this.UpdateFormTitle(currentUrl, String.Empty);
+        public void UpdateFormTitle(Uri currentUrl, string documentTitle)
+        {
+            if (string.IsNullOrEmpty(documentTitle))
+                this.Text = $"GuacamoleClient v{Application.ProductVersion} - {currentUrl.ToString()}";
+            else
+                this.Text = $"GuacamoleClient v{Application.ProductVersion} - {currentUrl.ToString()} - {documentTitle}";
+        }
+
+        public Uri GuacamoleSettingsUrl
+        {
+            get
+            {
+                return new Uri(this.HomeUrl, "#/settings/preferences");
+            }
+        }
+        public Uri GuacamoleConnectionConfigurationsUrl
+        {
+            get
+            {
+                return new Uri(this.HomeUrl, "#/settings/mysql/connections");
+            }
         }
 
         private void SetMenuStripBackgroundColorRecursive(MenuStrip item, Color newColor)
@@ -84,10 +128,14 @@ namespace GuacamoleClient.WinForms
 
         private void InitializeComponent()
         {
+            components = new System.ComponentModel.Container();
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(MainForm));
-            menuStrip1 = new MenuStrip();
+            this.mainMenuStrip = new MenuStrip();
             fileToolStripMenuItem = new ToolStripMenuItem();
             connectionHomeToolStripMenuItem = new ToolStripMenuItem();
+            guacamoleUserSettingsToolStripMenuItem = new ToolStripMenuItem();
+            guacamoleConnectionConfigurationsToolStripMenuItem = new ToolStripMenuItem();
+            newWindowToolStripMenuItem = new ToolStripMenuItem();
             toolStripSeparator1 = new ToolStripSeparator();
             quitToolStripMenuItem = new ToolStripMenuItem();
             testToolStripMenuItem = new ToolStripMenuItem();
@@ -95,21 +143,22 @@ namespace GuacamoleClient.WinForms
             fullScreenToolStripMenuItem = new ToolStripMenuItem();
             stopFullScreenModeToolStripMenuItem = new ToolStripMenuItem();
             WebBrowserHostPanel = new Panel();
-            menuStrip1.SuspendLayout();
+            formTitleRefreshTimer = new Timer(components);
+            this.mainMenuStrip.SuspendLayout();
             SuspendLayout();
             // 
-            // menuStrip1
+            // mainMenuStrip
             // 
-            menuStrip1.Items.AddRange(new ToolStripItem[] { fileToolStripMenuItem, testToolStripMenuItem, viewToolStripMenuItem });
-            menuStrip1.Location = new Point(0, 0);
-            menuStrip1.Name = "menuStrip1";
-            menuStrip1.Size = new Size(1264, 24);
-            menuStrip1.TabIndex = 0;
-            menuStrip1.Text = "menuStrip1";
+            this.mainMenuStrip.Items.AddRange(new ToolStripItem[] { fileToolStripMenuItem, testToolStripMenuItem, viewToolStripMenuItem });
+            this.mainMenuStrip.Location = new Point(0, 0);
+            this.mainMenuStrip.Name = "mainMenuStrip";
+            this.mainMenuStrip.Size = new Size(1264, 24);
+            this.mainMenuStrip.TabIndex = 0;
+            this.mainMenuStrip.Text = "menuStrip1";
             // 
             // fileToolStripMenuItem
             // 
-            fileToolStripMenuItem.DropDownItems.AddRange(new ToolStripItem[] { connectionHomeToolStripMenuItem, toolStripSeparator1, quitToolStripMenuItem });
+            fileToolStripMenuItem.DropDownItems.AddRange(new ToolStripItem[] { connectionHomeToolStripMenuItem, guacamoleUserSettingsToolStripMenuItem, guacamoleConnectionConfigurationsToolStripMenuItem, newWindowToolStripMenuItem, toolStripSeparator1, quitToolStripMenuItem });
             fileToolStripMenuItem.Name = "fileToolStripMenuItem";
             fileToolStripMenuItem.Size = new Size(81, 20);
             fileToolStripMenuItem.Text = "&Connection";
@@ -121,6 +170,27 @@ namespace GuacamoleClient.WinForms
             connectionHomeToolStripMenuItem.Size = new Size(330, 22);
             connectionHomeToolStripMenuItem.Text = "Connection Home";
             connectionHomeToolStripMenuItem.Click += connectionHomeToolStripMenuItem_Click;
+            // 
+            // guacamoleUserSettingsToolStripMenuItem
+            // 
+            guacamoleUserSettingsToolStripMenuItem.Name = "guacamoleUserSettingsToolStripMenuItem";
+            guacamoleUserSettingsToolStripMenuItem.Size = new Size(330, 22);
+            guacamoleUserSettingsToolStripMenuItem.Text = "Guacamole User Settings";
+            guacamoleUserSettingsToolStripMenuItem.Click += guacamoleUserSettingsToolStripMenuItem_Click;
+            // 
+            // guacamoleConnectionConfigurationsToolStripMenuItem
+            // 
+            guacamoleConnectionConfigurationsToolStripMenuItem.Name = "guacamoleConnectionConfigurationsToolStripMenuItem";
+            guacamoleConnectionConfigurationsToolStripMenuItem.Size = new Size(330, 22);
+            guacamoleConnectionConfigurationsToolStripMenuItem.Text = "Connection Configurations";
+            guacamoleConnectionConfigurationsToolStripMenuItem.Click += guacamoleConnectionConfigurationsToolStripMenuItem_Click;
+            // 
+            // newWindowToolStripMenuItem
+            // 
+            newWindowToolStripMenuItem.Name = "newWindowToolStripMenuItem";
+            newWindowToolStripMenuItem.Size = new Size(330, 22);
+            newWindowToolStripMenuItem.Text = "New Window";
+            newWindowToolStripMenuItem.Click += newWindowToolStripMenuItem_Click;
             // 
             // toolStripSeparator1
             // 
@@ -170,22 +240,26 @@ namespace GuacamoleClient.WinForms
             WebBrowserHostPanel.Dock = DockStyle.Fill;
             WebBrowserHostPanel.Location = new Point(0, 24);
             WebBrowserHostPanel.Name = "WebBrowserHostPanel";
-            WebBrowserHostPanel.Size = new Size(1264, 737);
+            WebBrowserHostPanel.Size = new Size(1264, 701);
             WebBrowserHostPanel.TabIndex = 1;
+            // 
+            // formTitleRefreshTimer
+            // 
+            formTitleRefreshTimer.Tick += formTitleRefreshTimer_Tick;
             // 
             // MainForm
             // 
-            ClientSize = new Size(1264, 761);
+            ClientSize = new Size(1264, 725);
             Controls.Add(WebBrowserHostPanel);
-            Controls.Add(menuStrip1);
+            Controls.Add(this.mainMenuStrip);
             Icon = (Icon)resources.GetObject("$this.Icon");
-            MainMenuStrip = menuStrip1;
+            MainMenuStrip = this.mainMenuStrip;
             Name = "MainForm";
             Load += MainForm_Load;
             ResizeEnd += MainForm_ResizeEnd;
             KeyDown += MainForm_KeyDown;
-            menuStrip1.ResumeLayout(false);
-            menuStrip1.PerformLayout();
+            this.mainMenuStrip.ResumeLayout(false);
+            this.mainMenuStrip.PerformLayout();
             ResumeLayout(false);
             PerformLayout();
 
@@ -211,6 +285,109 @@ namespace GuacamoleClient.WinForms
             Icon = (Icon)resources.GetObject("$this.Icon")!;
             await InitWebView2Async();
             _core!.PermissionRequested += CoreWebView2_PermissionRequested;
+            _core!.NavigationStarting += NavigationStarting;
+            _core!.NavigationCompleted += NavigationCompleted;
+            _core!.NewWindowRequested += NewWindowRequested;
+            _core!.FaviconChanged += (_, __) => RefreshFaviconAsync();
+            RefreshFaviconAsync();
+            mainMenuStrip.Renderer = new ColoredSeparatorRenderer(SystemColors.ButtonShadow, Color.Red);
+        }
+
+        public class ColoredSeparatorRenderer : ToolStripProfessionalRenderer
+        {
+            private readonly Color _separatorForeColor;
+            private readonly Color _separatorBackColor;
+
+            public ColoredSeparatorRenderer(Color separatorForeColor, Color separatorBackColor)
+            {
+                _separatorForeColor = separatorForeColor;
+                _separatorBackColor = separatorBackColor;
+            }
+
+            protected override void OnRenderSeparator(ToolStripSeparatorRenderEventArgs e)
+            {
+                // Hintergrund füllen
+                e.Graphics.FillRectangle(new SolidBrush(_separatorBackColor), 0,0, e.Item.Width, e.Item.Height); // e.Item.Bounds
+
+                // Separations-Linie zeichnen
+                using (var pen = new Pen(_separatorForeColor, 1))
+                {
+                    int y = e.Item.Bounds.Height / 2;
+                    e.Graphics.DrawLine(pen, 2, y, e.Item.Bounds.Width - 2, y);
+                }
+            }
+        }
+
+        private void NavigationCompleted(object? sender, CoreWebView2NavigationCompletedEventArgs e)
+        {
+            this.formTitleRefreshTimer.Enabled = true;
+            this.formTitleRefreshTimer.Interval = 100;
+            this.formTitleRefreshTimer.Start();
+            //UpdateLocationUrl();
+        }
+
+        private void NavigationStarting(object? sender, CoreWebView2NavigationStartingEventArgs e)
+        {
+            UpdateLocationUrl(new Uri(e.Uri));
+        }
+
+        private Icon? CreateIconFromPngStream(Stream pngStream)
+        {
+            try
+            {
+                // PNG vollständig in Bytearray kopieren
+                using var msPng = new MemoryStream();
+                pngStream.CopyTo(msPng);
+                byte[] pngBytes = msPng.ToArray();
+
+                using var pngBitmap = new Bitmap(msPng);
+
+                using var icoStream = new MemoryStream();
+
+                // ICO HEADER (6 bytes)
+                icoStream.Write(new byte[] { 0, 0, 1, 0, 1, 0 }, 0, 6);
+
+                // ICON DIRECTORY ENTRY (16 bytes)
+                byte width = (byte)(pngBitmap.Width >= 256 ? 0 : pngBitmap.Width);
+                byte height = (byte)(pngBitmap.Height >= 256 ? 0 : pngBitmap.Height);
+
+                icoStream.WriteByte(width);        // width
+                icoStream.WriteByte(height);       // height
+                icoStream.WriteByte(0);            // colors
+                icoStream.WriteByte(0);            // reserved
+                icoStream.Write(BitConverter.GetBytes((short)1), 0, 2);   // planes = 1
+                icoStream.Write(BitConverter.GetBytes((short)32), 0, 2);  // bit depth = 32
+                icoStream.Write(BitConverter.GetBytes(pngBytes.Length), 0, 4); // bytes in PNG
+                icoStream.Write(BitConverter.GetBytes(22), 0, 4); // offset to PNG data
+
+                // PNG-Daten anhängen
+                icoStream.Write(pngBytes, 0, pngBytes.Length);
+
+                icoStream.Position = 0;
+                return new Icon(icoStream);
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
+        private async void RefreshFaviconAsync()
+        {
+            try
+            {
+                Stream iconStream = await _core!.GetFaviconAsync(CoreWebView2FaviconImageFormat.Png);
+                if (iconStream != null && iconStream.Length > 0)
+                {
+                    Icon? icon = CreateIconFromPngStream(iconStream);
+                    if (icon != null)
+                        this.Icon = icon;
+                }
+            }
+            catch
+            {
+                // ignore
+            }
         }
 
         private async Task InitWebView2Async()
@@ -227,7 +404,7 @@ namespace GuacamoleClient.WinForms
             _core.Settings.AreDefaultContextMenusEnabled = true;
             _core.Settings.AreDevToolsEnabled = false;
 
-            _core.Navigate(StartUrl);
+            _core.Navigate(StartUrl.ToString());
             _controller.MoveFocus(CoreWebView2MoveFocusReason.Programmatic);
         }
 
@@ -250,6 +427,25 @@ namespace GuacamoleClient.WinForms
 
             // Für alles andere: explizit ablehnen (oder ignorieren → Standardverhalten)
             // e.State = CoreWebView2PermissionState.Deny; e.Handled = true;
+        }
+
+        private void UpdateLocationUrl()
+        {
+            try
+            {
+                if (_core == null || _core.IsSuspended) return;
+                this.UpdateFormTitle(new Uri(_core!.Source), _core!.DocumentTitle);
+            }
+            catch 
+            { 
+                //ignore
+            }
+        }
+
+        private void UpdateLocationUrl(Uri newUri)
+        {
+            if (_core == null) return;
+            this.UpdateFormTitle(newUri, _core!.DocumentTitle);
         }
 
         private void UpdateControllerBounds()
@@ -364,11 +560,21 @@ namespace GuacamoleClient.WinForms
                 return;
             }
 
+            // New Window
+            if (e.VirtualKey == (uint)Keys.N && alt && ctrl)
+            {
+                e.Handled = true;
+                newWindowToolStripMenuItem.PerformClick();
+                return;
+            }
+
+
             // Standard: Alles andere mit Ctrl/Alt/Shift/AltGr durchlassen
             e.Handled = false;
         }
 
         // Zusätzlicher „Fallschirm“ gegen unerwünschtes Schließen via Alt+F4 → SC_CLOSE
+        [DebuggerStepThrough]
         protected override void WndProc(ref Message m)
         {
             const int WM_SYSKEYDOWN = 0x0104;
@@ -425,7 +631,7 @@ namespace GuacamoleClient.WinForms
         public async Task<string?> GetGuacamoleAuthTokenAsync()
         {
             var cookieManager = _core!.CookieManager;
-            var cookies = await cookieManager.GetCookiesAsync(this.StartUrl).ConfigureAwait(false);
+            var cookies = await cookieManager.GetCookiesAsync(this.StartUrl.ToString()).ConfigureAwait(false);
             foreach (var c in cookies)
             {
                 Console.WriteLine($"{c.Name} = {c.Value} ; HttpOnly={c.IsHttpOnly} ; Secure={c.IsSecure} ; SameSite={c.SameSite}");
@@ -446,7 +652,7 @@ namespace GuacamoleClient.WinForms
 
         private void connectionHomeToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            _core?.Navigate(StartUrl);
+            _core?.Navigate(this.HomeUrl.ToString());
             _controller?.MoveFocus(CoreWebView2MoveFocusReason.Programmatic);
         }
 
@@ -542,6 +748,7 @@ namespace GuacamoleClient.WinForms
             const Keys VK_END = Keys.End;
             const Keys VK_ESC = Keys.Escape;
             const Keys VK_R = Keys.R;
+            const Keys VK_N = Keys.N;
             //const int VK_F4 = 0x73;
             //const int VK_END = 0x23;
             //const int VK_ESC = 0x1B;
@@ -632,6 +839,14 @@ namespace GuacamoleClient.WinForms
                 return;
             }
 
+            // New window
+            if (e.KeyCode == Keys.N && alt && ctrl)
+            {
+                e.Handled = true;
+                newWindowToolStripMenuItem.PerformClick();
+                return;
+            }
+
             // Standard: Alles andere mit Ctrl/Alt/Shift/AltGr durchlassen
             e.Handled = false;
         }
@@ -639,6 +854,47 @@ namespace GuacamoleClient.WinForms
         private void stopFullScreenModeToolStripMenuItem_Click(object sender, EventArgs e)
         {
             this.SwitchFullScreenMode(false);
+        }
+
+        private void guacamoleConnectionConfigurationsToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            var form = new MainForm(this.HomeUrl, new Uri(this.GuacamoleConnectionConfigurationsUrl.ToString()));
+            form.Show();
+        }
+
+        private void guacamoleUserSettingsToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            var form = new MainForm(this.HomeUrl, new Uri(this.GuacamoleSettingsUrl.ToString()));
+            form.Show();
+        }
+
+        private void newWindowToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            var form = new MainForm(this.HomeUrl, this.StartUrl);
+            form.Show();
+        }
+
+        private void toolStripMenuItem1_Click(object sender, EventArgs e)
+        {
+            UpdateLocationUrl();
+            this.toolStripMenuItem1.Text = DateTime.Now.ToString("HH:mm:ss.fff") + " " + this._core!.DocumentTitle;
+            RefreshFaviconAsync();
+        }
+
+        private void formTitleRefreshTimer_Tick(object sender, EventArgs e)
+        {
+            const int postNavMinInterval = 250;
+            const int maxInterval = 500;
+            if (this.formTitleRefreshTimer.Interval < postNavMinInterval)
+            {
+                this.formTitleRefreshTimer.Interval = postNavMinInterval;
+            }
+            else 
+            {
+                if (this.formTitleRefreshTimer.Interval < maxInterval)
+                    this.formTitleRefreshTimer.Interval = System.Math.Min((int)(this.formTitleRefreshTimer.Interval * 5), maxInterval);
+            }
+            UpdateLocationUrl();
         }
     }
 }

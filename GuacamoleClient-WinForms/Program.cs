@@ -12,8 +12,9 @@ namespace GuacamoleClient.WinForms
 
             string? startUrl = GuacConfig.GetOrAskStartUrl();
             if (string.IsNullOrWhiteSpace(startUrl)) return; // Benutzer hat abgebrochen
+            Uri startUri = new Uri(startUrl); 
 
-            Application.Run(new MainForm(new Uri(startUrl)));
+            Application.Run(new MainForm(startUri, startUri));
         }
     }
 }
