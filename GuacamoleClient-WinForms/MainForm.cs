@@ -37,6 +37,7 @@ namespace GuacamoleClient.WinForms
         private ToolStripMenuItem newWindowToolStripMenuItem;
         private Timer formTitleRefreshTimer;
         private System.ComponentModel.IContainer components;
+        private ToolStripMenuItem connectionNameInFullScreenModeToolStripMenuItem;
 
         public Uri HomeUrl { get; init; }
         public Uri StartUrl { get; init; }
@@ -86,9 +87,15 @@ namespace GuacamoleClient.WinForms
         public void UpdateFormTitle(Uri currentUrl, string documentTitle)
         {
             if (string.IsNullOrEmpty(documentTitle))
+            {
                 this.Text = $"GuacamoleClient v{Application.ProductVersion} - {currentUrl.ToString()}";
+                this.connectionNameInFullScreenModeToolStripMenuItem.Text = currentUrl.ToString();
+            }
             else
+            {
                 this.Text = $"GuacamoleClient v{Application.ProductVersion} - {currentUrl.ToString()} - {documentTitle}";
+                this.connectionNameInFullScreenModeToolStripMenuItem.Text = documentTitle;
+            }
         }
 
         public Uri GuacamoleSettingsUrl
@@ -130,7 +137,7 @@ namespace GuacamoleClient.WinForms
         {
             components = new System.ComponentModel.Container();
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(MainForm));
-            this.mainMenuStrip = new MenuStrip();
+            mainMenuStrip = new MenuStrip();
             fileToolStripMenuItem = new ToolStripMenuItem();
             connectionHomeToolStripMenuItem = new ToolStripMenuItem();
             guacamoleUserSettingsToolStripMenuItem = new ToolStripMenuItem();
@@ -144,17 +151,18 @@ namespace GuacamoleClient.WinForms
             stopFullScreenModeToolStripMenuItem = new ToolStripMenuItem();
             WebBrowserHostPanel = new Panel();
             formTitleRefreshTimer = new Timer(components);
-            this.mainMenuStrip.SuspendLayout();
+            connectionNameInFullScreenModeToolStripMenuItem = new ToolStripMenuItem();
+            mainMenuStrip.SuspendLayout();
             SuspendLayout();
             // 
             // mainMenuStrip
             // 
-            this.mainMenuStrip.Items.AddRange(new ToolStripItem[] { fileToolStripMenuItem, testToolStripMenuItem, viewToolStripMenuItem });
-            this.mainMenuStrip.Location = new Point(0, 0);
-            this.mainMenuStrip.Name = "mainMenuStrip";
-            this.mainMenuStrip.Size = new Size(1264, 24);
-            this.mainMenuStrip.TabIndex = 0;
-            this.mainMenuStrip.Text = "menuStrip1";
+            mainMenuStrip.Items.AddRange(new ToolStripItem[] { fileToolStripMenuItem, testToolStripMenuItem, viewToolStripMenuItem, connectionNameInFullScreenModeToolStripMenuItem });
+            mainMenuStrip.Location = new Point(0, 0);
+            mainMenuStrip.Name = "mainMenuStrip";
+            mainMenuStrip.Size = new Size(1264, 24);
+            mainMenuStrip.TabIndex = 0;
+            mainMenuStrip.Text = "menuStrip1";
             // 
             // fileToolStripMenuItem
             // 
@@ -247,19 +255,26 @@ namespace GuacamoleClient.WinForms
             // 
             formTitleRefreshTimer.Tick += formTitleRefreshTimer_Tick;
             // 
+            // connectionNameInFullScreenModeToolStripMenuItem
+            // 
+            connectionNameInFullScreenModeToolStripMenuItem.Alignment = ToolStripItemAlignment.Right;
+            connectionNameInFullScreenModeToolStripMenuItem.Name = "connectionNameInFullScreenModeToolStripMenuItem";
+            connectionNameInFullScreenModeToolStripMenuItem.Size = new Size(405, 20);
+            connectionNameInFullScreenModeToolStripMenuItem.Text = "ConnecticonnectionNameInFullScreenModeToolStripMenuItemonNameI";
+            // 
             // MainForm
             // 
             ClientSize = new Size(1264, 725);
             Controls.Add(WebBrowserHostPanel);
-            Controls.Add(this.mainMenuStrip);
+            Controls.Add(mainMenuStrip);
             Icon = (Icon)resources.GetObject("$this.Icon");
-            MainMenuStrip = this.mainMenuStrip;
+            MainMenuStrip = mainMenuStrip;
             Name = "MainForm";
             Load += MainForm_Load;
             ResizeEnd += MainForm_ResizeEnd;
             KeyDown += MainForm_KeyDown;
-            this.mainMenuStrip.ResumeLayout(false);
-            this.mainMenuStrip.PerformLayout();
+            mainMenuStrip.ResumeLayout(false);
+            mainMenuStrip.PerformLayout();
             ResumeLayout(false);
             PerformLayout();
 
@@ -734,6 +749,10 @@ namespace GuacamoleClient.WinForms
                 //Rectangle r = screen.Bounds;
             }
             this.stopFullScreenModeToolStripMenuItem.Available = fullScreen;
+            this.connectionNameInFullScreenModeToolStripMenuItem.Available = fullScreen;
+            this.connectionNameInFullScreenModeToolStripMenuItem.Enabled = false;
+            this.connectionNameInFullScreenModeToolStripMenuItem.ForeColor = Color.Black;
+            this.connectionNameInFullScreenModeToolStripMenuItem.Font = new Font(this.connectionNameInFullScreenModeToolStripMenuItem.Font, FontStyle.Bold);
         }
 
         private void MainForm_KeyDown(object? sender, KeyEventArgs e)
