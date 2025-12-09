@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Windows.Forms;
 using Microsoft.Win32;
+using GuacamoleClient.Common;
 
 namespace GuacamoleClient.WinForms
 {
@@ -16,8 +17,8 @@ namespace GuacamoleClient.WinForms
         public static string? GetOrAskStartUrl()
         {
             string? url = ReadStartUrlFromRegistry();
-
-            if ((string.IsNullOrWhiteSpace(url)) || !IsValidUrl(url) || !IsGuacamoleResponseWithStartPage(url))
+            
+            if ((string.IsNullOrWhiteSpace(url)) || !GuacamoleUrlAndContentChecks.IsValidUrlAndAcceptedScheme(url) || !GuacamoleUrlAndContentChecks.IsGuacamoleResponseWithStartPage(url))
             {
                 while (true)
                 {
@@ -42,13 +43,13 @@ namespace GuacamoleClient.WinForms
                         continue; // Retry
                     }
 
-                    if (!IsValidUrl(input))
+                    if (!GuacamoleUrlAndContentChecks.IsValidUrlAndAcceptedScheme(input))
                     {
                         MessageBox.Show(
                             LocalizedString(LocalizationKeys.ErrorMessageInvalidUrl),
                             LocalizedString(LocalizationKeys.ErrorTitleInvalidUrl), MessageBoxButtons.OK, MessageBoxIcon.Error);
                     }
-                    else if (!IsGuacamoleResponseWithStartPage(input))
+                    else if (!GuacamoleUrlAndContentChecks.IsGuacamoleResponseWithStartPage(input))
                     {
                         MessageBox.Show(
                             LocalizedString(LocalizationKeys.ErrorMessageNoGuacamoleServerResponse) + Environment.NewLine +
@@ -100,79 +101,6 @@ namespace GuacamoleClient.WinForms
                     Environment.NewLine + ex.Message,
                     LocalizedString(LocalizationKeys.ErrorTitleStorageError), MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
-        }
-
-        private static bool IsValidUrl(string value)
-        {
-            if (string.IsNullOrWhiteSpace(value)) return false;
-            if (Uri.TryCreate(value.Trim(), UriKind.Absolute, out var uri))
-                return uri.Scheme == Uri.UriSchemeHttps || uri.Scheme == Uri.UriSchemeHttp;
-            return false;
-        }
-
-        /// <summary>
-        /// Determines whether the specified HTTP response content represents a Guacamole start page.
-        /// </summary>
-        /// <param name="url">The url to the guacamole server</param>
-        /// <returns>true if the content contains a Guacamole start page; otherwise, false.</returns>
-        private static bool IsGuacamoleResponseWithStartPage(string? url)
-        {
-            if (url != null && Uri.TryCreate(url.Trim(), UriKind.Absolute, out var uri))
-            {
-                System.Net.Http.HttpClient request = new System.Net.Http.HttpClient();
-                try
-                {
-                    var response = request.GetAsync(uri).Result;
-                    if (!response.IsSuccessStatusCode)
-                        return false;
-                    var content = response.Content.ReadAsStringAsync().Result;
-                    return ContentIsGuacamoleStartPage(content);
-                }
-                catch
-                {
-                    return false;
-                }
-            }
-            else
-                return false;
-        }
-
-        /// <summary>
-        /// Determines whether the specified HTTP response content represents a Guacamole login form.
-        /// </summary>
-        /// <param name="url">The url to the guacamole server</param>
-        /// <returns>true if the content contains a Guacamole login form; otherwise, false.</returns>
-        private static bool IsGuacamoleResponseWithLoginForm(string url)
-        {
-            if (url != null && Uri.TryCreate(url.Trim(), UriKind.Absolute, out var uri))
-            {
-                System.Net.Http.HttpClient request = new System.Net.Http.HttpClient();
-                try
-                {
-                    var response = request.GetAsync(uri).Result;
-                    if (!response.IsSuccessStatusCode)
-                        return false;
-                    var content = response.Content.ReadAsStringAsync().Result;
-                    return ContentIsGuacamoleLoginForm(content);
-                }
-                catch
-                {
-                    return false;
-                }
-            }
-            else
-                return false;
-        }
-
-        private static bool ContentIsGuacamoleLoginForm(string content)
-        {
-            if (string.IsNullOrWhiteSpace(content)) return false;
-            return content.Contains("class=\"login-fields\"") && content.Contains("id=\"guac-field-") && content.Contains("name=\"username\"") && content.Contains("name=\"password\"");
-        }
-        private static bool ContentIsGuacamoleStartPage(string content)
-        {
-            if (string.IsNullOrWhiteSpace(content)) return false;
-            return content.Contains("<guac-modal>");
         }
 
         private enum LocalizationKeys

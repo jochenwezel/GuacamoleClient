@@ -1,4 +1,5 @@
-﻿using Microsoft.Web.WebView2.Core;
+﻿using GuacamoleClient.Common;
+using Microsoft.Web.WebView2.Core;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -333,12 +334,41 @@ namespace GuacamoleClient.WinForms
             }
         }
 
-        private void NavigationCompleted(object? sender, CoreWebView2NavigationCompletedEventArgs e)
+        private async void NavigationCompleted(object? sender, CoreWebView2NavigationCompletedEventArgs e)
         {
+            //configure timer to short timeout to refresh form controls ASAP
             this.formTitleRefreshTimer.Enabled = true;
             this.formTitleRefreshTimer.Interval = 100;
             this.formTitleRefreshTimer.Start();
-            //UpdateLocationUrl();
+        }
+
+        private async void SwitchMenuItemsBasedOnShownContent()
+        {
+            string currentHtml = await GetCurrentHtmlAsync();
+
+            //Check for login form and show menu items accordingly
+            if (GuacamoleUrlAndContentChecks.ContentIsGuacamoleLoginForm(currentHtml))
+            {
+                guacamoleUserSettingsToolStripMenuItem!.Available = false;
+                guacamoleConnectionConfigurationsToolStripMenuItem!.Available = false;
+                newWindowToolStripMenuItem!.Available = false;
+            }
+            else
+            {
+                guacamoleUserSettingsToolStripMenuItem!.Available = true;
+                guacamoleConnectionConfigurationsToolStripMenuItem!.Available = true;
+                newWindowToolStripMenuItem!.Available = true;
+            }
+        }
+
+        private async Task<string> GetCurrentHtmlAsync()
+        {
+            string htmlJson = await _core!.ExecuteScriptAsync(
+                "document.documentElement.outerHTML"
+            );
+
+            // ExecuteScriptAsync liefert JSON-encodierten String zurück
+            return System.Text.Json.JsonSerializer.Deserialize<string>(htmlJson)!;
         }
 
         private void NavigationStarting(object? sender, CoreWebView2NavigationStartingEventArgs e)
@@ -914,6 +944,7 @@ namespace GuacamoleClient.WinForms
                     this.formTitleRefreshTimer.Interval = System.Math.Min((int)(this.formTitleRefreshTimer.Interval * 5), maxInterval);
             }
             UpdateLocationUrl();
+            SwitchMenuItemsBasedOnShownContent();
         }
     }
 }
