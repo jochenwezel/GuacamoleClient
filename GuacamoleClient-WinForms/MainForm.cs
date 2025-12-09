@@ -962,20 +962,8 @@ namespace GuacamoleClient.WinForms
             HintCtrlAltBreakFullscreenModeOff,
             HintCtrlAltInsFullscreenModeOff,
             HintCtrlAltInsFullscreenModeOn,
-            Dummy6,
-            Dummy7,
-            Dummy8,
-            Dummy9,
             HintCtrlShiftEscCatched_NotForwardableToRemoteServer,
             HintCtrlAltEndWithoutEffect_mstsc,
-            Dummy12,
-            Dummy13,
-            Dummy14,
-            Dummy15,
-            Dummy16,
-            Dummy17,
-            Dummy18,
-            Dummy19,
         }
 
         private static string LocalizedString(LocalizationKeys key)
