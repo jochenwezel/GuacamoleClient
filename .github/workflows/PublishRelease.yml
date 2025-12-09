@@ -9,26 +9,26 @@
 on:
   release:
     types: [created]
-  # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
 
 permissions:
-  contents: write  # nötig fürs Anhängen von Assets an eine Release
+  contents: write # nötig fürs Anhängen von Assets an ein Release
 
 env:
-  BUILD_CONFIGURATION: CI_CD
+  BUILD_CONFIGURATION: Release
   BUILD_OUTPUT_BASEDIR1: GuacamoleClient-WinForms/bin/Debug/net8.0-windows
   BUILD_OUTPUT_BASEDIR2: GuacamoleClient-Avalonia/bin/Debug/net8.0
   BUILD_OUTPUT_BASEDIR3: GuacamoleClient-Avalonia/bin/Debug/net8.0/osx-arm64/publish
+  # Wurzelordner für das MSIX-Packaging-Projekt
+  MSIX_SEARCH_ROOT: WinAppPackagingMsixGuacamoleClientWinForms
 
 jobs:
   publish:
     runs-on: ${{ matrix.os }}
+
     strategy:
       fail-fast: false
       matrix:
-        #os: [ubuntu-latest, macos-latest]
-        #os: [windows-latest, ubuntu-latest, macos-latest]
         include:
           - os: windows-latest
             os_id: windows
@@ -50,18 +50,19 @@ jobs:
         shell: bash
         run: |
           RAW_TAG="${{ github.event.release.tag_name || github.ref_name }}"
-          VER="${RAW_TAG#v}"       # führendes "v" streichen, falls vorhanden
-          echo "VERSION=$VER" >> $GITHUB_ENV
+          VER="${RAW_TAG#v}"              # führendes "v" abschneiden, falls vorhanden
+          echo "VERSION=$VER" >> "$GITHUB_ENV"
           echo "Resolved VERSION=$VER"
-          echo "OS_NAME=${{ matrix.os_id }}" >> $GITHUB_ENV
+          echo "OS_NAME=${{ matrix.os_id }}" >> "$GITHUB_ENV"
 
       - name: Restore
         run: dotnet restore
 
+      # Linux + Windows: komplette Solution inkl. MSIX-Projekt bauen
       - name: Build (WinForms + Avalonia) (Linux + Windows)
         if: runner.os != 'macOS'
         run: >
-          dotnet build
+          dotnet build GuacamoleClient.sln
           --configuration ${{ env.BUILD_CONFIGURATION }}
           --no-restore
           -p:Version=${{ env.VERSION }}
@@ -69,30 +70,36 @@ jobs:
           -p:AssemblyVersion=${{ env.VERSION }}
           -p:InformationalVersion=${{ env.VERSION }}
 
+      # macOS: nur Avalonia, dafür RID-Publish
       - name: Publish Avalonia (macOS ARM64)
         if: runner.os == 'macOS'
         run: >
           dotnet publish GuacamoleClient-Avalonia/GuacamoleClient-Avalonia.csproj
-          -c Debug -r osx-arm64 --self-contained false
+          -c Debug
+          -r osx-arm64
+          --self-contained false
           /p:PublishSingleFile=false
           /p:IncludeNativeLibrariesForSelfExtract=false
           -p:Version=${{ env.VERSION }}
           -p:FileVersion=${{ env.VERSION }}
           -p:AssemblyVersion=${{ env.VERSION }}
           -p:InformationalVersion=${{ env.VERSION }}
-      
+
       - name: Publish Avalonia (macOS Intel x64)
         if: runner.os == 'macOS'
         run: >
           dotnet publish GuacamoleClient-Avalonia/GuacamoleClient-Avalonia.csproj
-          -c Debug -r osx-x64 --self-contained false
+          -c Debug
+          -r osx-x64
+          --self-contained false
           /p:PublishSingleFile=false
           /p:IncludeNativeLibrariesForSelfExtract=false
           -p:Version=${{ env.VERSION }}
           -p:FileVersion=${{ env.VERSION }}
           -p:AssemblyVersion=${{ env.VERSION }}
           -p:InformationalVersion=${{ env.VERSION }}
-      
+
+      # ZIPs bauen (Windows / Linux / macOS) – wie bisher
       - name: Pack binaries - WinForms (Windows)
         if: runner.os == 'Windows'
         shell: pwsh
@@ -100,7 +107,7 @@ jobs:
           $src = Join-Path $env:BUILD_OUTPUT_BASEDIR1 '*'
           $dst = Join-Path $env:GITHUB_WORKSPACE "bin-winforms-$($env:VERSION).zip"
           Compress-Archive -Path $src -DestinationPath $dst -Force
-      
+
       - name: Pack binaries - Avalonia (Windows)
         if: runner.os == 'Windows'
         shell: pwsh
@@ -108,22 +115,51 @@ jobs:
           $src = Join-Path $env:BUILD_OUTPUT_BASEDIR2 '*'
           $dst = Join-Path $env:GITHUB_WORKSPACE "bin-avalonia-$($env:OS_NAME)-$($env:VERSION).zip"
           Compress-Archive -Path $src -DestinationPath $dst -Force
-      
+
       - name: Pack binaries - Avalonia (Linux)
         if: runner.os == 'Linux'
         run: |
-          (cd "${{ env.BUILD_OUTPUT_BASEDIR2 }}" && zip "$GITHUB_WORKSPACE/bin-avalonia-${{ env.OS_NAME }}-${{ env.VERSION }}.zip" -r .)
+          (cd "${{ env.BUILD_OUTPUT_BASEDIR2 }}" && \
+           zip "$GITHUB_WORKSPACE/bin-avalonia-${{ env.OS_NAME }}-${{ env.VERSION }}.zip" -r .)
 
       - name: Pack binaries - Avalonia - MacOS ARM64
         if: runner.os == 'macOS'
         run: |
-          (cd "$BUILD_OUTPUT_BASEDIR3" && zip "$GITHUB_WORKSPACE/bin-avalonia-osx-arm64-${{ env.VERSION }}.zip" -r .)
+          (cd "$BUILD_OUTPUT_BASEDIR3" && \
+           zip "$GITHUB_WORKSPACE/bin-avalonia-osx-arm64-${{ env.VERSION }}.zip" -r .)
 
       - name: Pack binaries - Avalonia - MacOS Intel x64
         if: runner.os == 'macOS'
         run: |
-          (cd "$BUILD_OUTPUT_BASEDIR3" && zip "$GITHUB_WORKSPACE/bin-avalonia-osx-x64-${{ env.VERSION }}.zip" -r .)
+          (cd "$BUILD_OUTPUT_BASEDIR3" && \
+           zip "$GITHUB_WORKSPACE/bin-avalonia-osx-x64-${{ env.VERSION }}.zip" -r .)
 
+      # NEU: MSIX / AppX Paket einsammeln (nur Windows-Job)
+      - name: Collect MSIX package (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $searchRoot = Join-Path $env:GITHUB_WORKSPACE $env:MSIX_SEARCH_ROOT
+          Write-Host "Searching for MSIX/AppX artifacts under $searchRoot"
+
+          $msix = Get-ChildItem -Path $searchRoot -Recurse `
+                    -Include *.msix,*.msixbundle,*.msixupload,*.appx,*.appxbundle,*.appxupload `
+                    | Select-Object -First 1
+
+          if (-not $msix) {
+            Write-Error "No MSIX/AppX package found under $searchRoot"
+          }
+
+          $targetName = "GuacamoleClient-WinForms-msix-$($env:VERSION)$($msix.Extension)"
+          $dst = Join-Path $env:GITHUB_WORKSPACE $targetName
+
+          Copy-Item $msix.FullName $dst -Force
+          Write-Host "MSIX/AppX package copied to $dst"
+
+          # Name für nachfolgende Steps im Environment hinterlegen
+          "MSIX_FILE=$targetName" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+
+      # Assets an Release anhängen
       - name: Publish binaries to the release (Windows)
         if: runner.os == 'Windows'
         uses: softprops/action-gh-release@v2
@@ -131,6 +167,7 @@ jobs:
           files: |
             bin-winforms-${{ env.VERSION }}.zip
             bin-avalonia-${{ env.OS_NAME }}-${{ env.VERSION }}.zip
+            ${{ env.MSIX_FILE }}
           tag_name: ${{ github.event.release.tag_name || github.ref_name }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
