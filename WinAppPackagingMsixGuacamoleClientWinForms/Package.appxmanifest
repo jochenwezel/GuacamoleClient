@@ -10,7 +10,7 @@
   <Identity
     Name="CompuMasterGmbH.ClientforApacheGuacamoleunofficial"
     Publisher="CN=1B93C922-50C7-4769-8B7F-72BA988A4C42"
-    Version="0.1.2.0" />
+    Version="0.1.5.0" />
 
   <Properties>
     <DisplayName>Client for Apache Guacamole (unofficial)</DisplayName>
