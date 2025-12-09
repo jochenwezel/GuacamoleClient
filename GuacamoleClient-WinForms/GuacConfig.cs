@@ -42,17 +42,24 @@ namespace GuacamoleClient.WinForms
                         continue; // Retry
                     }
 
-                    if (IsValidUrl(input) && IsGuacamoleResponseWithStartPage(url))
+                    if (!IsValidUrl(input))
+                    {
+                        MessageBox.Show(
+                            LocalizedString(LocalizationKeys.ErrorMessageInvalidUrl),
+                            LocalizedString(LocalizationKeys.ErrorTitleInvalidUrl), MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    }
+                    else if (!IsGuacamoleResponseWithStartPage(input))
+                    {
+                        MessageBox.Show(
+                            LocalizedString(LocalizationKeys.ErrorMessageNoGuacamoleServerResponse) + Environment.NewLine +
+                            LocalizedString(LocalizationKeys.StartUrlExample),
+                            LocalizedString(LocalizationKeys.ErrorTitleInvalidUrl), MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    }
+                    else
                     {
                         url = input.Trim();
                         SaveStartUrlToRegistry(url);
                         break;
-                    }
-                    else
-                    {
-                        MessageBox.Show(
-                            LocalizedString(LocalizationKeys.ErrorMessageInvalidUrlOrNoGuacamoleServerResponse),
-                            LocalizedString(LocalizationKeys.ErrorTitleInvalidUrl), MessageBoxButtons.OK, MessageBoxIcon.Error);
                     }
                 }
             }
@@ -175,7 +182,8 @@ namespace GuacamoleClient.WinForms
             StartUrlExample,
             ErrorMessageStartUrlRequired,
             ErrorTitleStartUrlRequired,
-            ErrorMessageInvalidUrlOrNoGuacamoleServerResponse,
+            ErrorMessageInvalidUrl,
+            ErrorMessageNoGuacamoleServerResponse,
             ErrorTitleInvalidUrl,
             RegistrySaveError,
             ErrorTitleStorageError,
@@ -198,8 +206,10 @@ namespace GuacamoleClient.WinForms
                         return "Ohne Start-URL kann die Anwendung nicht fortfahren. Möchten Sie erneut versuchen?";
                     case LocalizationKeys.ErrorTitleStartUrlRequired:
                         return "Start-URL erforderlich";
-                    case LocalizationKeys.ErrorMessageInvalidUrlOrNoGuacamoleServerResponse:
-                        return "Die URL ist ungültig oder es antwortet kein Guacamole Server. Bitte prüfen Sie das Format (https://...).";
+                    case LocalizationKeys.ErrorMessageInvalidUrl:
+                        return "Die URL ist ungültig. Bitte prüfen Sie das Format (https://...).";
+                    case LocalizationKeys.ErrorMessageNoGuacamoleServerResponse:
+                        return "Die URL ist kein Guacamole Server. Bitte prüfen Sie die korrekte Basis-Adresse des Guacamole Dienstes";
                     case LocalizationKeys.RegistrySaveError:
                         return "Die Start-URL konnte nicht in der Registry gespeichert werden:";
                     case LocalizationKeys.ErrorTitleStorageError:
@@ -222,8 +232,10 @@ namespace GuacamoleClient.WinForms
                     return "The app can't continue without start URL. Do you want to retry?";
                 case LocalizationKeys.ErrorTitleStartUrlRequired:
                     return "Start URL required";
-                case LocalizationKeys.ErrorMessageInvalidUrlOrNoGuacamoleServerResponse:
-                    return "The URL is invalid or the response is no Guacamole server. Please check the format (https://...).";
+                case LocalizationKeys.ErrorMessageInvalidUrl:
+                    return "The URL is invalid. Please check the format (https://...).";
+                case LocalizationKeys.ErrorMessageNoGuacamoleServerResponse:
+                    return "The URL is no Guacamole server. Please check the correct base url of the Guacamole service.";
                 case LocalizationKeys.RegistrySaveError:
                     return "The start URL can't be saved in Registry:";
                 case LocalizationKeys.ErrorTitleStorageError:
