@@ -989,8 +989,6 @@ namespace GuacamoleClient.WinForms
                         return "Hinweis: Strg+Alt+Einfügen >> Full Screen wird deaktiviert";
                     case LocalizationKeys.HintCtrlAltInsFullscreenModeOn:
                         return "Hinweis: Strg+Alt+Einfügen >> Full Screen wird aktiviert";
-                    case LocalizationKeys.Dummy6:
-                        return "";
                 }
             }
 
@@ -1013,8 +1011,6 @@ namespace GuacamoleClient.WinForms
                     return "Hinweis: Ctrl+Alt+Insert >> Full Screen will be disabled";
                 case LocalizationKeys.HintCtrlAltInsFullscreenModeOn:
                     return "Hinweis: Ctrl+Alt+Insert >> Full Screen will be enabled";
-                case LocalizationKeys.Dummy6:
-                    return "";
                 default:
                     throw new NotImplementedException("Localization key not implemented: " + key.ToString());
             }

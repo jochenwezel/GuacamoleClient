@@ -10,7 +10,7 @@
   <Identity
     Name="CompuMasterGmbH.ClientforApacheGuacamoleunofficial"
     Publisher="CN=1B93C922-50C7-4769-8B7F-72BA988A4C42"
-    Version="0.1.5.0" />
+    Version="0.1.9.0" />
 
   <Properties>
     <DisplayName>Client for Apache Guacamole (unofficial)</DisplayName>
@@ -32,8 +32,8 @@
       Executable="$targetnametoken$.exe"
       EntryPoint="$targetentrypoint$" uap18:TrustLevel="mediumIL" uap18:RuntimeBehavior="packagedClassicApp">
       <uap:VisualElements
-        DisplayName="Client for Apache Guacamole (unofficial)"
-        Description="This GuacamoleClient app is more or less a browser control but catching as keyboard shortcuts as much as possible. This prevents e.g. accidential closing of browser tab (Ctrl+F4) with your guacamole session or the whole browser app (Alt+F4)."
+        DisplayName="CompuMaster windows client for remote desktop to Guacamole servers"
+        Description="This windows client app for connecting to Guacamole remote servers is more or less a browser control but catching as keyboard shortcuts as much as possible. This prevents e.g. accidential closing of browser tab (Ctrl+F4) with your guacamole session or the whole browser app (Alt+F4)."
         BackgroundColor="transparent"
         Square150x150Logo="Images\Square150x150Logo.png"
         Square44x44Logo="Images\Square44x44Logo.png">

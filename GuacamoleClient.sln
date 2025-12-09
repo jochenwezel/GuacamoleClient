@@ -8,7 +8,6 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Projektmappenelemente", "Projektmappenelemente", "{84D27F74-D2BA-6C25-2661-968F101900D9}"
 	ProjectSection(SolutionItems) = preProject
 		.github\workflows\BuildAndTest.yml = .github\workflows\BuildAndTest.yml
-		global.json = global.json
 		LICENSE = LICENSE
 		.github\workflows\PublishRelease.yml = .github\workflows\PublishRelease.yml
 		README.md = README.md
