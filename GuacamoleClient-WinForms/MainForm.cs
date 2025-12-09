@@ -531,7 +531,7 @@ namespace GuacamoleClient.WinForms
             if (e.VirtualKey == VK_F4 && ctrl && alt)
             {
                 e.Handled = true;
-                ShowHint("STRG+ALT+F4: Anwendung wird geschlossen …");
+                ShowHint(LocalizationKeys.HintCtrlAltF4AppWillBeClosed);
                 _closeTimer.Start();
                 return;
             }
@@ -540,7 +540,7 @@ namespace GuacamoleClient.WinForms
             if (e.VirtualKey == VK_F4 && alt && !ctrl)
             {
                 e.Handled = true;
-                ShowHint("ALT+F4 wurde abgefangen (App bleibt offen).");
+                ShowHint(LocalizationKeys.HintAltF4CatchedAndIgnored);
                 return;
             }
 
@@ -555,7 +555,7 @@ namespace GuacamoleClient.WinForms
             if (e.VirtualKey == VK_ESC && ctrl && shift)
             {
                 e.Handled = true; // lokal abfangen
-                ShowHint("STRG+UMSCHALT+ESC wurde abgefangen (lokaler Task-Manager). Nicht an Remote weiterleitbar. Tipp: In Guacamole-Menü „Strg+Alt+Entf“ nutzen.");
+                ShowHint(LocalizationKeys.HintCtrlShiftEscCatched_NotForwardableToRemoteServer);
                 return;
             }
 
@@ -564,7 +564,7 @@ namespace GuacamoleClient.WinForms
             {
                 // Wir lassen es durch – aber informieren, dass es i. d. R. nichts bewirkt.
                 e.Handled = false;
-                ShowHint("Hinweis: STRG+ALT+ENDE hat in diesem Setup üblicherweise keine Wirkung (mstsc-Sonderfall).");
+                ShowHint(LocalizationKeys.HintCtrlAltEndWithoutEffect_mstsc);
                 return;
             }
 
@@ -573,7 +573,7 @@ namespace GuacamoleClient.WinForms
             if ((IsWinPressed() && e.VirtualKey == VK_R))
             {
                 e.Handled = true;
-                ShowHint("WIN+R wurde abgefangen. Nicht an Remote weiterleitbar. Workaround: STRG+ESC öffnen und dort „Ausführen“ suchen.");
+                ShowHint(LocalizationKeys.HintWinRCatched_NotForwardableToRemoteServer);
                 return;
             }
 
@@ -581,7 +581,7 @@ namespace GuacamoleClient.WinForms
             {
                 e.Handled = true;
                 SwitchFullScreenMode(false);
-                ShowHint("Hinweis: Strg+Alt+Break >> Full Screen wird deaktiviert");
+                ShowHint(LocalizationKeys.HintCtrlAltBreakFullscreenModeOff);
                 return;
             }
 
@@ -591,9 +591,9 @@ namespace GuacamoleClient.WinForms
                 e.Handled = true;
                 SwitchFullScreenMode(!fullScreenToolStripMenuItem.Checked);
                 if (!fullScreenToolStripMenuItem.Checked)
-                    ShowHint("Hinweis: Strg+Alt+Insert >> Full Screen wird deaktiviert");
+                    ShowHint(LocalizationKeys.HintCtrlAltInsFullscreenModeOff);
                 else
-                    ShowHint("Hinweis: Strg+Alt+Insert >> Full Screen wird aktiviert");
+                    ShowHint(LocalizationKeys.HintCtrlAltInsFullscreenModeOn);
                 return;
             }
 
@@ -645,7 +645,7 @@ namespace GuacamoleClient.WinForms
                 if (_altF4Detected)
                 {
                     _altF4Detected = false;
-                    ShowHint("ALT+F4 wurde abgefangen (App bleibt offen).");
+                    ShowHint(LocalizationKeys.HintAltF4CatchedAndIgnored);
                     return; // blockieren
                 }
             }
@@ -662,8 +662,15 @@ namespace GuacamoleClient.WinForms
             return (GetKeyState(0x5B) < 0) || (GetKeyState(0x5C) < 0); // VK_LWIN, VK_RWIN
         }
 
+        [Obsolete("LocalizationKeys", true)]
         private void ShowHint(string text)
         {
+            try { _tip.Show(text, this, 20, 20, 5000); } catch { /*best effort*/ }
+        }
+
+        private void ShowHint(LocalizationKeys localizedString)
+        {
+            string text = LocalizedString(localizedString);
             try { _tip.Show(text, this, 20, 20, 5000); } catch { /*best effort*/ }
         }
 
@@ -814,7 +821,7 @@ namespace GuacamoleClient.WinForms
             if (e.KeyCode == VK_F4 && ctrl && alt)
             {
                 e.Handled = true;
-                ShowHint("STRG+ALT+F4: Anwendung wird geschlossen …");
+                ShowHint(LocalizationKeys.HintCtrlAltF4AppWillBeClosed);
                 _closeTimer.Start();
                 return;
             }
@@ -823,7 +830,7 @@ namespace GuacamoleClient.WinForms
             if (e.KeyCode == VK_F4 && alt && !ctrl)
             {
                 e.Handled = true;
-                ShowHint("ALT+F4 wurde abgefangen (App bleibt offen).");
+                ShowHint(LocalizationKeys.HintAltF4CatchedAndIgnored);
                 return;
             }
 
@@ -838,7 +845,7 @@ namespace GuacamoleClient.WinForms
             if (e.KeyCode == VK_ESC && ctrl && shift)
             {
                 e.Handled = true; // lokal abfangen
-                ShowHint("STRG+UMSCHALT+ESC wurde abgefangen (lokaler Task-Manager). Nicht an Remote weiterleitbar. Tipp: In Guacamole-Menü „Strg+Alt+Entf“ nutzen.");
+                ShowHint(LocalizationKeys.HintCtrlShiftEscCatched_NotForwardableToRemoteServer);
                 return;
             }
 
@@ -847,7 +854,7 @@ namespace GuacamoleClient.WinForms
             {
                 // Wir lassen es durch – aber informieren, dass es i. d. R. nichts bewirkt.
                 e.Handled = false;
-                ShowHint("Hinweis: STRG+ALT+ENDE hat in diesem Setup üblicherweise keine Wirkung (mstsc-Sonderfall).");
+                ShowHint(LocalizationKeys.HintCtrlAltEndWithoutEffect_mstsc);
                 return;
             }
 
@@ -856,7 +863,7 @@ namespace GuacamoleClient.WinForms
             if ((IsWinPressed() && e.KeyCode == VK_R))
             {
                 e.Handled = true;
-                ShowHint("WIN+R wurde abgefangen. Nicht an Remote weiterleitbar. Workaround: STRG+ESC öffnen und dort „Ausführen“ suchen.");
+                ShowHint(LocalizationKeys.HintWinRCatched_NotForwardableToRemoteServer);
                 return;
             }
 
@@ -864,7 +871,7 @@ namespace GuacamoleClient.WinForms
             {
                 e.Handled = true;
                 SwitchFullScreenMode(false);
-                ShowHint("Hinweis: Strg+Alt+Break >> Full Screen wird deaktiviert");
+                ShowHint(LocalizationKeys.HintCtrlAltBreakFullscreenModeOff);
                 return;
             }
 
@@ -874,9 +881,9 @@ namespace GuacamoleClient.WinForms
                 e.Handled = true;
                 SwitchFullScreenMode(!fullScreenToolStripMenuItem.Checked);
                 if (!fullScreenToolStripMenuItem.Checked)
-                    ShowHint("Hinweis: Strg+Alt+Insert >> Full Screen wird deaktiviert");
+                    ShowHint(LocalizationKeys.HintCtrlAltInsFullscreenModeOff);
                 else
-                    ShowHint("Hinweis: Strg+Alt+Insert >> Full Screen wird aktiviert");
+                    ShowHint(LocalizationKeys.HintCtrlAltInsFullscreenModeOn);
                 return;
             }
 
@@ -945,6 +952,84 @@ namespace GuacamoleClient.WinForms
             }
             UpdateLocationUrl();
             SwitchMenuItemsBasedOnShownContent();
+        }
+
+        private enum LocalizationKeys
+        {
+            HintCtrlAltF4AppWillBeClosed,
+            HintAltF4CatchedAndIgnored,
+            HintWinRCatched_NotForwardableToRemoteServer,
+            HintCtrlAltBreakFullscreenModeOff,
+            HintCtrlAltInsFullscreenModeOff,
+            HintCtrlAltInsFullscreenModeOn,
+            Dummy6,
+            Dummy7,
+            Dummy8,
+            Dummy9,
+            HintCtrlShiftEscCatched_NotForwardableToRemoteServer,
+            HintCtrlAltEndWithoutEffect_mstsc,
+            Dummy12,
+            Dummy13,
+            Dummy14,
+            Dummy15,
+            Dummy16,
+            Dummy17,
+            Dummy18,
+            Dummy19,
+        }
+
+        private static string LocalizedString(LocalizationKeys key)
+        {
+            // German localization 
+            if (System.Globalization.CultureInfo.CurrentUICulture.TwoLetterISOLanguageName == "de")
+            {
+                switch (key)
+                {
+                    case LocalizationKeys.HintCtrlAltF4AppWillBeClosed:
+                        return "Strg+Alt+F4: Anwendung wird geschlossen…";
+                    case LocalizationKeys.HintAltF4CatchedAndIgnored:
+                        return "Alt+F4 wurde abgefangen (App bleibt offen).";
+                    case LocalizationKeys.HintCtrlShiftEscCatched_NotForwardableToRemoteServer:
+                        return "Strg+Umschalt+Esc wurde abgefangen (lokaler Task-Manager). Nicht an Remote weiterleitbar. Tipp: In Guacamole-Menü „Strg+Alt+Entf“ nutzen.";
+                    case LocalizationKeys.HintCtrlAltEndWithoutEffect_mstsc:
+                        return "Hinweis: Strg+Alt+Ende hat in diesem Setup üblicherweise keine Wirkung (mstsc-Sonderfall).";
+                    case LocalizationKeys.HintWinRCatched_NotForwardableToRemoteServer:
+                        return "WIN+R wurde abgefangen. Nicht an Remote weiterleitbar. Workaround: Strg+Esc drücken und dort „Ausführen“ suchen.";
+                    case LocalizationKeys.HintCtrlAltBreakFullscreenModeOff:
+                        return "Hinweis: Strg+Alt+Untbr >> Full Screen wird deaktiviert";
+                    case LocalizationKeys.HintCtrlAltInsFullscreenModeOff:
+                        return "Hinweis: Strg+Alt+Einfügen >> Full Screen wird deaktiviert";
+                    case LocalizationKeys.HintCtrlAltInsFullscreenModeOn:
+                        return "Hinweis: Strg+Alt+Einfügen >> Full Screen wird aktiviert";
+                    case LocalizationKeys.Dummy6:
+                        return "";
+                }
+            }
+
+            // Fallback: English localization 
+            switch (key)
+            {
+                case LocalizationKeys.HintCtrlAltF4AppWillBeClosed:
+                    return "Ctrl+Alt+F4: Application will be closed…";
+                case LocalizationKeys.HintAltF4CatchedAndIgnored:
+                    return "Alt+F4 catched (app stays open).";
+                case LocalizationKeys.HintCtrlShiftEscCatched_NotForwardableToRemoteServer:
+                    return "Ctrl+SHIFT+Esc catched (local Task-Manager). Not forwardable to remote. Hint: use \"Ctrl+Alt+Del\" in Guacamole menu.";
+                case LocalizationKeys.HintCtrlAltEndWithoutEffect_mstsc:
+                    return "Hinweis: Ctrl+Alt+End usually without effect in this environment (special behaviour of mstsc).";
+                case LocalizationKeys.HintWinRCatched_NotForwardableToRemoteServer:
+                    return "WIN+R catched. Not forwardable to remote. Workaround: press Ctrl+Esc and search for \"Run\".";
+                case LocalizationKeys.HintCtrlAltBreakFullscreenModeOff:
+                    return "Hinweis: Ctrl+Alt+Break >> Full Screen will be disabled";
+                case LocalizationKeys.HintCtrlAltInsFullscreenModeOff:
+                    return "Hinweis: Ctrl+Alt+Insert >> Full Screen will be disabled";
+                case LocalizationKeys.HintCtrlAltInsFullscreenModeOn:
+                    return "Hinweis: Ctrl+Alt+Insert >> Full Screen will be enabled";
+                case LocalizationKeys.Dummy6:
+                    return "";
+                default:
+                    throw new NotImplementedException("Localization key not implemented: " + key.ToString());
+            }
         }
     }
 }
