@@ -17,14 +17,14 @@ namespace GuacamoleClient.WinForms
         {
             string? url = ReadStartUrlFromRegistry();
 
-            if ((string.IsNullOrWhiteSpace(url)) || !IsValidUrl(url))
+            if ((string.IsNullOrWhiteSpace(url)) || !IsValidUrl(url) || !IsGuacamoleResponseWithStartPage(url))
             {
                 while (true)
                 {
                     string input = Microsoft.VisualBasic.Interaction.InputBox(
-                        "Bitte geben Sie die Start-URL für Apache Guacamole ein:" + Environment.NewLine +
-                        "(Beispiel: https://remote.example.com/guacamole/)",
-                        "Start-URL festlegen",
+                        LocalizedString(LocalizationKeys.InputBoxPromptForStartUrl) + Environment.NewLine +
+                        LocalizedString(LocalizationKeys.StartUrlExample),
+                        LocalizedString(LocalizationKeys.InputBoxTitleStartUrl),
                         "https://",
                         -1, -1
                     );
@@ -32,8 +32,8 @@ namespace GuacamoleClient.WinForms
                     if (string.IsNullOrWhiteSpace(input))
                     {
                         var result = MessageBox.Show(
-                            "Ohne Start-URL kann die Anwendung nicht fortfahren. Möchten Sie erneut versuchen?",
-                            "Start-URL erforderlich",
+                            LocalizedString(LocalizationKeys.ErrorMessageStartUrlRequired),
+                            LocalizedString(LocalizationKeys.ErrorTitleStartUrlRequired),
                             MessageBoxButtons.RetryCancel, MessageBoxIcon.Warning);
 
                         if (result == DialogResult.Cancel)
@@ -42,7 +42,7 @@ namespace GuacamoleClient.WinForms
                         continue; // Retry
                     }
 
-                    if (IsValidUrl(input))
+                    if (IsValidUrl(input) && IsGuacamoleResponseWithStartPage(url))
                     {
                         url = input.Trim();
                         SaveStartUrlToRegistry(url);
@@ -51,8 +51,8 @@ namespace GuacamoleClient.WinForms
                     else
                     {
                         MessageBox.Show(
-                            "Die URL ist ungültig. Bitte prüfen Sie das Format (https://...).",
-                            "Ungültige URL", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                            LocalizedString(LocalizationKeys.ErrorMessageInvalidUrlOrNoGuacamoleServerResponse),
+                            LocalizedString(LocalizationKeys.ErrorTitleInvalidUrl), MessageBoxButtons.OK, MessageBoxIcon.Error);
                     }
                 }
             }
@@ -89,9 +89,9 @@ namespace GuacamoleClient.WinForms
             catch (Exception ex)
             {
                 MessageBox.Show(
-                    "Die Start-URL konnte nicht in der Registry gespeichert werden:" +
+                    LocalizedString(LocalizationKeys.RegistrySaveError) +
                     Environment.NewLine + ex.Message,
-                    "Speicherfehler", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    LocalizedString(LocalizationKeys.ErrorTitleStorageError), MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 
@@ -101,6 +101,138 @@ namespace GuacamoleClient.WinForms
             if (Uri.TryCreate(value.Trim(), UriKind.Absolute, out var uri))
                 return uri.Scheme == Uri.UriSchemeHttps || uri.Scheme == Uri.UriSchemeHttp;
             return false;
+        }
+
+        /// <summary>
+        /// Determines whether the specified HTTP response content represents a Guacamole start page.
+        /// </summary>
+        /// <param name="url">The url to the guacamole server</param>
+        /// <returns>true if the content contains a Guacamole start page; otherwise, false.</returns>
+        private static bool IsGuacamoleResponseWithStartPage(string? url)
+        {
+            if (url != null && Uri.TryCreate(url.Trim(), UriKind.Absolute, out var uri))
+            {
+                System.Net.Http.HttpClient request = new System.Net.Http.HttpClient();
+                try
+                {
+                    var response = request.GetAsync(uri).Result;
+                    if (!response.IsSuccessStatusCode)
+                        return false;
+                    var content = response.Content.ReadAsStringAsync().Result;
+                    return ContentIsGuacamoleStartPage(content);
+                }
+                catch
+                {
+                    return false;
+                }
+            }
+            else
+                return false;
+        }
+
+        /// <summary>
+        /// Determines whether the specified HTTP response content represents a Guacamole login form.
+        /// </summary>
+        /// <param name="url">The url to the guacamole server</param>
+        /// <returns>true if the content contains a Guacamole login form; otherwise, false.</returns>
+        private static bool IsGuacamoleResponseWithLoginForm(string url)
+        {
+            if (url != null && Uri.TryCreate(url.Trim(), UriKind.Absolute, out var uri))
+            {
+                System.Net.Http.HttpClient request = new System.Net.Http.HttpClient();
+                try
+                {
+                    var response = request.GetAsync(uri).Result;
+                    if (!response.IsSuccessStatusCode)
+                        return false;
+                    var content = response.Content.ReadAsStringAsync().Result;
+                    return ContentIsGuacamoleLoginForm(content);
+                }
+                catch
+                {
+                    return false;
+                }
+            }
+            else
+                return false;
+        }
+
+        private static bool ContentIsGuacamoleLoginForm(string content)
+        {
+            if (string.IsNullOrWhiteSpace(content)) return false;
+            return content.Contains("class=\"login-fields\"") && content.Contains("id=\"guac-field-") && content.Contains("name=\"username\"") && content.Contains("name=\"password\"");
+        }
+        private static bool ContentIsGuacamoleStartPage(string content)
+        {
+            if (string.IsNullOrWhiteSpace(content)) return false;
+            return content.Contains("<guac-modal>");
+        }
+
+        private enum LocalizationKeys
+        {
+            InputBoxPromptForStartUrl,
+            InputBoxTitleStartUrl,
+            StartUrlExample,
+            ErrorMessageStartUrlRequired,
+            ErrorTitleStartUrlRequired,
+            ErrorMessageInvalidUrlOrNoGuacamoleServerResponse,
+            ErrorTitleInvalidUrl,
+            RegistrySaveError,
+            ErrorTitleStorageError,
+        }
+
+        private static string LocalizedString(LocalizationKeys key)
+        {
+            // German localization 
+            if (System.Globalization.CultureInfo.CurrentUICulture.TwoLetterISOLanguageName == "de")
+            {
+                switch (key)
+                {
+                    case LocalizationKeys.InputBoxPromptForStartUrl:
+                        return "Bitte geben Sie die Start-URL für Apache Guacamole ein:";
+                    case LocalizationKeys.InputBoxTitleStartUrl:
+                        return "Start-URL festlegen";
+                    case LocalizationKeys.StartUrlExample:
+                        return "(Beispiel: https://remote.example.com/guacamole/)";
+                    case LocalizationKeys.ErrorMessageStartUrlRequired:
+                        return "Ohne Start-URL kann die Anwendung nicht fortfahren. Möchten Sie erneut versuchen?";
+                    case LocalizationKeys.ErrorTitleStartUrlRequired:
+                        return "Start-URL erforderlich";
+                    case LocalizationKeys.ErrorMessageInvalidUrlOrNoGuacamoleServerResponse:
+                        return "Die URL ist ungültig oder es antwortet kein Guacamole Server. Bitte prüfen Sie das Format (https://...).";
+                    case LocalizationKeys.RegistrySaveError:
+                        return "Die Start-URL konnte nicht in der Registry gespeichert werden:";
+                    case LocalizationKeys.ErrorTitleStorageError:
+                        return "Speicherfehler";
+                    case LocalizationKeys.ErrorTitleInvalidUrl:
+                        return "Ungültige URL";
+                }
+            }
+
+            // Fallback: English localization 
+            switch (key)
+            {
+                case LocalizationKeys.InputBoxPromptForStartUrl:
+                    return "Please input the start URL for your Apache Guacamole server:";
+                case LocalizationKeys.InputBoxTitleStartUrl:
+                    return "Configure start URL";
+                case LocalizationKeys.StartUrlExample:
+                    return "(example: https://remote.example.com/guacamole/)";
+                case LocalizationKeys.ErrorMessageStartUrlRequired:
+                    return "The app can't continue without start URL. Do you want to retry?";
+                case LocalizationKeys.ErrorTitleStartUrlRequired:
+                    return "Start URL required";
+                case LocalizationKeys.ErrorMessageInvalidUrlOrNoGuacamoleServerResponse:
+                    return "The URL is invalid or the response is no Guacamole server. Please check the format (https://...).";
+                case LocalizationKeys.RegistrySaveError:
+                    return "The start URL can't be saved in Registry:";
+                case LocalizationKeys.ErrorTitleStorageError:
+                    return "Error on saving";
+                case LocalizationKeys.ErrorTitleInvalidUrl:
+                    return "Invalid URL";
+                default:
+                    throw new NotImplementedException("Localization key not implemented: " + key.ToString());
+            }
         }
     }
 }
