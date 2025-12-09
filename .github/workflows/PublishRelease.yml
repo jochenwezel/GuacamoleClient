@@ -21,6 +21,7 @@ env:
   BUILD_OUTPUT_BASEDIR3: GuacamoleClient-Avalonia/bin/Debug/net8.0/osx-arm64/publish
   # Wurzelordner für das MSIX-Packaging-Projekt
   MSIX_SEARCH_ROOT: WinAppPackagingMsixGuacamoleClientWinForms
+  ENABLE_MSSTORE_PUBLISH: false
 
 jobs:
   publish:
@@ -192,3 +193,33 @@ jobs:
           tag_name: ${{ github.event.release.tag_name || github.ref_name }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # Microsoft Store Developer CLI installieren (offizielle Action von Microsoft)
+      - name: Setup Microsoft Store CLI
+        if: runner.os == 'Windows' && env.ENABLE_MSSTORE_PUBLISH == 'true'
+        uses: microsoft/microsoft-store-apppublisher@v1.1
+
+      # CLI mit Ihren Partner-Center-Credentials konfigurieren (aus GitHub-Secrets)
+      - name: Configure Microsoft Store CLI
+        if: runner.os == 'Windows' && env.ENABLE_MSSTORE_PUBLISH == 'true'
+        shell: pwsh
+        run: |
+          msstore reconfigure `
+            --tenantId    "${{ secrets.PARTNER_CENTER_TENANT_ID }}" `
+            --sellerId    "${{ secrets.PARTNER_CENTER_SELLER_ID }}" `
+            --clientId    "${{ secrets.PARTNER_CENTER_CLIENT_ID }}" `
+            --clientSecret "${{ secrets.PARTNER_CENTER_CLIENT_SECRET }}"
+
+      # MSIX-Paket über die CLI an den Microsoft Store übergeben
+      - name: Publish MSIX to Microsoft Store
+        if: runner.os == 'Windows' && env.ENABLE_MSSTORE_PUBLISH == 'true'
+        shell: pwsh
+        run: |
+          $workspace = $env:GITHUB_WORKSPACE
+          $packagePath = Join-Path $workspace $env:MSIX_FILE
+
+          Write-Host "Publishing MSIX package $packagePath to Microsoft Store..."
+
+          # Falls Sie 'msstore init' im Repo ausgeführt und committed haben,
+          # reicht der Projektpfad als erstes Argument.
+          msstore publish $workspace -i "$packagePath"

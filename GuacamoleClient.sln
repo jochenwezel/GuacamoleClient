@@ -8,6 +8,7 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Projektmappenelemente", "Projektmappenelemente", "{84D27F74-D2BA-6C25-2661-968F101900D9}"
 	ProjectSection(SolutionItems) = preProject
 		.github\workflows\BuildAndTest.yml = .github\workflows\BuildAndTest.yml
+		global.json = global.json
 		LICENSE = LICENSE
 		.github\workflows\PublishRelease.yml = .github\workflows\PublishRelease.yml
 		README.md = README.md
@@ -129,8 +130,6 @@ Global
 		{B03BF4BB-2B9E-4D19-B955-EE96D82DA151}.Release|x86.ActiveCfg = Release|Any CPU
 		{B03BF4BB-2B9E-4D19-B955-EE96D82DA151}.Release|x86.Build.0 = Release|Any CPU
 		{2383B0BA-14D1-40AE-B160-43C6502AE1E5}.CI_CD|Any CPU.ActiveCfg = Release|Any CPU
-		{2383B0BA-14D1-40AE-B160-43C6502AE1E5}.CI_CD|Any CPU.Build.0 = Release|Any CPU
-		{2383B0BA-14D1-40AE-B160-43C6502AE1E5}.CI_CD|Any CPU.Deploy.0 = Release|Any CPU
 		{2383B0BA-14D1-40AE-B160-43C6502AE1E5}.CI_CD|ARM.ActiveCfg = Debug|ARM
 		{2383B0BA-14D1-40AE-B160-43C6502AE1E5}.CI_CD|ARM.Build.0 = Debug|ARM
 		{2383B0BA-14D1-40AE-B160-43C6502AE1E5}.CI_CD|ARM.Deploy.0 = Debug|ARM

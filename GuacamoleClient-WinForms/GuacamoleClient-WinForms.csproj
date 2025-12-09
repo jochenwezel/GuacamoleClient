@@ -12,11 +12,11 @@
     <IncludeSourceRevisionInInformationalVersion>false</IncludeSourceRevisionInInformationalVersion>
 
     <Description>
-      This GuacamoleClient app is more or less a browser control but catching as keyboard shortcuts as much as possible.
+      This windows client app for remote desktop sessions to Guacamole servers is more or less a browser control but catching as keyboard shortcuts as much as possible.
       This prevents e.g. accidential closing of browser tab (Ctrl+F4) with your guacamole session or the whole browser app (Alt+F4).
     </Description>
     <Company>CompuMaster GmbH</Company>
-    <Product>GuacamoleClient</Product>
+    <Product>CompuMaster windows client for remote desktop to Guacamole servers</Product>
     <Copyright>2025 CompuMaster GmbH</Copyright>
     <GeneratePackageOnBuild>False</GeneratePackageOnBuild>
     <ApplicationIcon>guac.ico</ApplicationIcon>
