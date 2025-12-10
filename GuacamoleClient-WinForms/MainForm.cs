@@ -89,12 +89,12 @@ namespace GuacamoleClient.WinForms
         {
             if (string.IsNullOrEmpty(documentTitle))
             {
-                this.Text = $"GuacamoleClient v{Application.ProductVersion} - {currentUrl.ToString()}";
+                this.Text = $"{currentUrl.ToString()} - GuacamoleClient v{Application.ProductVersion}";
                 this.connectionNameInFullScreenModeToolStripMenuItem.Text = currentUrl.ToString();
             }
             else
             {
-                this.Text = $"GuacamoleClient v{Application.ProductVersion} - {currentUrl.ToString()} - {documentTitle}";
+                this.Text = $"{documentTitle} - {currentUrl.ToString()} - GuacamoleClient v{Application.ProductVersion}";
                 this.connectionNameInFullScreenModeToolStripMenuItem.Text = documentTitle;
             }
         }
