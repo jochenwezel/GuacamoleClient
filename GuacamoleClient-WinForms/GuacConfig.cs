@@ -22,11 +22,12 @@ namespace GuacamoleClient.WinForms
             {
                 while (true)
                 {
+                    if (string.IsNullOrWhiteSpace(url)) url = "https://";
                     string input = Microsoft.VisualBasic.Interaction.InputBox(
                         LocalizedString(LocalizationKeys.InputBoxPromptForStartUrl) + Environment.NewLine +
                         LocalizedString(LocalizationKeys.StartUrlExample),
                         LocalizedString(LocalizationKeys.InputBoxTitleStartUrl),
-                        "https://",
+                        url,
                         -1, -1
                     );
 
@@ -35,9 +36,9 @@ namespace GuacamoleClient.WinForms
                         var result = MessageBox.Show(
                             LocalizedString(LocalizationKeys.ErrorMessageStartUrlRequired),
                             LocalizedString(LocalizationKeys.ErrorTitleStartUrlRequired),
-                            MessageBoxButtons.RetryCancel, MessageBoxIcon.Warning);
+                            MessageBoxButtons.YesNoCancel, MessageBoxIcon.Warning);
 
-                        if (result == DialogResult.Cancel)
+                        if (result != DialogResult.Yes)
                             return null;
 
                         continue; // Retry
