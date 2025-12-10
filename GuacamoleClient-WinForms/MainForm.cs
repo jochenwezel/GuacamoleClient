@@ -2,6 +2,7 @@
 using Microsoft.Web.WebView2.Core;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Diagnostics;
 using System.Drawing;
 using System.IO;
@@ -22,7 +23,7 @@ namespace GuacamoleClient.WinForms
         private CoreWebView2? _core;
 
         private bool _altF4Detected;
-        private MenuStrip mainMenuStrip;
+        private CustomMenuStrip mainMenuStrip;
         private ToolStripMenuItem fileToolStripMenuItem;
         private ToolStripMenuItem quitToolStripMenuItem;
         private ToolStripMenuItem connectionHomeToolStripMenuItem;
@@ -58,7 +59,9 @@ namespace GuacamoleClient.WinForms
 
             this.UpdateFormTitle(startUrl);
             KeyPreview = true;
-            SetMenuStripBackgroundColorRecursive(mainMenuStrip!, Color.Red);
+            //mainMenuStrip!.SetMenuStripColorsRecursive(System.Drawing.SystemColors.Menu, System.Drawing.SystemColors.Menu, System.Drawing.SystemColors.MenuHighlight, System.Drawing.SystemColors.MenuText, SystemColors.ButtonShadow);
+            //mainMenuStrip!.SetMenuStripColorsRecursive(Color.Red, Color.Red, Color.DarkRed, Color.White);
+            mainMenuStrip!.SetMenuStripColorsRecursive(Color.OrangeRed, Color.OrangeRed, Color.DarkRed, Color.Black, Color.DarkGray);
             testToolStripMenuItem!.Available = TEST_MENU_ENABLED;
 
             _tip = new ToolTip
@@ -73,6 +76,12 @@ namespace GuacamoleClient.WinForms
             this.WebBrowserHostPanel!.LocationChanged += (_, __) => UpdateLocationUrl();
             this.WebBrowserHostPanel!.Resize += (_, __) => UpdateControllerBounds();
             _closeTimer.Tick += (_, __) => { _closeTimer.Stop(); Close(); };
+        }
+
+        protected override void OnHandleCreated(EventArgs e)
+        {
+            base.OnHandleCreated(e);
+            TitleBarHelper.ApplyTitleBarColors(this, Color.OrangeRed, Color.Black);
         }
 
         private void NewWindowRequested(object? sender, CoreWebView2NewWindowRequestedEventArgs e)
@@ -112,33 +121,13 @@ namespace GuacamoleClient.WinForms
             {
                 return new Uri(this.HomeUrl, "#/settings/mysql/connections");
             }
-        }
-
-        private void SetMenuStripBackgroundColorRecursive(MenuStrip item, Color newColor)
-        {
-            item.BackColor = newColor;
-            foreach (ToolStripItem child in item.Items)
-                if (child is ToolStripMenuItem m2)
-                    SetMenuStripBackgroundColorRecursive(m2, newColor);
-                else
-                    child.BackColor = newColor;
-        }
-
-        private void SetMenuStripBackgroundColorRecursive(ToolStripMenuItem item, Color newColor)
-        {
-            item.BackColor = newColor;
-            foreach (ToolStripItem child in item.DropDownItems)
-                if (child is ToolStripMenuItem m2)
-                    SetMenuStripBackgroundColorRecursive(m2, newColor);
-                else
-                    child.BackColor = newColor;
-        }
+        }           
 
         private void InitializeComponent()
         {
             components = new System.ComponentModel.Container();
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(MainForm));
-            mainMenuStrip = new MenuStrip();
+            mainMenuStrip = new CustomMenuStrip();
             fileToolStripMenuItem = new ToolStripMenuItem();
             connectionHomeToolStripMenuItem = new ToolStripMenuItem();
             guacamoleUserSettingsToolStripMenuItem = new ToolStripMenuItem();
@@ -306,32 +295,6 @@ namespace GuacamoleClient.WinForms
             _core!.NewWindowRequested += NewWindowRequested;
             _core!.FaviconChanged += (_, __) => RefreshFaviconAsync();
             RefreshFaviconAsync();
-            mainMenuStrip.Renderer = new ColoredSeparatorRenderer(SystemColors.ButtonShadow, Color.Red);
-        }
-
-        public class ColoredSeparatorRenderer : ToolStripProfessionalRenderer
-        {
-            private readonly Color _separatorForeColor;
-            private readonly Color _separatorBackColor;
-
-            public ColoredSeparatorRenderer(Color separatorForeColor, Color separatorBackColor)
-            {
-                _separatorForeColor = separatorForeColor;
-                _separatorBackColor = separatorBackColor;
-            }
-
-            protected override void OnRenderSeparator(ToolStripSeparatorRenderEventArgs e)
-            {
-                // Hintergrund füllen
-                e.Graphics.FillRectangle(new SolidBrush(_separatorBackColor), 0,0, e.Item.Width, e.Item.Height); // e.Item.Bounds
-
-                // Separations-Linie zeichnen
-                using (var pen = new Pen(_separatorForeColor, 1))
-                {
-                    int y = e.Item.Bounds.Height / 2;
-                    e.Graphics.DrawLine(pen, 2, y, e.Item.Bounds.Width - 2, y);
-                }
-            }
         }
 
         private async void NavigationCompleted(object? sender, CoreWebView2NavigationCompletedEventArgs e)
