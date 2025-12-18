@@ -305,9 +305,29 @@ namespace GuacamoleClient.WinForms
             this.formTitleRefreshTimer.Start();
         }
 
+        private Exception? SwitchMenuItemsBasedOnShownContent_Ex = null;
         private async void SwitchMenuItemsBasedOnShownContent()
         {
-            string currentHtml = await GetCurrentHtmlAsync();
+            string currentHtml;
+
+            try
+            {
+                currentHtml = await GetCurrentHtmlAsync();
+                SwitchMenuItemsBasedOnShownContent_Ex = null;
+            }
+            catch (Exception ex)
+            {
+                if (SwitchMenuItemsBasedOnShownContent_Ex == null)
+                {
+                    SwitchMenuItemsBasedOnShownContent_Ex = ex;
+                    MessageBox.Show(this, $"Unexpected exception:\n{ex.ToString()}", "Unexpected error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
+                else
+                {
+                    //ignore repeated exceptions
+                }
+                return;
+            }
 
             //Check for login form and show menu items accordingly
             if (GuacamoleUrlAndContentChecks.ContentIsGuacamoleLoginForm(currentHtml))
@@ -900,6 +920,7 @@ namespace GuacamoleClient.WinForms
             RefreshFaviconAsync();
         }
 
+        private Exception? formTitleRefreshTimer_Tick_Ex = null;
         private void formTitleRefreshTimer_Tick(object sender, EventArgs e)
         {
             const int postNavMinInterval = 250;
@@ -913,8 +934,24 @@ namespace GuacamoleClient.WinForms
                 if (this.formTitleRefreshTimer.Interval < maxInterval)
                     this.formTitleRefreshTimer.Interval = System.Math.Min((int)(this.formTitleRefreshTimer.Interval * 5), maxInterval);
             }
-            UpdateLocationUrl();
-            SwitchMenuItemsBasedOnShownContent();
+            try
+            {
+                UpdateLocationUrl();
+                SwitchMenuItemsBasedOnShownContent();
+                formTitleRefreshTimer_Tick_Ex = null;
+            }
+            catch (Exception ex)
+            {
+                if (formTitleRefreshTimer_Tick_Ex == null)
+                {
+                    formTitleRefreshTimer_Tick_Ex = ex;
+                    MessageBox.Show(this, $"Unexpected exception:\n{ex.ToString()}", "Unexpected error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
+                else // => formTitleRefreshTimer_Tick_Ex != null
+                {
+                    //ignore repeated exceptions
+                }
+            }
         }
 
         private enum LocalizationKeys
