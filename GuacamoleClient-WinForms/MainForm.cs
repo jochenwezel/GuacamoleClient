@@ -317,7 +317,11 @@ namespace GuacamoleClient.WinForms
             }
             catch (Exception ex)
             {
-                if (SwitchMenuItemsBasedOnShownContent_Ex == null)
+                if (this.Disposing || this.IsDisposed)
+                {
+                    //form is disposing/disposed, thrown exceptions can be ignored
+                }
+                else if (SwitchMenuItemsBasedOnShownContent_Ex == null)
                 {
                     SwitchMenuItemsBasedOnShownContent_Ex = ex;
                     MessageBox.Show(this, $"Unexpected exception:\n{ex.ToString()}", "Unexpected error", MessageBoxButtons.OK, MessageBoxIcon.Error);
