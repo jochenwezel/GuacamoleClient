@@ -45,7 +45,6 @@ namespace GuacamoleClient.WinForms
         public Uri StartUrl { get; init; }
         private readonly HashSet<string> _trustedHosts = new HashSet<string>();
 
-
         [Obsolete("For designer support only", true)]
         [System.ComponentModel.EditorBrowsable(System.ComponentModel.EditorBrowsableState.Never)]
         public MainForm() : this(new Uri("https://guacamole.apache.org/"), new Uri("https://guacamole.apache.org/")) { }
@@ -56,11 +55,10 @@ namespace GuacamoleClient.WinForms
             this.StartUrl = startUrl;
             _trustedHosts.Add(homeUrl.Host);
             InitializeComponent();
+            InitializeControlFocusManagementWithKeyboardCapturingHandler();
 
             this.UpdateFormTitle(startUrl);
             KeyPreview = true;
-            //mainMenuStrip!.SetMenuStripColorsRecursive(System.Drawing.SystemColors.Menu, System.Drawing.SystemColors.Menu, System.Drawing.SystemColors.MenuHighlight, System.Drawing.SystemColors.MenuText, SystemColors.ButtonShadow);
-            //mainMenuStrip!.SetMenuStripColorsRecursive(Color.Red, Color.Red, Color.DarkRed, Color.White);
             mainMenuStrip!.SetMenuStripColorsRecursive(Color.OrangeRed, Color.OrangeRed, Color.DarkRed, Color.Black, Color.DarkGray);
             testToolStripMenuItem!.Available = TEST_MENU_ENABLED;
 
@@ -76,6 +74,150 @@ namespace GuacamoleClient.WinForms
             this.WebBrowserHostPanel!.LocationChanged += (_, __) => UpdateLocationUrl();
             this.WebBrowserHostPanel!.Resize += (_, __) => UpdateControllerBounds();
             _closeTimer.Tick += (_, __) => { _closeTimer.Stop(); Close(); };
+        }
+
+        #region Debug helpers
+        private string ControlName(Control c)
+        {
+            if (c == null)
+                return "{null}";
+            else if (String.IsNullOrEmpty(c.Name))
+                return "{empty}";
+            else
+                return c.Name;
+        }
+
+        private ToolStripMenuItem HintStopWebcontrol2FocusShortcut;
+        private int _openDropdowns;
+        private bool IsMenuOpen
+        {
+            get
+            {
+                if (_openDropdowns > 0 || this.MainMenuStrip!.Focused || this.MainMenuStrip.ContainsFocus)
+                    return true;
+                else
+                {
+                    foreach (ToolStripMenuItem item in this.MainMenuStrip.Items)
+                    {
+                        if (item.Selected) return true;
+                    }
+                    return false;
+                }
+            }
+        }
+        #endregion
+
+        #region Keyboard capturing + active control focus
+
+        void InitializeControlFocusManagementWithKeyboardCapturingHandler()
+        {
+            HookMenuItemsRecursive(mainMenuStrip!.Items);
+            this.Activated += (_, __) => RestoreFocusOnWebview2Control();
+            this.Deactivate += (_, __) => DetachWebViewFocus(true);
+            this.mainMenuStrip.Leave += (_, __) => RestoreFocusOnWebview2Control();
+            this.HintStopWebcontrol2FocusShortcut!.Visible = false;
+        }
+
+        /// <summary>
+        /// Invisible Textbox for capturing focus and while focused capturing keyboard shortcuts
+        /// </summary>
+        private TextBox _focusSink;
+
+        private void RestoreFocusOnWebview2Control()
+        {
+            // Wenn Sie danach zurück in WebView wollen:
+            WebBrowserHostPanel.Focus();
+            _controller?.MoveFocus(CoreWebView2MoveFocusReason.Programmatic);
+            IsKeyboardFocusBoundToWebview2Control = KeyboardCaptureMode.GrabbingEnabled_ShowKeyboardShortcutInfo;
+        }
+
+        /// <summary>
+        /// Removes keyboard focus from the WebView2 control by setting focus to an alternative control within the form.
+        /// </summary>
+        /// <remarks>Use this method to ensure that the WebView2 control no longer receives keyboard
+        /// input, which may be necessary before disposing the control or when redirecting user interaction to another
+        /// part of the application (e.g. main menu). This method is intended for internal focus management and should be called only
+        /// when it is necessary to explicitly change the active control.</remarks>
+        private void DetachWebViewFocus(bool hideShortcutTip)
+        {
+            // Ein anderes Win32-Fokusziel setzen → WebView2 verliert Tastatur
+            _focusSink.Focus();
+            this.ActiveControl = _focusSink; // optional, hilft WinForms-intern
+            if (hideShortcutTip)
+                IsKeyboardFocusBoundToWebview2Control = KeyboardCaptureMode.GrabbingDisabled_HideKeyboardShortcutInfo;
+            else
+                IsKeyboardFocusBoundToWebview2Control = KeyboardCaptureMode.GrabbingDisabled_ShowKeyboardShortcutInfo;
+        }
+
+        private enum KeyboardCaptureMode
+        {
+            GrabbingEnabled_ShowKeyboardShortcutInfo,
+            GrabbingDisabled_ShowKeyboardShortcutInfo,
+            GrabbingDisabled_HideKeyboardShortcutInfo,
+        }
+        private KeyboardCaptureMode _IsKeyboardFocusBoundToWebview2Control = KeyboardCaptureMode.GrabbingDisabled_HideKeyboardShortcutInfo;
+        private KeyboardCaptureMode IsKeyboardFocusBoundToWebview2Control
+        {
+            get { return _IsKeyboardFocusBoundToWebview2Control; }
+            set
+            {
+                _IsKeyboardFocusBoundToWebview2Control = value;
+                switch (value)
+                {
+                    case KeyboardCaptureMode.GrabbingEnabled_ShowKeyboardShortcutInfo:
+                        this.HintStopWebcontrol2FocusShortcut!.Text = LocalizedString(LocalizationKeys.Tip_CtrlAltScroll_StopKeyboardGrabbingOfGuacamoleWindow);
+                        this.HintStopWebcontrol2FocusShortcut!.Visible = true;
+                        break;
+                    case KeyboardCaptureMode.GrabbingDisabled_ShowKeyboardShortcutInfo:
+                        this.HintStopWebcontrol2FocusShortcut!.Text = LocalizedString(LocalizationKeys.Tip_CtrlAltScroll_StartKeyboardGrabbingOfGuacamoleWindow);
+                        this.HintStopWebcontrol2FocusShortcut!.Visible = true;
+                        break;
+                    case KeyboardCaptureMode.GrabbingDisabled_HideKeyboardShortcutInfo:
+                        this.HintStopWebcontrol2FocusShortcut!.Visible = false;
+                        break;
+                    default:
+                        throw new NotImplementedException();
+                }
+            }
+        }
+        #endregion
+
+        /// <summary>
+        /// Processes a keyboard command key before it is dispatched to the control.
+        /// </summary>
+        /// <remarks>Override this method to implement custom keyboard handling for the control. If not
+        /// overridden, the base implementation determines whether the key is processed.</remarks>
+        /// <param name="msg">A Windows message representing the keyboard input to process.</param>
+        /// <param name="keyData">One of the Keys values that specifies the key data for the keyboard input.</param>
+        /// <returns>true if the key was processed by the control; otherwise, false.</returns>
+        protected override bool ProcessCmdKey(ref Message msg, Keys keyData)
+        {
+            return base.ProcessCmdKey(ref msg, keyData);
+        }
+
+        private void HookMenuItemsRecursive(ToolStripItemCollection items)
+        {
+            foreach (ToolStripItem item in items)
+            {
+                if (item is ToolStripMenuItem mi)
+                {
+                    mi.DropDownOpened += (_, __) =>
+                    {
+                        _openDropdowns++;
+                        DetachWebViewFocus(false);
+                    };
+                    mi.DropDownClosed += (_, __) =>
+                    {
+                        _openDropdowns = Math.Max(0, _openDropdowns - 1);
+                        //BeginInvoke((Action)RestoreLastFocus); // z.B. WebView2-Fokus zurück
+                        RestoreFocusOnWebview2Control();
+                    };
+
+                    // Untermenüs rekursiv
+                    if (mi.HasDropDownItems)
+                        HookMenuItemsRecursive(mi.DropDownItems);
+                }
+            }
         }
 
         protected override void OnHandleCreated(EventArgs e)
@@ -96,14 +238,21 @@ namespace GuacamoleClient.WinForms
         public void UpdateFormTitle(Uri currentUrl) => this.UpdateFormTitle(currentUrl, String.Empty);
         public void UpdateFormTitle(Uri currentUrl, string documentTitle)
         {
+            string focusWarning = String.Empty;
+            if (System.Diagnostics.Debugger.IsAttached)
+            {
+                if (this.IsMenuOpen) focusWarning += " - " + this.ControlName(this.MainMenuStrip);
+                if (!this.WebBrowserHostPanel.Focused) focusWarning += " - " + LocalizedString(LocalizationKeys.FocussedAnotherControlWarning) + this.ControlName(this.ActiveControl);
+            }
+
             if (string.IsNullOrEmpty(documentTitle))
             {
-                this.Text = $"{currentUrl.ToString()} - GuacamoleClient v{Application.ProductVersion}";
+                this.Text = $"{currentUrl.ToString()}{focusWarning} - GuacamoleClient v{Application.ProductVersion}";
                 this.connectionNameInFullScreenModeToolStripMenuItem.Text = currentUrl.ToString();
             }
             else
             {
-                this.Text = $"{documentTitle} - {currentUrl.ToString()} - GuacamoleClient v{Application.ProductVersion}";
+                this.Text = $"{documentTitle}{focusWarning} - {currentUrl.ToString()} - GuacamoleClient v{Application.ProductVersion}";
                 this.connectionNameInFullScreenModeToolStripMenuItem.Text = documentTitle;
             }
         }
@@ -121,12 +270,12 @@ namespace GuacamoleClient.WinForms
             {
                 return new Uri(this.HomeUrl, "#/settings/mysql/connections");
             }
-        }           
+        }
 
         private void InitializeComponent()
         {
-            components = new System.ComponentModel.Container();
-            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(MainForm));
+            components = new Container();
+            ComponentResourceManager resources = new ComponentResourceManager(typeof(MainForm));
             mainMenuStrip = new CustomMenuStrip();
             fileToolStripMenuItem = new ToolStripMenuItem();
             connectionHomeToolStripMenuItem = new ToolStripMenuItem();
@@ -139,15 +288,17 @@ namespace GuacamoleClient.WinForms
             viewToolStripMenuItem = new ToolStripMenuItem();
             fullScreenToolStripMenuItem = new ToolStripMenuItem();
             stopFullScreenModeToolStripMenuItem = new ToolStripMenuItem();
+            connectionNameInFullScreenModeToolStripMenuItem = new ToolStripMenuItem();
             WebBrowserHostPanel = new Panel();
             formTitleRefreshTimer = new Timer(components);
-            connectionNameInFullScreenModeToolStripMenuItem = new ToolStripMenuItem();
+            _focusSink = new TextBox();
+            HintStopWebcontrol2FocusShortcut = new ToolStripMenuItem();
             mainMenuStrip.SuspendLayout();
             SuspendLayout();
             // 
             // mainMenuStrip
             // 
-            mainMenuStrip.Items.AddRange(new ToolStripItem[] { fileToolStripMenuItem, testToolStripMenuItem, viewToolStripMenuItem, connectionNameInFullScreenModeToolStripMenuItem });
+            mainMenuStrip.Items.AddRange(new ToolStripItem[] { fileToolStripMenuItem, testToolStripMenuItem, viewToolStripMenuItem, connectionNameInFullScreenModeToolStripMenuItem, HintStopWebcontrol2FocusShortcut });
             mainMenuStrip.Location = new Point(0, 0);
             mainMenuStrip.Name = "mainMenuStrip";
             mainMenuStrip.Size = new Size(1264, 24);
@@ -186,6 +337,7 @@ namespace GuacamoleClient.WinForms
             // newWindowToolStripMenuItem
             // 
             newWindowToolStripMenuItem.Name = "newWindowToolStripMenuItem";
+            newWindowToolStripMenuItem.ShortcutKeyDisplayString = "Ctrl+Alt+N / Alt-Gr+N";
             newWindowToolStripMenuItem.Size = new Size(330, 22);
             newWindowToolStripMenuItem.Text = "New Window";
             newWindowToolStripMenuItem.Click += newWindowToolStripMenuItem_Click;
@@ -233,6 +385,13 @@ namespace GuacamoleClient.WinForms
             stopFullScreenModeToolStripMenuItem.Text = "Stop Full-Screen Mode";
             stopFullScreenModeToolStripMenuItem.Click += stopFullScreenModeToolStripMenuItem_Click;
             // 
+            // connectionNameInFullScreenModeToolStripMenuItem
+            // 
+            connectionNameInFullScreenModeToolStripMenuItem.Alignment = ToolStripItemAlignment.Right;
+            connectionNameInFullScreenModeToolStripMenuItem.Name = "connectionNameInFullScreenModeToolStripMenuItem";
+            connectionNameInFullScreenModeToolStripMenuItem.Size = new Size(405, 20);
+            connectionNameInFullScreenModeToolStripMenuItem.Text = "ConnecticonnectionNameInFullScreenModeToolStripMenuItemonNameI";
+            // 
             // WebBrowserHostPanel
             // 
             WebBrowserHostPanel.Dock = DockStyle.Fill;
@@ -245,16 +404,28 @@ namespace GuacamoleClient.WinForms
             // 
             formTitleRefreshTimer.Tick += formTitleRefreshTimer_Tick;
             // 
-            // connectionNameInFullScreenModeToolStripMenuItem
+            // _focusSink
             // 
-            connectionNameInFullScreenModeToolStripMenuItem.Alignment = ToolStripItemAlignment.Right;
-            connectionNameInFullScreenModeToolStripMenuItem.Name = "connectionNameInFullScreenModeToolStripMenuItem";
-            connectionNameInFullScreenModeToolStripMenuItem.Size = new Size(405, 20);
-            connectionNameInFullScreenModeToolStripMenuItem.Text = "ConnecticonnectionNameInFullScreenModeToolStripMenuItemonNameI";
+            _focusSink.BorderStyle = BorderStyle.None;
+            _focusSink.Location = new Point(-2000, -2000);
+            _focusSink.Name = "_focusSink";
+            _focusSink.Size = new Size(100, 16);
+            _focusSink.TabIndex = 0;
+            _focusSink.TabStop = false;
+            _focusSink.Visible = false;
+            // 
+            // HintStopWebcontrol2FocusShortcut
+            // 
+            HintStopWebcontrol2FocusShortcut.Alignment = ToolStripItemAlignment.Right;
+            HintStopWebcontrol2FocusShortcut.Enabled = false;
+            HintStopWebcontrol2FocusShortcut.Name = "HintStopWebcontrol2FocusShortcut";
+            HintStopWebcontrol2FocusShortcut.Size = new Size(98, 20);
+            HintStopWebcontrol2FocusShortcut.Text = "Ctrl+Alt+Scroll";
             // 
             // MainForm
             // 
             ClientSize = new Size(1264, 725);
+            Controls.Add(_focusSink);
             Controls.Add(WebBrowserHostPanel);
             Controls.Add(mainMenuStrip);
             Icon = (Icon)resources.GetObject("$this.Icon");
@@ -263,6 +434,7 @@ namespace GuacamoleClient.WinForms
             Load += MainForm_Load;
             ResizeEnd += MainForm_ResizeEnd;
             KeyDown += MainForm_KeyDown;
+            MouseClick += MainForm_MouseClick;
             mainMenuStrip.ResumeLayout(false);
             mainMenuStrip.PerformLayout();
             ResumeLayout(false);
@@ -436,8 +608,8 @@ namespace GuacamoleClient.WinForms
             _core.Settings.AreDefaultContextMenusEnabled = true;
             _core.Settings.AreDevToolsEnabled = false;
 
-            _core.Navigate(StartUrl.ToString());
-            _controller.MoveFocus(CoreWebView2MoveFocusReason.Programmatic);
+            _core.Navigate(StartUrl.ToString());            
+            RestoreFocusOnWebview2Control();
         }
 
         private void CoreWebView2_PermissionRequested(object? sender, CoreWebView2PermissionRequestedEventArgs e)
@@ -468,8 +640,8 @@ namespace GuacamoleClient.WinForms
                 if (_core == null || _core.IsSuspended) return;
                 this.UpdateFormTitle(new Uri(_core!.Source), _core!.DocumentTitle);
             }
-            catch 
-            { 
+            catch
+            {
                 //ignore
             }
         }
@@ -492,6 +664,8 @@ namespace GuacamoleClient.WinForms
 
         private void Controller_AcceleratorKeyPressed(object? sender, CoreWebView2AcceleratorKeyPressedEventArgs e)
         {
+            if (this.IsMenuOpen) return;
+
             // Nur KeyDown / SystemKeyDown interessieren
             if (e.KeyEventKind != CoreWebView2KeyEventKind.KeyDown &&
                 e.KeyEventKind != CoreWebView2KeyEventKind.SystemKeyDown)
@@ -502,6 +676,7 @@ namespace GuacamoleClient.WinForms
             const uint VK_END = (uint)Keys.End;
             const uint VK_ESC = (uint)Keys.Escape;
             const uint VK_R = (uint)Keys.R;
+            const uint VK_SCROLL = (uint)Keys.Scroll;
             //const int VK_F4 = 0x73;
             //const int VK_END = 0x23;
             //const int VK_ESC = 0x1B;
@@ -535,6 +710,14 @@ namespace GuacamoleClient.WinForms
             if (e.VirtualKey == VK_F4 && ctrl && !alt)
             {
                 e.Handled = false; // weiter an WebView/Seite
+                return;
+            }
+
+            // --- App-Policy: Ctrl+Alt+Scroll gibt Tastaturfokus frei ---
+            if (e.VirtualKey == VK_SCROLL && ctrl && alt)
+            {
+                e.Handled = true;
+                DetachWebViewFocus(false);
                 return;
             }
 
@@ -692,7 +875,7 @@ namespace GuacamoleClient.WinForms
         private void connectionHomeToolStripMenuItem_Click(object sender, EventArgs e)
         {
             _core?.Navigate(this.HomeUrl.ToString());
-            _controller?.MoveFocus(CoreWebView2MoveFocusReason.Programmatic);
+            RestoreFocusOnWebview2Control();
         }
 
         private async void testToolStripMenuItem_Click(object sender, EventArgs e)
@@ -785,6 +968,7 @@ namespace GuacamoleClient.WinForms
             // Nur KeyDown / SystemKeyDown interessieren
             if (e.Handled)
                 return;
+            if (this.IsMenuOpen) return;
 
             // VK-Konstanten
             const Keys VK_F4 = Keys.F4;
@@ -792,6 +976,7 @@ namespace GuacamoleClient.WinForms
             const Keys VK_ESC = Keys.Escape;
             const Keys VK_R = Keys.R;
             const Keys VK_N = Keys.N;
+            const Keys VK_SCROLL = Keys.Scroll;
             //const int VK_F4 = 0x73;
             //const int VK_END = 0x23;
             //const int VK_ESC = 0x1B;
@@ -825,6 +1010,14 @@ namespace GuacamoleClient.WinForms
             if (e.KeyCode == VK_F4 && ctrl && !alt)
             {
                 e.Handled = false; // weiter an WebView/Seite
+                return;
+            }
+
+            // --- App-Policy: Ctrl+Alt+Scroll gibt Tastaturfokus frei ---
+            if (e.KeyCode == VK_SCROLL && ctrl && alt)
+            {
+                e.Handled = true;
+                RestoreFocusOnWebview2Control();
                 return;
             }
 
@@ -933,7 +1126,7 @@ namespace GuacamoleClient.WinForms
             {
                 this.formTitleRefreshTimer.Interval = postNavMinInterval;
             }
-            else 
+            else
             {
                 if (this.formTitleRefreshTimer.Interval < maxInterval)
                     this.formTitleRefreshTimer.Interval = System.Math.Min((int)(this.formTitleRefreshTimer.Interval * 5), maxInterval);
@@ -968,6 +1161,9 @@ namespace GuacamoleClient.WinForms
             HintCtrlAltInsFullscreenModeOn,
             HintCtrlShiftEscCatched_NotForwardableToRemoteServer,
             HintCtrlAltEndWithoutEffect_mstsc,
+            FocussedAnotherControlWarning,
+            Tip_CtrlAltScroll_StopKeyboardGrabbingOfGuacamoleWindow,
+            Tip_CtrlAltScroll_StartKeyboardGrabbingOfGuacamoleWindow
         }
 
         private static string LocalizedString(LocalizationKeys key)
@@ -988,11 +1184,17 @@ namespace GuacamoleClient.WinForms
                     case LocalizationKeys.HintWinRCatched_NotForwardableToRemoteServer:
                         return "WIN+R wurde abgefangen. Nicht an Remote weiterleitbar. Workaround: Strg+Esc drücken und dort „Ausführen“ suchen.";
                     case LocalizationKeys.HintCtrlAltBreakFullscreenModeOff:
-                        return "Hinweis: Strg+Alt+Untbr >> Full Screen wird deaktiviert";
+                        return "Hinweis: Strg+Alt+Untbr >> Full Screen wurde deaktiviert";
                     case LocalizationKeys.HintCtrlAltInsFullscreenModeOff:
-                        return "Hinweis: Strg+Alt+Einfügen >> Full Screen wird deaktiviert";
+                        return "Hinweis: Strg+Alt+Einfügen >> Full Screen wurde deaktiviert";
                     case LocalizationKeys.HintCtrlAltInsFullscreenModeOn:
-                        return "Hinweis: Strg+Alt+Einfügen >> Full Screen wird aktiviert";
+                        return "Hinweis: Strg+Alt+Einfügen >> Full Screen wurde aktiviert";
+                    case LocalizationKeys.Tip_CtrlAltScroll_StopKeyboardGrabbingOfGuacamoleWindow:
+                        return "Strg+Alt+Rollen zum Tastaturfokus freigeben";
+                    case LocalizationKeys.Tip_CtrlAltScroll_StartKeyboardGrabbingOfGuacamoleWindow:
+                        return "Strg+Alt+Rollen zum Tastaturfokus einfangen";
+                    case LocalizationKeys.FocussedAnotherControlWarning:
+                        return "ACHTUNG: Eingabe-Fokus liegt aktuell bei ";
                 }
             }
 
@@ -1010,14 +1212,25 @@ namespace GuacamoleClient.WinForms
                 case LocalizationKeys.HintWinRCatched_NotForwardableToRemoteServer:
                     return "WIN+R catched. Not forwardable to remote. Workaround: press Ctrl+Esc and search for \"Run\".";
                 case LocalizationKeys.HintCtrlAltBreakFullscreenModeOff:
-                    return "Hinweis: Ctrl+Alt+Break >> Full Screen will be disabled";
+                    return "Hinweis: Ctrl+Alt+Break >> Full Screen has been disabled";
                 case LocalizationKeys.HintCtrlAltInsFullscreenModeOff:
-                    return "Hinweis: Ctrl+Alt+Insert >> Full Screen will be disabled";
+                    return "Hinweis: Ctrl+Alt+Insert >> Full Screen has been disabled";
                 case LocalizationKeys.HintCtrlAltInsFullscreenModeOn:
-                    return "Hinweis: Ctrl+Alt+Insert >> Full Screen will be enabled";
+                    return "Hinweis: Ctrl+Alt+Insert >> Full Screen has been enabled";
+                case LocalizationKeys.Tip_CtrlAltScroll_StopKeyboardGrabbingOfGuacamoleWindow:
+                    return "Ctrl+Alt+Scroll to release keyboard focus";
+                case LocalizationKeys.Tip_CtrlAltScroll_StartKeyboardGrabbingOfGuacamoleWindow:
+                    return "Ctrl+Alt+Scroll to capture keyboard focus";
+                case LocalizationKeys.FocussedAnotherControlWarning:
+                    return "ATTENTION: input focus currently at control ";
                 default:
                     throw new NotImplementedException("Localization key not implemented: " + key.ToString());
             }
+        }
+
+        private void MainForm_MouseClick(object sender, MouseEventArgs e)
+        {
+            UpdateLocationUrl();
         }
     }
 }
