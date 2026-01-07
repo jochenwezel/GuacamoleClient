@@ -36,6 +36,12 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Compile Update="MainForm.*.cs">
+      <DependentUpon>MainForm.cs</DependentUpon>
+    </Compile>
+  </ItemGroup>
+
+  <ItemGroup>
     <None Include="..\logos\favicon-guac-classic-logo\apple-touch-icon.png">
       <Pack>True</Pack>
       <PackagePath>\</PackagePath>
@@ -52,6 +58,13 @@
 
   <ItemGroup>
     <ProjectReference Include="..\GuacamoleCommon\GuacamoleCommon.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Update="MainForm - Kopieren.ShortcutHandler.cs">
+      <SubType>Form</SubType>
+      <DependentUpon>MainForm.cs</DependentUpon>
+    </Compile>
   </ItemGroup>
   
 </Project>

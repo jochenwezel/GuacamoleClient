@@ -19,7 +19,6 @@ namespace GuacamoleClient.WinForms
         private ToolStripMenuItem stopFullScreenModeToolStripMenuItem;
         private ToolStripMenuItem guacamoleUserSettingsToolStripMenuItem;
         private ToolStripMenuItem guacamoleConnectionConfigurationsToolStripMenuItem;
-        private ToolStripMenuItem toolStripMenuItem1;
         private ToolStripMenuItem newWindowToolStripMenuItem;
         private Timer formTitleRefreshTimer;
         private System.ComponentModel.IContainer components;

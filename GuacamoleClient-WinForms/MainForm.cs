@@ -14,20 +14,8 @@ namespace GuacamoleClient.WinForms
     public partial class MainForm : Form
     {
         private const bool TEST_MENU_ENABLED = false;
+        private const bool TEST_CONTROL_FOCUS_INFO_IN_FORM_TITLE = false; // effective only when enabled and with Debugger attached
 
-        private readonly ToolTip _tip;
-        private readonly Timer _closeTimer = new() { Interval = 1200 }; // sanftes Close nach Hinweis
-
-        private CoreWebView2Environment? _env;
-        private CoreWebView2Controller? _controller;
-        private CoreWebView2? _core;
-
-        private bool _altF4Detected;
-
-
-        public Uri HomeUrl { get; init; }
-        public Uri StartUrl { get; init; }
-        private readonly HashSet<string> _trustedHosts = new HashSet<string>();
 
         [Obsolete("For designer support only", true)]
         [System.ComponentModel.EditorBrowsable(System.ComponentModel.EditorBrowsableState.Never)]
@@ -38,14 +26,20 @@ namespace GuacamoleClient.WinForms
             this.HomeUrl = homeUrl;
             this.StartUrl = startUrl;
             _trustedHosts.Add(homeUrl.Host);
+
             InitializeComponent();
             InitializeControlFocusManagementWithKeyboardCapturingHandler();
 
+            //Form title + menu customization
             this.UpdateFormTitle(startUrl);
             KeyPreview = true;
             mainMenuStrip!.SetMenuStripColorsRecursive(Color.OrangeRed, Color.OrangeRed, Color.DarkRed, Color.Black, Color.DarkGray);
-            testToolStripMenuItem!.Available = TEST_MENU_ENABLED;
+            testToolStripMenuItem.Available = TEST_MENU_ENABLED;
 
+            //Assign commands to close timer
+            _closeTimer.Tick += (_, __) => { _closeTimer.Stop(); Close(); };
+
+            //Tooltip
             _tip = new ToolTip
             {
                 IsBalloon = false,
@@ -55,157 +49,58 @@ namespace GuacamoleClient.WinForms
                 ShowAlways = true
             };
 
+            //Browser control
             this.WebBrowserHostPanel!.LocationChanged += (_, __) => UpdateLocationUrl();
             this.WebBrowserHostPanel!.Resize += (_, __) => UpdateControllerBounds();
-            _closeTimer.Tick += (_, __) => { _closeTimer.Stop(); Close(); };
         }
 
-        #region Debug helpers
-        private string ControlName(Control c)
-        {
-            if (c == null)
-                return "{null}";
-            else if (String.IsNullOrEmpty(c.Name))
-                return "{empty}";
-            else
-                return c.Name;
-        }
-        private int _openDropdowns;
-        private bool IsMenuOpen
-        {
-            get
-            {
-                if (_openDropdowns > 0 || this.MainMenuStrip!.Focused || this.MainMenuStrip.ContainsFocus)
-                    return true;
-                else
-                {
-                    foreach (ToolStripMenuItem item in this.MainMenuStrip.Items)
-                    {
-                        if (item.Selected) return true;
-                    }
-                    return false;
-                }
-            }
-        }
-        #endregion
-
-        #region Keyboard capturing + active control focus
-
-        void InitializeControlFocusManagementWithKeyboardCapturingHandler()
-        {
-            HookMenuItemsRecursive(mainMenuStrip!.Items);
-            this.Activated += (_, __) => RestoreFocusOnWebview2Control();
-            this.Deactivate += (_, __) => DetachWebViewFocus(true);
-            this.mainMenuStrip.Leave += (_, __) => RestoreFocusOnWebview2Control();
-            this.HintStopWebcontrol2FocusShortcut!.Visible = false;
-        }
+        private readonly ToolTip _tip;
 
         /// <summary>
-        /// Invisible Textbox for capturing focus and while focused capturing keyboard shortcuts
+        /// The (usually disabled) timer to close the form
         /// </summary>
-        private void RestoreFocusOnWebview2Control()
-        {
-            // Wenn Sie danach zurück in WebView wollen:
-            WebBrowserHostPanel.Focus();
-            _controller?.MoveFocus(CoreWebView2MoveFocusReason.Programmatic);
-            IsKeyboardFocusBoundToWebview2Control = KeyboardCaptureMode.GrabbingEnabled_ShowKeyboardShortcutInfo;
-        }
+        private readonly Timer _closeTimer = new() { Interval = 1200 }; // sanftes Close nach Hinweis
+
+        private CoreWebView2Environment? _webview2_env;
+        private CoreWebView2Controller? _webview2_controller;
+        private CoreWebView2? _webview2_core;
 
         /// <summary>
-        /// Removes keyboard focus from the WebView2 control by setting focus to an alternative control within the form.
+        /// The URL of guacamole when the user wants to go back to home screen and which is also used as base for addresses of connection and settings pages
         /// </summary>
-        /// <remarks>Use this method to ensure that the WebView2 control no longer receives keyboard
-        /// input, which may be necessary before disposing the control or when redirecting user interaction to another
-        /// part of the application (e.g. main menu). This method is intended for internal focus management and should be called only
-        /// when it is necessary to explicitly change the active control.</remarks>
-        private void DetachWebViewFocus(bool hideShortcutTip)
-        {
-            // Ein anderes Win32-Fokusziel setzen → WebView2 verliert Tastatur
-            _focusSink.Focus();
-            this.ActiveControl = _focusSink; // optional, hilft WinForms-intern
-            if (hideShortcutTip)
-                IsKeyboardFocusBoundToWebview2Control = KeyboardCaptureMode.GrabbingDisabled_HideKeyboardShortcutInfo;
-            else
-                IsKeyboardFocusBoundToWebview2Control = KeyboardCaptureMode.GrabbingDisabled_ShowKeyboardShortcutInfo;
-        }
-
-        private enum KeyboardCaptureMode
-        {
-            GrabbingEnabled_ShowKeyboardShortcutInfo,
-            GrabbingDisabled_ShowKeyboardShortcutInfo,
-            GrabbingDisabled_HideKeyboardShortcutInfo,
-        }
-        private KeyboardCaptureMode _IsKeyboardFocusBoundToWebview2Control = KeyboardCaptureMode.GrabbingDisabled_HideKeyboardShortcutInfo;
-        private KeyboardCaptureMode IsKeyboardFocusBoundToWebview2Control
-        {
-            get { return _IsKeyboardFocusBoundToWebview2Control; }
-            set
-            {
-                _IsKeyboardFocusBoundToWebview2Control = value;
-                switch (value)
-                {
-                    case KeyboardCaptureMode.GrabbingEnabled_ShowKeyboardShortcutInfo:
-                        this.HintStopWebcontrol2FocusShortcut!.Text = LocalizedString(LocalizationKeys.Tip_CtrlAltScroll_StopKeyboardGrabbingOfGuacamoleWindow);
-                        this.HintStopWebcontrol2FocusShortcut!.Visible = true;
-                        break;
-                    case KeyboardCaptureMode.GrabbingDisabled_ShowKeyboardShortcutInfo:
-                        this.HintStopWebcontrol2FocusShortcut!.Text = LocalizedString(LocalizationKeys.Tip_CtrlAltScroll_StartKeyboardGrabbingOfGuacamoleWindow);
-                        this.HintStopWebcontrol2FocusShortcut!.Visible = true;
-                        break;
-                    case KeyboardCaptureMode.GrabbingDisabled_HideKeyboardShortcutInfo:
-                        this.HintStopWebcontrol2FocusShortcut!.Visible = false;
-                        break;
-                    default:
-                        throw new NotImplementedException();
-                }
-            }
-        }
-        #endregion
+        public Uri HomeUrl { get; init; }
 
         /// <summary>
-        /// Processes a keyboard command key before it is dispatched to the control.
+        /// The start URL for the 1st browser navigation action on initialization
         /// </summary>
-        /// <remarks>Override this method to implement custom keyboard handling for the control. If not
-        /// overridden, the base implementation determines whether the key is processed.</remarks>
-        /// <param name="msg">A Windows message representing the keyboard input to process.</param>
-        /// <param name="keyData">One of the Keys values that specifies the key data for the keyboard input.</param>
-        /// <returns>true if the key was processed by the control; otherwise, false.</returns>
-        protected override bool ProcessCmdKey(ref Message msg, Keys keyData)
-        {
-            return base.ProcessCmdKey(ref msg, keyData);
-        }
+        public Uri StartUrl { get; init; }
 
-        private void HookMenuItemsRecursive(ToolStripItemCollection items)
-        {
-            foreach (ToolStripItem item in items)
-            {
-                if (item is ToolStripMenuItem mi)
-                {
-                    mi.DropDownOpened += (_, __) =>
-                    {
-                        _openDropdowns++;
-                        DetachWebViewFocus(false);
-                    };
-                    mi.DropDownClosed += (_, __) =>
-                    {
-                        _openDropdowns = Math.Max(0, _openDropdowns - 1);
-                        //BeginInvoke((Action)RestoreLastFocus); // z.B. WebView2-Fokus zurück
-                        RestoreFocusOnWebview2Control();
-                    };
+        /// <summary>
+        /// A list of trusted hosts (usually the host of HomeUrl) to allow features like clipboard access for Webview2 control
+        /// </summary>
+        private readonly HashSet<string> _trustedHosts = new HashSet<string>();
 
-                    // Untermenüs rekursiv
-                    if (mi.HasDropDownItems)
-                        HookMenuItemsRecursive(mi.DropDownItems);
-                }
-            }
-        }
 
+        /// <summary>
+        /// Handles the creation of the window handle and applies custom title bar colors.
+        /// </summary>
+        /// <remarks>This method overrides the base implementation to customize the appearance of the
+        /// window's title bar when the handle is created. It is typically called by the Windows Forms framework and
+        /// should not be called directly.</remarks>
+        /// <param name="e">An object that contains the event data associated with the handle creation event.</param>
         protected override void OnHandleCreated(EventArgs e)
         {
             base.OnHandleCreated(e);
             TitleBarHelper.ApplyTitleBarColors(this, Color.OrangeRed, Color.Black);
         }
 
+        /// <summary>
+        /// Create a new form instance to provide another remote desktop window
+        /// </summary>
+        /// <remarks>This handler opens the requested URI in a new instance of the main form and prevents
+        /// the WebView2 control from opening the new window itself.</remarks>
+        /// <param name="sender">The source of the event, typically the WebView2 control.</param>
+        /// <param name="e">A CoreWebView2NewWindowRequestedEventArgs object that contains the event data, including the requested URI.</param>
         private void NewWindowRequested(object? sender, CoreWebView2NewWindowRequestedEventArgs e)
         {
             // Öffne neuen MainForm mit der Ziel-URL
@@ -215,11 +110,22 @@ namespace GuacamoleClient.WinForms
             e.Handled = true;
         }
 
+        /// <summary>
+        /// Updates the form's title based on the specified URL.
+        /// </summary>
+        /// <param name="currentUrl">The current URL used to determine the new form title.</param>
         public void UpdateFormTitle(Uri currentUrl) => this.UpdateFormTitle(currentUrl, String.Empty);
+        
+        /// <summary>
+        /// Updates the form's title and the full screen mode menu item to reflect the current document and URL.
+        /// </summary>
+        /// <param name="currentUrl">The URI of the current document or page being displayed. Used as part of the form title if no document title
+        /// is provided.</param>
+        /// <param name="documentTitle">The title of the current document. If null or empty, the form title will use the URL instead.</param>
         public void UpdateFormTitle(Uri currentUrl, string documentTitle)
         {
             string focusWarning = String.Empty;
-            if (System.Diagnostics.Debugger.IsAttached)
+            if (TEST_CONTROL_FOCUS_INFO_IN_FORM_TITLE && System.Diagnostics.Debugger.IsAttached)
             {
                 if (this.IsMenuOpen) focusWarning += " - " + this.ControlName(this.MainMenuStrip);
                 if (!this.WebBrowserHostPanel.Focused) focusWarning += " - " + LocalizedString(LocalizationKeys.FocussedAnotherControlWarning) + this.ControlName(this.ActiveControl);
@@ -237,6 +143,9 @@ namespace GuacamoleClient.WinForms
             }
         }
 
+        /// <summary>
+        /// The URL for the settings page of guacamole
+        /// </summary>
         public Uri GuacamoleSettingsUrl
         {
             get
@@ -244,6 +153,10 @@ namespace GuacamoleClient.WinForms
                 return new Uri(this.HomeUrl, "#/settings/preferences");
             }
         }
+
+        /// <summary>
+        /// The URL for the connections configuation page of guacamole
+        /// </summary>
         public Uri GuacamoleConnectionConfigurationsUrl
         {
             get
@@ -271,14 +184,19 @@ namespace GuacamoleClient.WinForms
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(MainForm));
             Icon = (Icon)resources.GetObject("$this.Icon")!;
             await InitWebView2Async();
-            _core!.PermissionRequested += CoreWebView2_PermissionRequested;
-            _core!.NavigationStarting += NavigationStarting;
-            _core!.NavigationCompleted += NavigationCompleted;
-            _core!.NewWindowRequested += NewWindowRequested;
-            _core!.FaviconChanged += (_, __) => RefreshFaviconAsync();
+            _webview2_core!.PermissionRequested += CoreWebView2_PermissionRequested;
+            _webview2_core!.NavigationStarting += NavigationStarting;
+            _webview2_core!.NavigationCompleted += NavigationCompleted;
+            _webview2_core!.NewWindowRequested += NewWindowRequested;
+            _webview2_core!.FaviconChanged += (_, __) => RefreshFaviconAsync();
             RefreshFaviconAsync();
         }
 
+        /// <summary>
+        /// Refresh form title a few milliseconds after navigation completed
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private async void NavigationCompleted(object? sender, CoreWebView2NavigationCompletedEventArgs e)
         {
             //configure timer to short timeout to refresh form controls ASAP
@@ -330,9 +248,13 @@ namespace GuacamoleClient.WinForms
             }
         }
 
+        /// <summary>
+        /// Get the current HTML code
+        /// </summary>
+        /// <returns></returns>
         private async Task<string> GetCurrentHtmlAsync()
         {
-            string htmlJson = await _core!.ExecuteScriptAsync(
+            string htmlJson = await _webview2_core!.ExecuteScriptAsync(
                 "document.documentElement.outerHTML"
             );
 
@@ -340,11 +262,21 @@ namespace GuacamoleClient.WinForms
             return System.Text.Json.JsonSerializer.Deserialize<string>(htmlJson)!;
         }
 
+        /// <summary>
+        /// Update form title with new document URL
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void NavigationStarting(object? sender, CoreWebView2NavigationStartingEventArgs e)
         {
             UpdateLocationUrl(new Uri(e.Uri));
         }
 
+        /// <summary>
+        /// Create a windows icon from a PNG file (website favicon)
+        /// </summary>
+        /// <param name="pngStream"></param>
+        /// <returns></returns>
         private Icon? CreateIconFromPngStream(Stream pngStream)
         {
             try
@@ -386,11 +318,14 @@ namespace GuacamoleClient.WinForms
             }
         }
 
+        /// <summary>
+        /// Assign document favicon to form
+        /// </summary>
         private async void RefreshFaviconAsync()
         {
             try
             {
-                Stream iconStream = await _core!.GetFaviconAsync(CoreWebView2FaviconImageFormat.Png);
+                Stream iconStream = await _webview2_core!.GetFaviconAsync(CoreWebView2FaviconImageFormat.Png);
                 if (iconStream != null && iconStream.Length > 0)
                 {
                     Icon? icon = CreateIconFromPngStream(iconStream);
@@ -404,24 +339,33 @@ namespace GuacamoleClient.WinForms
             }
         }
 
+        /// <summary>
+        /// Initialize the webview2 control and start navigation to StartUrl and focus control start grabbing keyboard input
+        /// </summary>
+        /// <returns></returns>
         private async Task InitWebView2Async()
         {
-            _env = await CoreWebView2Environment.CreateAsync();
-            _controller = await _env.CreateCoreWebView2ControllerAsync(this.WebBrowserHostPanel!.Handle);
-            _controller.IsVisible = true;
+            _webview2_env = await CoreWebView2Environment.CreateAsync();
+            _webview2_controller = await _webview2_env.CreateCoreWebView2ControllerAsync(this.WebBrowserHostPanel!.Handle);
+            _webview2_controller.IsVisible = true;
             UpdateControllerBounds();
 
-            _controller.AcceleratorKeyPressed += Controller_AcceleratorKeyPressed;
+            _webview2_controller.AcceleratorKeyPressed += Controller_AcceleratorKeyPressed;
 
-            _core = _controller.CoreWebView2;
-            _core.Settings.IsStatusBarEnabled = false;
-            _core.Settings.AreDefaultContextMenusEnabled = true;
-            _core.Settings.AreDevToolsEnabled = false;
+            _webview2_core = _webview2_controller.CoreWebView2;
+            _webview2_core.Settings.IsStatusBarEnabled = false;
+            _webview2_core.Settings.AreDefaultContextMenusEnabled = true;
+            _webview2_core.Settings.AreDevToolsEnabled = false;
 
-            _core.Navigate(StartUrl.ToString());            
-            RestoreFocusOnWebview2Control();
+            _webview2_core.Navigate(StartUrl.ToString());            
+            SetFocusToWebview2Control();
         }
 
+        /// <summary>
+        /// Assign required/authorized permissions e.g. for clipboard access
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void CoreWebView2_PermissionRequested(object? sender, CoreWebView2PermissionRequestedEventArgs e)
         {
             // Nur für vertrauenswürdige Origins und nur für die Zwischenablage erlauben
@@ -443,298 +387,78 @@ namespace GuacamoleClient.WinForms
             // e.State = CoreWebView2PermissionState.Deny; e.Handled = true;
         }
 
+        /// <summary>
+        /// Update form title with new document URL
+        /// </summary>
         private void UpdateLocationUrl()
         {
             try
             {
-                if (_core == null || _core.IsSuspended) return;
-                this.UpdateFormTitle(new Uri(_core!.Source), _core!.DocumentTitle);
+                if (_webview2_core == null || _webview2_core.IsSuspended) return;
+                this.UpdateFormTitle(new Uri(_webview2_core!.Source), _webview2_core!.DocumentTitle);
             }
             catch
             {
-                //ignore
+                //ignore (on disposing, an exception might occure but can be suppressed
             }
         }
 
+        /// <summary>
+        /// Update form title with new document URL
+        /// </summary>
+        /// <param name="newUri"></param>
         private void UpdateLocationUrl(Uri newUri)
         {
-            if (_core == null) return;
-            this.UpdateFormTitle(newUri, _core!.DocumentTitle);
+            if (_webview2_core == null) return;
+            this.UpdateFormTitle(newUri, _webview2_core!.DocumentTitle);
         }
 
+        /// <summary>
+        /// Refresh webview's client size
+        /// </summary>
         private void UpdateControllerBounds()
         {
-            if (_controller == null) return;
+            if (_webview2_controller == null) return;
             var r = this.WebBrowserHostPanel!.ClientRectangle;
-            _controller.Bounds = new Rectangle(r.X, r.Y, r.Width, r.Height);
-        }
+            _webview2_controller.Bounds = new Rectangle(r.X, r.Y, r.Width, r.Height);
+        }       
 
-        // ========== Tastatur-Logik ==========
-        // Ziel: Alles durchlassen außer explizit behandelte (OS-reservierte) Kombinationen.
-
-        private void Controller_AcceleratorKeyPressed(object? sender, CoreWebView2AcceleratorKeyPressedEventArgs e)
-        {
-            if (this.IsMenuOpen) return;
-
-            // Nur KeyDown / SystemKeyDown interessieren
-            if (e.KeyEventKind != CoreWebView2KeyEventKind.KeyDown &&
-                e.KeyEventKind != CoreWebView2KeyEventKind.SystemKeyDown)
-                return;
-
-            // VK-Konstanten
-            const uint VK_F4 = (uint)Keys.F4;
-            const uint VK_END = (uint)Keys.End;
-            const uint VK_ESC = (uint)Keys.Escape;
-            const uint VK_R = (uint)Keys.R;
-            const uint VK_SCROLL = (uint)Keys.Scroll;
-            //const int VK_F4 = 0x73;
-            //const int VK_END = 0x23;
-            //const int VK_ESC = 0x1B;
-            //const int VK_R = 0x52; 
-
-            bool ctrl = (Control.ModifierKeys & Keys.Control) == Keys.Control;
-            bool alt = (Control.ModifierKeys & Keys.Alt) == Keys.Alt;     // AltGr erscheint hier als Ctrl+Alt
-            bool shift = (Control.ModifierKeys & Keys.Shift) == Keys.Shift;
-            bool lwin = (Control.ModifierKeys & Keys.LWin) == Keys.LWin;
-            bool rwin = (Control.ModifierKeys & Keys.RWin) == Keys.RWin;
-            bool win = (lwin || rwin);
-
-            // --- App-Policy: Ctrl+Alt+F4 schließt die App ---
-            if (e.VirtualKey == VK_F4 && ctrl && alt)
-            {
-                e.Handled = true;
-                ShowHint(LocalizationKeys.Hint_CtrlAltF4_AppWillBeClosed);
-                _closeTimer.Start();
-                return;
-            }
-
-            // --- Alt+F4 blocken (App bleibt offen) ---
-            if (e.VirtualKey == VK_F4 && alt && !ctrl)
-            {
-                e.Handled = true;
-                ShowHint(LocalizationKeys.Hint_AltF4_CatchedAndIgnored);
-                return;
-            }
-
-            // --- Ctrl+F4 durchlassen ---
-            if (e.VirtualKey == VK_F4 && ctrl && !alt)
-            {
-                e.Handled = false; // weiter an WebView/Seite
-                return;
-            }
-
-            // --- App-Policy: Ctrl+Alt+Scroll gibt Tastaturfokus frei ---
-            if (e.VirtualKey == VK_SCROLL && ctrl && alt)
-            {
-                e.Handled = true;
-                DetachWebViewFocus(false);
-                return;
-            }
-
-            // --- Ctrl+Shift+Esc (lokaler Task-Manager) -> NICHT weiterleitbar ---
-            if (e.VirtualKey == VK_ESC && ctrl && shift)
-            {
-                e.Handled = true; // lokal abfangen
-                ShowHint(LocalizationKeys.Hint_CtrlShiftEsc_Catched_NotForwardableToRemoteServer);
-                return;
-            }
-
-            // --- Ctrl+Alt+End: in WebView2/Guacamole typischerweise ohne Wirkung ---
-            if (e.VirtualKey == VK_END && ctrl && alt)
-            {
-                // Wir lassen es durch – aber informieren, dass es i. d. R. nichts bewirkt.
-                e.Handled = false;
-                ShowHint(LocalizationKeys.Hint_CtrlAltEnd_WithoutEffect_mstsc);
-                return;
-            }
-
-            // --- Win+R (OS-reserviert) -> abfangen ---
-            // Windows-Taste selbst kommt hier i. d. R. nicht an; falls doch, verhindern wir lokal.
-            if ((IsWinPressed() && e.VirtualKey == VK_R))
-            {
-                e.Handled = true;
-                ShowHint(LocalizationKeys.Hint_WinR_Catched_NotForwardableToRemoteServer);
-                return;
-            }
-
-            if (fullScreenToolStripMenuItem.Checked && e.VirtualKey == (uint)Keys.Cancel && alt && ctrl)
-            {
-                e.Handled = true;
-                SwitchFullScreenMode(false);
-                ShowHint(LocalizationKeys.Hint_CtrlAltBreak_FullscreenModeOff);
-                return;
-            }
-
-            // Restore window state from fullscreen on Strg+Break
-            if (e.VirtualKey == (uint)Keys.Insert && alt && ctrl)
-            {
-                e.Handled = true;
-                SwitchFullScreenMode(!fullScreenToolStripMenuItem.Checked);
-                if (!fullScreenToolStripMenuItem.Checked)
-                    ShowHint(LocalizationKeys.Hint_CtrlAltIns_FullscreenModeOff);
-                else
-                    ShowHint(LocalizationKeys.Hint_CtrlAltIns_FullscreenModeOn);
-                return;
-            }
-
-            // Go to guacamole home screen
-            if (e.VirtualKey == (uint)Keys.Home && alt && ctrl)
-            {
-                e.Handled = true;
-                connectionHomeToolStripMenuItem.PerformClick();
-                return;
-            }
-
-            // New Window
-            if (e.VirtualKey == (uint)Keys.N && alt && ctrl)
-            {
-                e.Handled = true;
-                newWindowToolStripMenuItem.PerformClick();
-                return;
-            }
-
-
-            // Standard: Alles andere mit Ctrl/Alt/Shift/AltGr durchlassen
-            e.Handled = false;
-        }
-
-        // Zusätzlicher „Fallschirm“ gegen unerwünschtes Schließen via Alt+F4 → SC_CLOSE
-        [DebuggerStepThrough]
-        protected override void WndProc(ref Message m)
-        {
-            const int WM_SYSKEYDOWN = 0x0104;
-            const int VK_F4 = 0x73;
-            const int KF_ALTDOWN = 0x2000;
-
-            const int WM_SYSCOMMAND = 0x0112;
-            const int SC_CLOSE = 0xF060;
-
-            if (m.Msg == WM_SYSKEYDOWN)
-            {
-                int vk = (int)m.WParam;
-                int lParam = m.LParam.ToInt32();
-                bool alt = (lParam & KF_ALTDOWN) != 0;
-
-                if (vk == VK_F4 && alt)
-                {
-                    _altF4Detected = true;
-                }
-            }
-            else if (m.Msg == WM_SYSCOMMAND && (m.WParam.ToInt32() & 0xFFF0) == SC_CLOSE)
-            {
-                if (_altF4Detected)
-                {
-                    _altF4Detected = false;
-                    ShowHint(LocalizationKeys.Hint_AltF4_CatchedAndIgnored);
-                    return; // blockieren
-                }
-            }
-
-            base.WndProc(ref m);
-        }
-
-        // Hilfsfunktion: Prüfung, ob (evtl.) eine Win-Taste aktiv ist.
-        // In AcceleratorKeyPressed bekommen wir Win i. d. R. gar nicht.
-        private static bool IsWinPressed()
-        {
-            // Minimalprüfung: Abfrage per GetKeyState (links/rechts) – optional.
-            short GetKeyState(int vk) => NativeMethods.GetKeyState(vk);
-            return (GetKeyState(0x5B) < 0) || (GetKeyState(0x5C) < 0); // VK_LWIN, VK_RWIN
-        }
-
-        [Obsolete("LocalizationKeys", true)]
-        private void ShowHint(string text)
-        {
-            try { _tip.Show(text, this, 20, 20, 5000); } catch { /*best effort*/ }
-        }
-
-        private void ShowHint(LocalizationKeys localizedString)
-        {
-            string text = LocalizedString(localizedString);
-            try { _tip.Show(text, this, 20, 20, 5000); } catch { /*best effort*/ }
-        }
-
-        private static class NativeMethods
-        {
-            [System.Runtime.InteropServices.DllImport("user32.dll")]
-            public static extern short GetKeyState(int nVirtKey);
-        }
-
-        public async Task<string?> GetGuacamoleAuthTokenAsync()
-        {
-            var cookieManager = _core!.CookieManager;
-            var cookies = await cookieManager.GetCookiesAsync(this.StartUrl.ToString()).ConfigureAwait(false);
-            foreach (var c in cookies)
-            {
-                Console.WriteLine($"{c.Name} = {c.Value} ; HttpOnly={c.IsHttpOnly} ; Secure={c.IsSecure} ; SameSite={c.SameSite}");
-                if (c.Name == "GUAC_AUTH" || c.Name == "guac.token")
-                {
-                    string token = c.Value;
-                    // token verwenden
-                    return token;
-                }
-            }
-            return null;
-        }
-
+        /// <summary>
+        /// Close window
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void quitToolStripMenuItem_Click(object sender, EventArgs e)
         {
             Close();
         }
 
+        /// <summary>
+        /// Go to guacamole's home screen with overview and start option for available configured remote server connections
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void connectionHomeToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            _core?.Navigate(this.HomeUrl.ToString());
-            RestoreFocusOnWebview2Control();
+            _webview2_core?.Navigate(this.HomeUrl.ToString());
+            SetFocusToWebview2Control();
         }
 
-        private async void testToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-            string json = await TestAsync();
-            MessageBox.Show(this, $"Guacamole Auth Token:\n{json}", "Test", MessageBoxButtons.OK, MessageBoxIcon.Information);
-            var token = await GetGuacamoleAuthTokenAsync();
-            MessageBox.Show(this, $"Guacamole Auth Token:\n{token}", "Test", MessageBoxButtons.OK, MessageBoxIcon.Information);
-        }
-
-        private async Task<string> TestAsync()
-        {
-            var json = await _core!.ExecuteScriptAsync(@"
-(() => JSON.stringify({
-  keys: Object.keys(localStorage),
-  guac_auth: localStorage.getItem('GUAC_AUTH') || null
-}))()");
-            //            MessageBox.Show(this, $"Guacamole Auth Token:\n{json}", "Test", MessageBoxButtons.OK, MessageBoxIcon.Information);
-
-            // Dump aller Keys + GUAC_AUTH anzeigen
-            var script = @"
-(() => {
-  const ls = (typeof localStorage !== 'undefined') ? localStorage : null;
-  const ss = (typeof sessionStorage !== 'undefined') ? sessionStorage : null;
-  const res = {
-    origin: location.origin,
-    path: location.pathname,
-    localKeys: ls ? Object.keys(ls) : [],
-    sessionKeys: ss ? Object.keys(ss) : [],
-    guacLocal: ls ? ls.getItem('GUAC_AUTH') : null,
-    guacSession: ss ? ss.getItem('GUAC_AUTH') : null
-  };
-  return JSON.stringify(res);
-})()";
-            var json2 = await _core!.ExecuteScriptAsync(script);
-            // json ist ein C#-String mit Anführungszeichen – ggf. unescapen/parsen:
-            var payload = System.Text.Json.JsonDocument.Parse(json2.Trim('"').Replace("\\\"", "\""));
-            // -> payload.RootElement.GetProperty("guacLocal").GetString()
-            //            MessageBox.Show(this, $"Guacamole Auth Token:\n{json2}", "Test", MessageBoxButtons.OK, MessageBoxIcon.Information);
-
-            return json2;
-        }
-
+        /// <summary>
+        /// Switch to full screen mode and back to normal window state
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void fullScreenToolStripMenuItem_Click(object sender, EventArgs e)
         {
             SwitchFullScreenMode(!fullScreenToolStripMenuItem.Checked);
         }
 
         private Rectangle _previousBounds;
+        /// <summary>
+        /// Switch to full screen mode and back to normal window state
+        /// </summary>
+        /// <param name="fullScreen"></param>
         private void SwitchFullScreenMode(bool fullScreen)
         {
             if (!fullScreenToolStripMenuItem.Checked && this.WindowState == FormWindowState.Normal)
@@ -770,164 +494,61 @@ namespace GuacamoleClient.WinForms
             this.connectionNameInFullScreenModeToolStripMenuItem.Enabled = false;
             this.connectionNameInFullScreenModeToolStripMenuItem.ForeColor = Color.Black;
             this.connectionNameInFullScreenModeToolStripMenuItem.Font = new Font(this.connectionNameInFullScreenModeToolStripMenuItem.Font, FontStyle.Bold);
-        }
+        } 
 
-        private void MainForm_KeyDown(object? sender, KeyEventArgs e)
-        {
-
-            // Nur KeyDown / SystemKeyDown interessieren
-            if (e.Handled)
-                return;
-            if (this.IsMenuOpen) return;
-
-            // VK-Konstanten
-            const Keys VK_F4 = Keys.F4;
-            const Keys VK_END = Keys.End;
-            const Keys VK_ESC = Keys.Escape;
-            const Keys VK_R = Keys.R;
-            const Keys VK_N = Keys.N;
-            const Keys VK_SCROLL = Keys.Scroll;
-            //const int VK_F4 = 0x73;
-            //const int VK_END = 0x23;
-            //const int VK_ESC = 0x1B;
-            //const int VK_R = 0x52; 
-
-            bool ctrl = (Control.ModifierKeys & Keys.Control) == Keys.Control;
-            bool alt = (Control.ModifierKeys & Keys.Alt) == Keys.Alt;     // AltGr erscheint hier als Ctrl+Alt
-            bool shift = (Control.ModifierKeys & Keys.Shift) == Keys.Shift;
-            bool lwin = (Control.ModifierKeys & Keys.LWin) == Keys.LWin;
-            bool rwin = (Control.ModifierKeys & Keys.RWin) == Keys.RWin;
-            bool win = (lwin || rwin);
-
-            // --- App-Policy: Ctrl+Alt+F4 schließt die App ---
-            if (e.KeyCode == VK_F4 && ctrl && alt)
-            {
-                e.Handled = true;
-                ShowHint(LocalizationKeys.Hint_CtrlAltF4_AppWillBeClosed);
-                _closeTimer.Start();
-                return;
-            }
-
-            // --- Alt+F4 blocken (App bleibt offen) ---
-            if (e.KeyCode == VK_F4 && alt && !ctrl)
-            {
-                e.Handled = true;
-                ShowHint(LocalizationKeys.Hint_AltF4_CatchedAndIgnored);
-                return;
-            }
-
-            // --- Ctrl+F4 durchlassen ---
-            if (e.KeyCode == VK_F4 && ctrl && !alt)
-            {
-                e.Handled = false; // weiter an WebView/Seite
-                return;
-            }
-
-            // --- App-Policy: Ctrl+Alt+Scroll gibt Tastaturfokus frei ---
-            if (e.KeyCode == VK_SCROLL && ctrl && alt)
-            {
-                e.Handled = true;
-                RestoreFocusOnWebview2Control();
-                return;
-            }
-
-            // --- Ctrl+Shift+Esc (lokaler Task-Manager) -> NICHT weiterleitbar ---
-            if (e.KeyCode == VK_ESC && ctrl && shift)
-            {
-                e.Handled = true; // lokal abfangen
-                ShowHint(LocalizationKeys.Hint_CtrlShiftEsc_Catched_NotForwardableToRemoteServer);
-                return;
-            }
-
-            // --- Ctrl+Alt+End: in WebView2/Guacamole typischerweise ohne Wirkung ---
-            if (e.KeyCode == VK_END && ctrl && alt)
-            {
-                // Wir lassen es durch – aber informieren, dass es i. d. R. nichts bewirkt.
-                e.Handled = false;
-                ShowHint(LocalizationKeys.Hint_CtrlAltEnd_WithoutEffect_mstsc);
-                return;
-            }
-
-            // --- Win+R (OS-reserviert) -> abfangen ---
-            // Windows-Taste selbst kommt hier i. d. R. nicht an; falls doch, verhindern wir lokal.
-            if ((IsWinPressed() && e.KeyCode == VK_R))
-            {
-                e.Handled = true;
-                ShowHint(LocalizationKeys.Hint_WinR_Catched_NotForwardableToRemoteServer);
-                return;
-            }
-
-            if (fullScreenToolStripMenuItem.Checked && e.KeyCode == Keys.Cancel && alt && ctrl)
-            {
-                e.Handled = true;
-                SwitchFullScreenMode(false);
-                ShowHint(LocalizationKeys.Hint_CtrlAltBreak_FullscreenModeOff);
-                return;
-            }
-
-            // Restore window state from fullscreen on Strg+Break
-            if (e.KeyCode == Keys.Insert && alt && ctrl)
-            {
-                e.Handled = true;
-                SwitchFullScreenMode(!fullScreenToolStripMenuItem.Checked);
-                if (!fullScreenToolStripMenuItem.Checked)
-                    ShowHint(LocalizationKeys.Hint_CtrlAltIns_FullscreenModeOff);
-                else
-                    ShowHint(LocalizationKeys.Hint_CtrlAltIns_FullscreenModeOn);
-                return;
-            }
-
-            // Go to guacamole home screen
-            if (e.KeyCode == Keys.Home && alt && ctrl)
-            {
-                e.Handled = true;
-                connectionHomeToolStripMenuItem.PerformClick();
-                return;
-            }
-
-            // New window
-            if (e.KeyCode == Keys.N && alt && ctrl)
-            {
-                e.Handled = true;
-                newWindowToolStripMenuItem.PerformClick();
-                return;
-            }
-
-            // Standard: Alles andere mit Ctrl/Alt/Shift/AltGr durchlassen
-            e.Handled = false;
-        }
-
+        /// <summary>
+        /// Stop full screen mode
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void stopFullScreenModeToolStripMenuItem_Click(object sender, EventArgs e)
         {
             this.SwitchFullScreenMode(false);
         }
 
+        /// <summary>
+        /// Open new window with connections configurations page of guacamole
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void guacamoleConnectionConfigurationsToolStripMenuItem_Click(object sender, EventArgs e)
         {
             var form = new MainForm(this.HomeUrl, new Uri(this.GuacamoleConnectionConfigurationsUrl.ToString()));
             form.Show();
         }
 
+        /// <summary>
+        /// Open new window with settings page of guacamole
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void guacamoleUserSettingsToolStripMenuItem_Click(object sender, EventArgs e)
         {
             var form = new MainForm(this.HomeUrl, new Uri(this.GuacamoleSettingsUrl.ToString()));
             form.Show();
         }
 
+        /// <summary>
+        /// Open new window instance
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void newWindowToolStripMenuItem_Click(object sender, EventArgs e)
         {
             var form = new MainForm(this.HomeUrl, this.StartUrl);
             form.Show();
         }
 
-        private void toolStripMenuItem1_Click(object sender, EventArgs e)
-        {
-            UpdateLocationUrl();
-            this.toolStripMenuItem1.Text = DateTime.Now.ToString("HH:mm:ss.fff") + " " + this._core!.DocumentTitle;
-            RefreshFaviconAsync();
-        }
-
+        /// <summary>
+        /// A buffer field for last exception on form title refresh
+        /// </summary>
         private Exception? formTitleRefreshTimer_Tick_Ex = null;
+
+        /// <summary>
+        /// Periodically refresh form's title bar to reflect latest document (address) information
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void formTitleRefreshTimer_Tick(object sender, EventArgs e)
         {
             const int postNavMinInterval = 250;
@@ -959,129 +580,107 @@ namespace GuacamoleClient.WinForms
                     //ignore repeated exceptions
                 }
             }
-        }
+        }         
 
         /// <summary>
-        /// Specifies the keys used to identify localized strings for user interface hints, tips, and warnings.
+        /// Immediately update form title on mouse click
         /// </summary>
-        /// <remarks>These keys are typically used to retrieve localized messages related to keyboard
-        /// shortcuts, application behavior, and user guidance. The enumeration values correspond to specific scenarios
-        /// where user feedback or instructions may be displayed in the application.</remarks>
-        private enum LocalizationKeys
-        {
-            Hint_CtrlAltF4_AppWillBeClosed,
-            Hint_AltF4_CatchedAndIgnored,
-            Hint_WinR_Catched_NotForwardableToRemoteServer,
-            Hint_CtrlAltBreak_FullscreenModeOff,
-            Hint_CtrlAltIns_FullscreenModeOff,
-            Hint_CtrlAltIns_FullscreenModeOn,
-            Hint_CtrlShiftEsc_Catched_NotForwardableToRemoteServer,
-            /// <summary>
-            /// Gets the hint message indicating that pressing Ctrl+Alt+End has no effect in Remote Desktop sessions
-            /// (well-known keyboard shortcut from mstsc).
-            /// </summary>
-            Hint_CtrlAltEnd_WithoutEffect_mstsc,
-            FocussedAnotherControlWarning,
-            /// <summary>
-            /// Gets a tooltip string that instructs the user to stop keyboard grabbing in the Guacamole window using
-            /// the Ctrl+Alt+Scroll shortcut.
-            /// </summary>
-            Tip_CtrlAltScroll_StopKeyboardGrabbingOfGuacamoleWindow,
-            /// <summary>
-            /// Gets a tooltip string that instructs the user to startkeyboard grabbing in the Guacamole window using
-            /// the Ctrl+Alt+Scroll shortcut.
-            /// </summary>
-            Tip_CtrlAltScroll_StartKeyboardGrabbingOfGuacamoleWindow,
-        }
-
-        /// <summary>
-        /// Retrieves the localized string corresponding to the specified localization key for the current user
-        /// interface culture.
-        /// </summary>
-        /// <remarks>This method supports localization for multiple languages. If the current UI culture
-        /// is not supported, a default fallback string is provided. The method is intended for internal use to
-        /// centralize localization logic.</remarks>
-        /// <param name="key">The key that identifies the string to be localized.</param>
-        /// <returns>A localized string for the specified key, based on the current UI culture. If a localized value is not
-        /// available for the current culture, a fallback string is returned.</returns>
-        private static string LocalizedString(LocalizationKeys key)
-        {
-            if (System.Diagnostics.Debugger.IsAttached)
-                LocalizedFallbackString(key); //just call it once to ensure all fallback values are implemented
-
-            // German localization 
-            if (System.Globalization.CultureInfo.CurrentUICulture.TwoLetterISOLanguageName == "de")
-            {
-                switch (key)
-                {
-                    case LocalizationKeys.Hint_CtrlAltF4_AppWillBeClosed:
-                        return "Strg+Alt+F4: Anwendung wird geschlossen…";
-                    case LocalizationKeys.Hint_AltF4_CatchedAndIgnored:
-                        return "Alt+F4 wurde abgefangen (App bleibt offen).";
-                    case LocalizationKeys.Hint_CtrlShiftEsc_Catched_NotForwardableToRemoteServer:
-                        return "Strg+Umschalt+Esc wurde abgefangen (lokaler Task-Manager). Nicht an Remote weiterleitbar. Tipp: In Guacamole-Menü „Strg+Alt+Entf“ nutzen.";
-                    case LocalizationKeys.Hint_CtrlAltEnd_WithoutEffect_mstsc:
-                        return "Hinweis: Strg+Alt+Ende hat in diesem Setup üblicherweise keine Wirkung (mstsc-Sonderfall).";
-                    case LocalizationKeys.Hint_WinR_Catched_NotForwardableToRemoteServer:
-                        return "WIN+R wurde abgefangen. Nicht an Remote weiterleitbar. Workaround: Strg+Esc drücken und dort „Ausführen“ suchen.";
-                    case LocalizationKeys.Hint_CtrlAltBreak_FullscreenModeOff:
-                        return "Hinweis: Strg+Alt+Untbr >> Full Screen wurde deaktiviert";
-                    case LocalizationKeys.Hint_CtrlAltIns_FullscreenModeOff:
-                        return "Hinweis: Strg+Alt+Einfügen >> Full Screen wurde deaktiviert";
-                    case LocalizationKeys.Hint_CtrlAltIns_FullscreenModeOn:
-                        return "Hinweis: Strg+Alt+Einfügen >> Full Screen wurde aktiviert";
-                    case LocalizationKeys.Tip_CtrlAltScroll_StopKeyboardGrabbingOfGuacamoleWindow:
-                        return "Strg+Alt+Rollen zum Tastaturfokus freigeben";
-                    case LocalizationKeys.Tip_CtrlAltScroll_StartKeyboardGrabbingOfGuacamoleWindow:
-                        return "Strg+Alt+Rollen zum Tastaturfokus einfangen";
-                    case LocalizationKeys.FocussedAnotherControlWarning:
-                        return "ACHTUNG: Eingabe-Fokus liegt aktuell bei ";
-                }
-            }
-
-            return LocalizedFallbackString(key);
-        }
-
-        /// <summary>
-        /// Localized English fallback strings for known application hints and tips.
-        /// </summary>
-        /// <param name="key">The localization key that identifies the message to retrieve.</param>
-        /// <returns>A localized string associated with the specified key.</returns>
-        /// <exception cref="NotImplementedException">Thrown if the specified key does not have a corresponding localized string defined.</exception>
-        private static string LocalizedFallbackString(LocalizationKeys key)
-        {
-            switch (key)
-            {
-                case LocalizationKeys.Hint_CtrlAltF4_AppWillBeClosed:
-                    return "Ctrl+Alt+F4: Application will be closed…";
-                case LocalizationKeys.Hint_AltF4_CatchedAndIgnored:
-                    return "Alt+F4 catched (app stays open).";
-                case LocalizationKeys.Hint_CtrlShiftEsc_Catched_NotForwardableToRemoteServer:
-                    return "Ctrl+SHIFT+Esc catched (local Task-Manager). Not forwardable to remote. Hint: use \"Ctrl+Alt+Del\" in Guacamole menu.";
-                case LocalizationKeys.Hint_CtrlAltEnd_WithoutEffect_mstsc:
-                    return "Hinweis: Ctrl+Alt+End usually without effect in this environment (special behaviour of mstsc).";
-                case LocalizationKeys.Hint_WinR_Catched_NotForwardableToRemoteServer:
-                    return "WIN+R catched. Not forwardable to remote. Workaround: press Ctrl+Esc and search for \"Run\".";
-                case LocalizationKeys.Hint_CtrlAltBreak_FullscreenModeOff:
-                    return "Hinweis: Ctrl+Alt+Break >> Full Screen has been disabled";
-                case LocalizationKeys.Hint_CtrlAltIns_FullscreenModeOff:
-                    return "Hinweis: Ctrl+Alt+Insert >> Full Screen has been disabled";
-                case LocalizationKeys.Hint_CtrlAltIns_FullscreenModeOn:
-                    return "Hinweis: Ctrl+Alt+Insert >> Full Screen has been enabled";
-                case LocalizationKeys.Tip_CtrlAltScroll_StopKeyboardGrabbingOfGuacamoleWindow:
-                    return "Ctrl+Alt+Scroll to release keyboard focus";
-                case LocalizationKeys.Tip_CtrlAltScroll_StartKeyboardGrabbingOfGuacamoleWindow:
-                    return "Ctrl+Alt+Scroll to capture keyboard focus";
-                case LocalizationKeys.FocussedAnotherControlWarning:
-                    return "ATTENTION: input focus currently at control ";
-                default:
-                    throw new NotImplementedException("Localization key not implemented: " + key.ToString());
-            }
-        }
-
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void MainForm_MouseClick(object sender, MouseEventArgs e)
         {
             UpdateLocationUrl();
         }
+
+        #region Debug helpers and code for testing and development
+
+        /// <summary>
+        /// A control's name
+        /// </summary>
+        /// <param name="c"></param>
+        /// <returns></returns>
+        private string ControlName(Control c)
+        {
+            if (c == null)
+                return "{null}";
+            else if (String.IsNullOrEmpty(c.Name))
+                return "{empty}";
+            else
+                return c.Name;
+        }
+
+        /// <summary>
+        /// Show cached login session details or other valuable keys to analyse how to check of is-logged-on-state
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private async void testToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            string json = await CaptureGuacamoleSessionAndStorageKeysAsync();
+            MessageBox.Show(this, $"Guacamole Auth Token - chance 1:\n{json}", "Test", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            var token = await GetGuacamoleAuthTokenAsync();
+            MessageBox.Show(this, $"Guacamole Auth Token - chance 2:\n{token}", "Test", MessageBoxButtons.OK, MessageBoxIcon.Information);
+        }
+
+        /// <summary>
+        /// Capture cached login session details or other valuable keys to analyse how to check of is-logged-on-state
+        /// </summary>
+        /// <returns></returns>
+        private async Task<string> CaptureGuacamoleSessionAndStorageKeysAsync()
+        {
+            var json = await _webview2_core!.ExecuteScriptAsync(@"
+(() => JSON.stringify({
+  keys: Object.keys(localStorage),
+  guac_auth: localStorage.getItem('GUAC_AUTH') || null
+}))()");
+            //            MessageBox.Show(this, $"Guacamole Auth Token:\n{json}", "Test", MessageBoxButtons.OK, MessageBoxIcon.Information);
+
+            // Dump aller Keys + GUAC_AUTH anzeigen
+            var script = @"
+(() => {
+  const ls = (typeof localStorage !== 'undefined') ? localStorage : null;
+  const ss = (typeof sessionStorage !== 'undefined') ? sessionStorage : null;
+  const res = {
+    origin: location.origin,
+    path: location.pathname,
+    localKeys: ls ? Object.keys(ls) : [],
+    sessionKeys: ss ? Object.keys(ss) : [],
+    guacLocal: ls ? ls.getItem('GUAC_AUTH') : null,
+    guacSession: ss ? ss.getItem('GUAC_AUTH') : null
+  };
+  return JSON.stringify(res);
+})()";
+            var json2 = await _webview2_core!.ExecuteScriptAsync(script);
+            // json ist ein C#-String mit Anführungszeichen – ggf. unescapen/parsen:
+            var payload = System.Text.Json.JsonDocument.Parse(json2.Trim('"').Replace("\\\"", "\""));
+            // -> payload.RootElement.GetProperty("guacLocal").GetString()
+            //            MessageBox.Show(this, $"Guacamole Auth Token:\n{json2}", "Test", MessageBoxButtons.OK, MessageBoxIcon.Information);
+
+            return json2;
+        }
+
+        /// <summary>
+        /// Capture the auth token of guacamole session to analyse how to check of is-logged-on-state
+        /// </summary>
+        /// <returns></returns>
+        public async Task<string?> GetGuacamoleAuthTokenAsync()
+        {
+            var cookieManager = _webview2_core!.CookieManager;
+            var cookies = await cookieManager.GetCookiesAsync(this.StartUrl.ToString()).ConfigureAwait(false);
+            foreach (var c in cookies)
+            {
+                Console.WriteLine($"{c.Name} = {c.Value} ; HttpOnly={c.IsHttpOnly} ; Secure={c.IsSecure} ; SameSite={c.SameSite}");
+                if (c.Name == "GUAC_AUTH" || c.Name == "guac.token")
+                {
+                    string token = c.Value;
+                    // token verwenden
+                    return token;
+                }
+            }
+            return null;
+        }
+
+
+        #endregion
     }
 }
