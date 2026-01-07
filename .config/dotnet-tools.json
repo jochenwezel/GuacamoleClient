@@ -1,0 +1,13 @@
+{
+  "version": 1,
+  "isRoot": true,
+  "tools": {
+    "microsoft.dotnet.mage": {
+      "version": "10.0.0",
+      "commands": [
+        "dotnet-mage"
+      ],
+      "rollForward": false
+    }
+  }
+}
