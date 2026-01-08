@@ -59,6 +59,9 @@ jobs:
         run: |
           dotnet tool list
           dotnet tool list -g
+          dotnet --list-sdks
+          dotnet --list-runtimes
+
 
       - name: Restore
         run: dotnet restore GuacamoleClient-WinForms/GuacamoleClient-WinForms.csproj
