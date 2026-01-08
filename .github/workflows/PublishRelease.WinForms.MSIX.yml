@@ -1,0 +1,97 @@
+﻿name: PublishRelease - WinForms MSIX
+
+# PLEASE NOTE: PUBLISHING/DEPLOYMENT
+#   * Release is to be created manually at GitHub releases management page
+#     * release name usually contains "1.2.3.4" (also supported: "v1.2.3.4")
+#   * After creating a GitHub release, following actions will automatically run:
+#     * Attaching of compiled binaries to GitHub release
+
+on:
+  release:
+    types: [created]
+  workflow_dispatch:
+
+permissions:
+  contents: write # nötig fürs Anhängen von Assets an ein Release
+
+env:
+  BUILD_CONFIGURATION: Release
+
+jobs:
+  winforms-msix:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+
+      # MSIX / Desktop Bridge benötigt Visual Studio MSBuild
+      - name: Setup MSBuild (Visual Studio)
+        uses: microsoft/setup-msbuild@v2
+
+      - name: Resolve version
+        shell: bash
+        run: |
+          RAW_TAG="${{ github.event.release.tag_name || github.ref_name }}"
+          if [[ -z "$RAW_TAG" ]]; then
+            VER="0.0.0.1"
+          else
+            VER="${RAW_TAG#v}"
+          fi
+          echo "VERSION=$VER" >> "$GITHUB_ENV"
+          echo "Resolved VERSION=$VER"
+
+      - name: Restore WinForms project
+        run: dotnet restore GuacamoleClient-WinForms/GuacamoleClient-WinForms.csproj
+
+      - name: Build WinForms (prerequisite)
+        run: >
+          dotnet build GuacamoleClient-WinForms/GuacamoleClient-WinForms.csproj
+          --configuration ${{ env.BUILD_CONFIGURATION }}
+          --no-restore
+          -p:Version=${{ env.VERSION }}
+          -p:FileVersion=${{ env.VERSION }}
+          -p:AssemblyVersion=${{ env.VERSION }}
+          -p:InformationalVersion=${{ env.VERSION }}
+
+      - name: Build MSIX packaging project (MSBuild)
+        shell: pwsh
+        run: |
+          $wapproj = Join-Path $env:GITHUB_WORKSPACE "WinAppPackagingMsixGuacamoleClientWinForms\WinAppPackagingMsixGuacamoleClientWinForms.wapproj"
+          if (-not (Test-Path $wapproj)) { throw "wapproj not found: $wapproj" }
+
+          msbuild $wapproj `
+            /p:Configuration=${{ env.BUILD_CONFIGURATION }} `
+            /p:Version=${{ env.VERSION }} `
+            /p:FileVersion=${{ env.VERSION }} `
+            /p:AssemblyVersion=${{ env.VERSION }} `
+            /p:InformationalVersion=${{ env.VERSION }}
+
+      - name: Locate MSIX/AppX package and copy to workspace root
+        shell: pwsh
+        run: |
+          $root = Join-Path $env:GITHUB_WORKSPACE "WinAppPackagingMsixGuacamoleClientWinForms"
+          $pkg = Get-ChildItem -Path $root -Recurse -File -Include *.msix,*.appx |
+            Sort-Object LastWriteTime -Descending |
+            Select-Object -First 1
+
+          if (-not $pkg) { throw "No MSIX/AppX file found under $root" }
+
+          $targetName = "GuacamoleClient-WinForms-msix-$($env:VERSION)$($pkg.Extension)"
+          $dst = Join-Path $env:GITHUB_WORKSPACE $targetName
+          Copy-Item $pkg.FullName $dst -Force
+          "MSIX_FILE=$targetName" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+
+      - name: Publish MSIX to the release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            ${{ env.MSIX_FILE }}
+          tag_name: ${{ github.event.release.tag_name || github.ref_name }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

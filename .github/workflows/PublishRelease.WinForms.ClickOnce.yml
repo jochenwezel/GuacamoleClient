@@ -1,0 +1,93 @@
+﻿name: PublishRelease - WinForms ClickOnce (staging)
+
+# PLEASE NOTE: PUBLISHING/DEPLOYMENT
+#   * Release is to be created manually at GitHub releases management page
+#     * release name usually contains "1.2.3.4" (also supported: "v1.2.3.4")
+#   * After creating a GitHub release, following actions will automatically run:
+#     * Attaching of compiled binaries to GitHub release
+
+on:
+  release:
+    types: [created]
+  workflow_dispatch:
+
+permissions:
+  contents: write # nötig fürs Anhängen von Assets an ein Release
+
+env:
+  BUILD_CONFIGURATION: Release
+  CLICKONCE_OUTDIR: artifacts/clickonce/win-x64
+
+jobs:
+  winforms-clickonce:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+
+      - name: Resolve version
+        shell: bash
+        run: |
+          RAW_TAG="${{ github.event.release.tag_name || github.ref_name }}"
+          if [[ -z "$RAW_TAG" ]]; then
+            VER="0.0.0.1"
+          else
+            VER="${RAW_TAG#v}"
+          fi
+          echo "VERSION=$VER" >> "$GITHUB_ENV"
+          echo "Resolved VERSION=$VER"
+
+      - name: Restore Tools
+        run: dotnet tool restore
+
+      - name: Restore
+        run: dotnet restore GuacamoleClient-WinForms/GuacamoleClient-WinForms.csproj
+
+      - name: Publish app payload (input for ClickOnce packaging)
+        shell: pwsh
+        run: |
+          $out = Join-Path $env:GITHUB_WORKSPACE "${{ env.CLICKONCE_OUTDIR }}"
+          New-Item -ItemType Directory -Force -Path $out | Out-Null
+
+          dotnet publish .\GuacamoleClient-WinForms\GuacamoleClient-WinForms.csproj `
+            -c ${{ env.BUILD_CONFIGURATION }} `
+            -r win-x64 `
+            --self-contained false `
+            -o $out `
+            -p:Version=${{ env.VERSION }} `
+            -p:FileVersion=${{ env.VERSION }} `
+            -p:AssemblyVersion=${{ env.VERSION }} `
+            -p:InformationalVersion=${{ env.VERSION }}
+
+      # NOTE: ClickOnce packaging via dotnet.mage comes in the next milestone (MS3).
+      # Here we only stage the published payload and upload it as artifact/release asset.
+
+      - name: Upload artifact (ClickOnce staging payload)
+        uses: actions/upload-artifact@v4
+        with:
+          name: GuacamoleClient-WinForms_clickonce-staging_win-x64_${{ env.VERSION }}
+          path: ${{ env.CLICKONCE_OUTDIR }}/**
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Pack ClickOnce staging payload
+        shell: pwsh
+        run: |
+          $src = Join-Path $env:GITHUB_WORKSPACE "${{ env.CLICKONCE_OUTDIR }}\*"
+          $dst = Join-Path $env:GITHUB_WORKSPACE "bin-winforms-clickonce-staging-${{ env.VERSION }}.zip"
+          Compress-Archive -Path $src -DestinationPath $dst -Force
+
+      - name: Publish staging payload to the release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            bin-winforms-clickonce-staging-${{ env.VERSION }}.zip
+          tag_name: ${{ github.event.release.tag_name || github.ref_name }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

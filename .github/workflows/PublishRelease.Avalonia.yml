@@ -1,0 +1,159 @@
+﻿name: PublishRelease - Avalonia
+
+# PLEASE NOTE: PUBLISHING/DEPLOYMENT
+#   * Release is to be created manually at GitHub releases management page
+#     * release name usually contains "1.2.3.4" (also supported: "v1.2.3.4")
+#   * After creating a GitHub release, following actions will automatically run:
+#     * Attaching of compiled binaries to GitHub release
+
+on:
+  release:
+    types: [created]
+  workflow_dispatch:
+
+permissions:
+  contents: write # nötig fürs Anhängen von Assets an ein Release
+
+env:
+  BUILD_CONFIGURATION: Release
+
+jobs:
+  avalonia:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            os_id: windows
+          - os: ubuntu-latest
+            os_id: linux
+          - os: macos-latest
+            os_id: macos
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+
+      - name: Resolve version
+        shell: bash
+        run: |
+          RAW_TAG="${{ github.event.release.tag_name || github.ref_name }}"
+          if [[ -z "$RAW_TAG" ]]; then
+            VER="0.0.0.1"
+          else
+            VER="${RAW_TAG#v}"
+          fi
+          echo "VERSION=$VER" >> "$GITHUB_ENV"
+          echo "OS_NAME=${{ matrix.os_id }}" >> "$GITHUB_ENV"
+          echo "Resolved VERSION=$VER"
+
+      - name: Restore Tools
+        run: dotnet tool restore
+
+      - name: Restore
+        run: dotnet restore GuacamoleClient-Avalonia/GuacamoleClient-Avalonia.csproj
+
+      - name: Build Avalonia (Windows/Linux)
+        if: runner.os != 'macOS'
+        run: >
+          dotnet build GuacamoleClient-Avalonia/GuacamoleClient-Avalonia.csproj
+          --configuration ${{ env.BUILD_CONFIGURATION }}
+          --no-restore
+          -p:Version=${{ env.VERSION }}
+          -p:FileVersion=${{ env.VERSION }}
+          -p:AssemblyVersion=${{ env.VERSION }}
+          -p:InformationalVersion=${{ env.VERSION }}
+
+      - name: Publish Avalonia (macOS ARM64)
+        if: runner.os == 'macOS'
+        run: >
+          dotnet publish GuacamoleClient-Avalonia/GuacamoleClient-Avalonia.csproj
+          -c ${{ env.BUILD_CONFIGURATION }}
+          -r osx-arm64
+          --self-contained false
+          /p:PublishSingleFile=false
+          /p:IncludeNativeLibrariesForSelfExtract=false
+          -p:Version=${{ env.VERSION }}
+          -p:FileVersion=${{ env.VERSION }}
+          -p:AssemblyVersion=${{ env.VERSION }}
+          -p:InformationalVersion=${{ env.VERSION }}
+
+      - name: Publish Avalonia (macOS Intel x64)
+        if: runner.os == 'macOS'
+        run: >
+          dotnet publish GuacamoleClient-Avalonia/GuacamoleClient-Avalonia.csproj
+          -c ${{ env.BUILD_CONFIGURATION }}
+          -r osx-x64
+          --self-contained false
+          /p:PublishSingleFile=false
+          /p:IncludeNativeLibrariesForSelfExtract=false
+          -p:Version=${{ env.VERSION }}
+          -p:FileVersion=${{ env.VERSION }}
+          -p:AssemblyVersion=${{ env.VERSION }}
+          -p:InformationalVersion=${{ env.VERSION }}
+
+      - name: Pack binaries - Avalonia (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $src = Join-Path $env:GITHUB_WORKSPACE "GuacamoleClient-Avalonia\bin\${{ env.BUILD_CONFIGURATION }}\net8.0\*"
+          $dst = Join-Path $env:GITHUB_WORKSPACE "bin-avalonia-${{ env.OS_NAME }}-${{ env.VERSION }}.zip"
+          Compress-Archive -Path $src -DestinationPath $dst -Force
+
+      - name: Pack binaries - Avalonia (Linux)
+        if: runner.os == 'Linux'
+        shell: bash
+        run: |
+          (cd "GuacamoleClient-Avalonia/bin/${{ env.BUILD_CONFIGURATION }}/net8.0" && \
+           zip "$GITHUB_WORKSPACE/bin-avalonia-${{ env.OS_NAME }}-${{ env.VERSION }}.zip" -r .)
+
+      - name: Pack binaries - Avalonia - macOS ARM64
+        if: runner.os == 'macOS'
+        shell: bash
+        run: |
+          (cd "GuacamoleClient-Avalonia/bin/${{ env.BUILD_CONFIGURATION }}/net8.0/osx-arm64/publish" && \
+           zip "$GITHUB_WORKSPACE/bin-avalonia-osx-arm64-${{ env.VERSION }}.zip" -r .)
+
+      - name: Pack binaries - Avalonia - macOS Intel x64
+        if: runner.os == 'macOS'
+        shell: bash
+        run: |
+          (cd "GuacamoleClient-Avalonia/bin/${{ env.BUILD_CONFIGURATION }}/net8.0/osx-x64/publish" && \
+           zip "$GITHUB_WORKSPACE/bin-avalonia-osx-x64-${{ env.VERSION }}.zip" -r .)
+
+      - name: Publish binaries to the release (Windows)
+        if: runner.os == 'Windows'
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            bin-avalonia-${{ env.OS_NAME }}-${{ env.VERSION }}.zip
+          tag_name: ${{ github.event.release.tag_name || github.ref_name }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Publish binaries to the release (Linux)
+        if: runner.os == 'Linux'
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            bin-avalonia-${{ env.OS_NAME }}-${{ env.VERSION }}.zip
+          tag_name: ${{ github.event.release.tag_name || github.ref_name }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Publish binaries to the release (macOS)
+        if: runner.os == 'macOS'
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            bin-avalonia-osx-arm64-${{ env.VERSION }}.zip
+            bin-avalonia-osx-x64-${{ env.VERSION }}.zip
+          tag_name: ${{ github.event.release.tag_name || github.ref_name }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
