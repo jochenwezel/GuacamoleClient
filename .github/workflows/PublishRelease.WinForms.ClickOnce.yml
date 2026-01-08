@@ -105,8 +105,7 @@ jobs:
             -Version "${{ env.VERSION }}" `
             -FromDirectory "$out" `
             -ToFile "$appManifest" `
-            -Processor msil `
-            -TrustLevel FullTrust
+            -Processor msil
 
           if (-not (Test-Path $appManifest)) { throw "Application manifest not created: $appManifest" }
 
