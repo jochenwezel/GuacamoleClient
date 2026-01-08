@@ -1,4 +1,4 @@
-﻿name: Publish/Upload dotnet package on release
+﻿name: PublishRelease - Avalonia
 
 # PLEASE NOTE: PUBLISHING/DEPLOYMENT
 #   * Release is to be created manually at GitHub releases management page
@@ -16,17 +16,10 @@ permissions:
 
 env:
   BUILD_CONFIGURATION: Release
-  BUILD_OUTPUT_BASEDIR1: GuacamoleClient-WinForms/bin/Debug/net8.0-windows
-  BUILD_OUTPUT_BASEDIR2: GuacamoleClient-Avalonia/bin/Debug/net8.0
-  BUILD_OUTPUT_BASEDIR3: GuacamoleClient-Avalonia/bin/Debug/net8.0/osx-arm64/publish
-  # Wurzelordner für das MSIX-Packaging-Projekt
-  MSIX_SEARCH_ROOT: WinAppPackagingMsixGuacamoleClientWinForms
-  ENABLE_MSSTORE_PUBLISH: false
 
 jobs:
-  publish:
+  avalonia:
     runs-on: ${{ matrix.os }}
-
     strategy:
       fail-fast: false
       matrix:
@@ -47,23 +40,29 @@ jobs:
         with:
           dotnet-version: 8.0.x
 
-      - name: Extract version from release tag
+      - name: Resolve version
         shell: bash
         run: |
           RAW_TAG="${{ github.event.release.tag_name || github.ref_name }}"
-          VER="${RAW_TAG#v}"              # führendes "v" abschneiden, falls vorhanden
+          if [[ -z "$RAW_TAG" ]]; then
+            VER="0.0.0.1"
+          else
+            VER="${RAW_TAG#v}"
+          fi
           echo "VERSION=$VER" >> "$GITHUB_ENV"
-          echo "Resolved VERSION=$VER"
           echo "OS_NAME=${{ matrix.os_id }}" >> "$GITHUB_ENV"
+          echo "Resolved VERSION=$VER"
+
+      - name: Restore Tools
+        run: dotnet tool restore
 
       - name: Restore
-        run: dotnet restore
+        run: dotnet restore GuacamoleClient-Avalonia/GuacamoleClient-Avalonia.csproj
 
-      # Linux + Windows: komplette Solution inkl. MSIX-Projekt bauen
-      - name: Build (WinForms + Avalonia) (Linux + Windows)
+      - name: Build Avalonia (Windows/Linux)
         if: runner.os != 'macOS'
         run: >
-          dotnet build GuacamoleClient.sln
+          dotnet build GuacamoleClient-Avalonia/GuacamoleClient-Avalonia.csproj
           --configuration ${{ env.BUILD_CONFIGURATION }}
           --no-restore
           -p:Version=${{ env.VERSION }}
@@ -71,12 +70,11 @@ jobs:
           -p:AssemblyVersion=${{ env.VERSION }}
           -p:InformationalVersion=${{ env.VERSION }}
 
-      # macOS: nur Avalonia, dafür RID-Publish
       - name: Publish Avalonia (macOS ARM64)
         if: runner.os == 'macOS'
         run: >
           dotnet publish GuacamoleClient-Avalonia/GuacamoleClient-Avalonia.csproj
-          -c Debug
+          -c ${{ env.BUILD_CONFIGURATION }}
           -r osx-arm64
           --self-contained false
           /p:PublishSingleFile=false
@@ -90,7 +88,7 @@ jobs:
         if: runner.os == 'macOS'
         run: >
           dotnet publish GuacamoleClient-Avalonia/GuacamoleClient-Avalonia.csproj
-          -c Debug
+          -c ${{ env.BUILD_CONFIGURATION }}
           -r osx-x64
           --self-contained false
           /p:PublishSingleFile=false
@@ -100,75 +98,41 @@ jobs:
           -p:AssemblyVersion=${{ env.VERSION }}
           -p:InformationalVersion=${{ env.VERSION }}
 
-      # ZIPs bauen (Windows / Linux / macOS) – wie bisher
-      - name: Pack binaries - WinForms (Windows)
-        if: runner.os == 'Windows'
-        shell: pwsh
-        run: |
-          $src = Join-Path $env:BUILD_OUTPUT_BASEDIR1 '*'
-          $dst = Join-Path $env:GITHUB_WORKSPACE "bin-winforms-$($env:VERSION).zip"
-          Compress-Archive -Path $src -DestinationPath $dst -Force
-
       - name: Pack binaries - Avalonia (Windows)
         if: runner.os == 'Windows'
         shell: pwsh
         run: |
-          $src = Join-Path $env:BUILD_OUTPUT_BASEDIR2 '*'
-          $dst = Join-Path $env:GITHUB_WORKSPACE "bin-avalonia-$($env:OS_NAME)-$($env:VERSION).zip"
+          $src = Join-Path $env:GITHUB_WORKSPACE "GuacamoleClient-Avalonia\bin\${{ env.BUILD_CONFIGURATION }}\net8.0\*"
+          $dst = Join-Path $env:GITHUB_WORKSPACE "bin-avalonia-${{ env.OS_NAME }}-${{ env.VERSION }}.zip"
           Compress-Archive -Path $src -DestinationPath $dst -Force
 
       - name: Pack binaries - Avalonia (Linux)
         if: runner.os == 'Linux'
+        shell: bash
         run: |
-          (cd "${{ env.BUILD_OUTPUT_BASEDIR2 }}" && \
+          (cd "GuacamoleClient-Avalonia/bin/${{ env.BUILD_CONFIGURATION }}/net8.0" && \
            zip "$GITHUB_WORKSPACE/bin-avalonia-${{ env.OS_NAME }}-${{ env.VERSION }}.zip" -r .)
 
-      - name: Pack binaries - Avalonia - MacOS ARM64
+      - name: Pack binaries - Avalonia - macOS ARM64
         if: runner.os == 'macOS'
+        shell: bash
         run: |
-          (cd "$BUILD_OUTPUT_BASEDIR3" && \
+          (cd "GuacamoleClient-Avalonia/bin/${{ env.BUILD_CONFIGURATION }}/net8.0/osx-arm64/publish" && \
            zip "$GITHUB_WORKSPACE/bin-avalonia-osx-arm64-${{ env.VERSION }}.zip" -r .)
 
-      - name: Pack binaries - Avalonia - MacOS Intel x64
+      - name: Pack binaries - Avalonia - macOS Intel x64
         if: runner.os == 'macOS'
+        shell: bash
         run: |
-          (cd "$BUILD_OUTPUT_BASEDIR3" && \
+          (cd "GuacamoleClient-Avalonia/bin/${{ env.BUILD_CONFIGURATION }}/net8.0/osx-x64/publish" && \
            zip "$GITHUB_WORKSPACE/bin-avalonia-osx-x64-${{ env.VERSION }}.zip" -r .)
 
-      # NEU: MSIX / AppX Paket einsammeln (nur Windows-Job)
-      - name: Collect MSIX package (Windows)
-        if: runner.os == 'Windows'
-        shell: pwsh
-        run: |
-          $searchRoot = Join-Path $env:GITHUB_WORKSPACE $env:MSIX_SEARCH_ROOT
-          Write-Host "Searching for MSIX/AppX artifacts under $searchRoot"
-
-          $msix = Get-ChildItem -Path $searchRoot -Recurse `
-                    -Include *.msix,*.msixbundle,*.msixupload,*.appx,*.appxbundle,*.appxupload `
-                    | Select-Object -First 1
-
-          if (-not $msix) {
-            Write-Error "No MSIX/AppX package found under $searchRoot"
-          }
-
-          $targetName = "GuacamoleClient-WinForms-msix-$($env:VERSION)$($msix.Extension)"
-          $dst = Join-Path $env:GITHUB_WORKSPACE $targetName
-
-          Copy-Item $msix.FullName $dst -Force
-          Write-Host "MSIX/AppX package copied to $dst"
-
-          # Name für nachfolgende Steps im Environment hinterlegen
-          "MSIX_FILE=$targetName" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
-
-      # Assets an Release anhängen
       - name: Publish binaries to the release (Windows)
         if: runner.os == 'Windows'
         uses: softprops/action-gh-release@v2
         with:
           files: |
-            bin-winforms-${{ env.VERSION }}.zip
             bin-avalonia-${{ env.OS_NAME }}-${{ env.VERSION }}.zip
-            ${{ env.MSIX_FILE }}
           tag_name: ${{ github.event.release.tag_name || github.ref_name }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -193,33 +157,3 @@ jobs:
           tag_name: ${{ github.event.release.tag_name || github.ref_name }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      # Microsoft Store Developer CLI installieren (offizielle Action von Microsoft)
-      - name: Setup Microsoft Store CLI
-        if: runner.os == 'Windows' && env.ENABLE_MSSTORE_PUBLISH == 'true'
-        uses: microsoft/microsoft-store-apppublisher@v1.1
-
-      # CLI mit Ihren Partner-Center-Credentials konfigurieren (aus GitHub-Secrets)
-      - name: Configure Microsoft Store CLI
-        if: runner.os == 'Windows' && env.ENABLE_MSSTORE_PUBLISH == 'true'
-        shell: pwsh
-        run: |
-          msstore reconfigure `
-            --tenantId    "${{ secrets.PARTNER_CENTER_TENANT_ID }}" `
-            --sellerId    "${{ secrets.PARTNER_CENTER_SELLER_ID }}" `
-            --clientId    "${{ secrets.PARTNER_CENTER_CLIENT_ID }}" `
-            --clientSecret "${{ secrets.PARTNER_CENTER_CLIENT_SECRET }}"
-
-      # MSIX-Paket über die CLI an den Microsoft Store übergeben
-      - name: Publish MSIX to Microsoft Store
-        if: runner.os == 'Windows' && env.ENABLE_MSSTORE_PUBLISH == 'true'
-        shell: pwsh
-        run: |
-          $workspace = $env:GITHUB_WORKSPACE
-          $packagePath = Join-Path $workspace $env:MSIX_FILE
-
-          Write-Host "Publishing MSIX package $packagePath to Microsoft Store..."
-
-          # Falls Sie 'msstore init' im Repo ausgeführt und committed haben,
-          # reicht der Projektpfad als erstes Argument.
-          msstore publish $workspace -i "$packagePath"

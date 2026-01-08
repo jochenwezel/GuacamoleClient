@@ -1,0 +1,109 @@
+﻿name: PublishRelease - WinForms Other Variants
+
+# PLEASE NOTE: PUBLISHING/DEPLOYMENT
+#   * Release is to be created manually at GitHub releases management page
+#     * release name usually contains "1.2.3.4" (also supported: "v1.2.3.4")
+#   * After creating a GitHub release, following actions will automatically run:
+#     * Attaching of compiled binaries to GitHub release
+
+on:
+  release:
+    types: [created]
+  workflow_dispatch:
+
+permissions:
+  contents: write # nötig fürs Anhängen von Assets an ein Release
+
+env:
+  BUILD_CONFIGURATION: Release
+  OUT_FRAMEWORK: artifacts/publish/winforms/framework/win-x64
+  OUT_PORTABLE: artifacts/publish/winforms/portable/win-x64
+
+jobs:
+  winforms-other:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+
+      - name: Resolve version
+        shell: bash
+        run: |
+          RAW_TAG="${{ github.event.release.tag_name || github.ref_name }}"
+          if [[ -z "$RAW_TAG" ]]; then
+            VER="0.0.0.1"
+          else
+            VER="${RAW_TAG#v}"
+          fi
+          echo "VERSION=$VER" >> "$GITHUB_ENV"
+          echo "Resolved VERSION=$VER"
+
+      - name: Restore Tools
+        run: dotnet tool restore
+
+      - name: Restore
+        run: dotnet restore GuacamoleClient-WinForms/GuacamoleClient-WinForms.csproj
+
+      - name: Publish WinForms (framework-dependent)
+        shell: pwsh
+        run: |
+          $out = Join-Path $env:GITHUB_WORKSPACE "${{ env.OUT_FRAMEWORK }}"
+          New-Item -ItemType Directory -Force -Path $out | Out-Null
+
+          dotnet publish .\GuacamoleClient-WinForms\GuacamoleClient-WinForms.csproj `
+            -c ${{ env.BUILD_CONFIGURATION }} `
+            -r win-x64 `
+            --self-contained false `
+            -o $out `
+            -p:Version=${{ env.VERSION }} `
+            -p:FileVersion=${{ env.VERSION }} `
+            -p:AssemblyVersion=${{ env.VERSION }} `
+            -p:InformationalVersion=${{ env.VERSION }}
+
+      - name: Publish WinForms (portable, single exe)
+        shell: pwsh
+        run: |
+          $out = Join-Path $env:GITHUB_WORKSPACE "${{ env.OUT_PORTABLE }}"
+          New-Item -ItemType Directory -Force -Path $out | Out-Null
+
+          dotnet publish .\GuacamoleClient-WinForms\GuacamoleClient-WinForms.csproj `
+            -c ${{ env.BUILD_CONFIGURATION }} `
+            -r win-x64 `
+            --self-contained true `
+            /p:PublishSingleFile=true `
+            /p:IncludeNativeLibrariesForSelfExtract=true `
+            -o $out `
+            -p:Version=${{ env.VERSION }} `
+            -p:FileVersion=${{ env.VERSION }} `
+            -p:AssemblyVersion=${{ env.VERSION }} `
+            -p:InformationalVersion=${{ env.VERSION }}
+
+      - name: Pack framework-dependent
+        shell: pwsh
+        run: |
+          $src = Join-Path $env:GITHUB_WORKSPACE "${{ env.OUT_FRAMEWORK }}\*"
+          $dst = Join-Path $env:GITHUB_WORKSPACE "bin-winforms-framework-${{ env.VERSION }}.zip"
+          Compress-Archive -Path $src -DestinationPath $dst -Force
+
+      - name: Pack portable single exe
+        shell: pwsh
+        run: |
+          $src = Join-Path $env:GITHUB_WORKSPACE "${{ env.OUT_PORTABLE }}\*"
+          $dst = Join-Path $env:GITHUB_WORKSPACE "bin-winforms-portable-${{ env.VERSION }}.zip"
+          Compress-Archive -Path $src -DestinationPath $dst -Force
+
+      - name: Publish WinForms variants to the release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            bin-winforms-framework-${{ env.VERSION }}.zip
+            bin-winforms-portable-${{ env.VERSION }}.zip
+          tag_name: ${{ github.event.release.tag_name || github.ref_name }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

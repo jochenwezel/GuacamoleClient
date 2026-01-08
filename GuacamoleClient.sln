@@ -9,7 +9,10 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Projektmappenelemente", "Pr
 	ProjectSection(SolutionItems) = preProject
 		.github\workflows\BuildAndTest.yml = .github\workflows\BuildAndTest.yml
 		LICENSE = LICENSE
-		.github\workflows\PublishRelease.yml = .github\workflows\PublishRelease.yml
+		.github\workflows\PublishRelease.Avalonia.yml = .github\workflows\PublishRelease.Avalonia.yml
+		.github\workflows\PublishRelease.WinForms.Other.yml = .github\workflows\PublishRelease.WinForms.Other.yml
+		.github\workflows\PublishRelease.WinForms.ClickOnce.yml = .github\workflows\PublishRelease.WinForms.ClickOnce.yml
+		.github\workflows\PublishRelease.WinForms.MSIX.yml = .github\workflows\PublishRelease.WinForms.MSIX.yml
 		README.md = README.md
 	EndProjectSection
 EndProject
