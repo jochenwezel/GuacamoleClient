@@ -34,9 +34,10 @@ jobs:
       - name: Resolve version
         shell: bash
         run: |
-          RAW_TAG="${{ github.event.release.tag_name || github.ref_name }}"
+          #RAW_TAG="${{ github.event.release.tag_name || github.ref_name }}"
+          RAW_TAG="${{ github.event.release.tag_name }}"
           if [[ -z "$RAW_TAG" ]]; then
-            VER="0.0.0.1"
+            VER="0.0.0.${{ github.run_number }}"
           else
             VER="${RAW_TAG#v}"
           fi
