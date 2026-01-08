@@ -49,11 +49,20 @@ jobs:
         with:
           dotnet-version: 8.0.x
 
-      - name: Extract version from release tag
+      - name: Resolve version
+        id: ver
         shell: bash
         run: |
-          RAW_TAG="${{ github.event.release.tag_name || github.ref_name }}"
-          VER="${RAW_TAG#v}"              # führendes "v" abschneiden, falls vorhanden
+          if [[ "${{ github.ref_type }}" == "tag" ]]; then
+            RAW="${{ github.ref_name }}"
+            VER="${RAW#v}"
+          elif [[ "${{ github.event.release.tag_name }}" != "" ]]; then
+            RAW="${{ github.event.release.tag_name }}"
+            VER="${RAW#v}"
+          else
+            VER="0.0.0.1"
+          fi
+
           echo "VERSION=$VER" >> "$GITHUB_ENV"
           echo "Resolved VERSION=$VER"
           echo "OS_NAME=${{ matrix.os_id }}" >> "$GITHUB_ENV"
@@ -81,11 +90,6 @@ jobs:
         if: runner.os == 'Windows'
         shell: pwsh
         run: |
-          #$out = Join-Path $env:GITHUB_WORKSPACE "artifacts\publish\win-x64"
-          #New-Item -ItemType Directory -Force -Path $out | Out-Null
-          #dotnet publish .\GuacamoleClient-WinForms\GuacamoleClient-WinForms.csproj
-          #  -o $out
-
           dotnet publish .\GuacamoleClient-WinForms\GuacamoleClient-WinForms.csproj
             -c Debug
             -r win-x64
