@@ -1,10 +1,11 @@
-﻿name: PublishRelease - WinForms ClickOnce (staging)
+﻿name: PublishRelease - WinForms ClickOnce (MS3)
 
 # PLEASE NOTE: PUBLISHING/DEPLOYMENT
 #   * Release is to be created manually at GitHub releases management page
 #     * release name usually contains "1.2.3.4" (also supported: "v1.2.3.4")
 #   * After creating a GitHub release, following actions will automatically run:
-#     * Attaching of compiled binaries to GitHub release
+#     * Creating ClickOnce manifests (MS3)
+#     * Attaching a ClickOnce ZIP to GitHub release (for inspection / download)
 
 on:
   release:
@@ -12,11 +13,19 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write # nötig fürs Anhängen von Assets an ein Release
+  contents: write # needed for attaching assets to a release
 
 env:
   BUILD_CONFIGURATION: Release
-  CLICKONCE_OUTDIR: artifacts/clickonce/win-x64
+
+  # Variant C: RID-less publish (AnyCPU-ish), so no win-x64 folder name here
+  CLICKONCE_OUTDIR: artifacts/clickonce/anycpu
+
+  # Placeholder provider URL for MS3. MS4 will replace this with the real GitHub Pages URL.
+  CLICKONCE_PROVIDER_URL: https://example.invalid/clickonce/
+
+  # ClickOnce app display name (free text)
+  CLICKONCE_APP_NAME: GuacamoleClient
 
 jobs:
   winforms-clickonce:
@@ -34,7 +43,6 @@ jobs:
       - name: Resolve version
         shell: bash
         run: |
-          #RAW_TAG="${{ github.event.release.tag_name || github.ref_name }}"
           RAW_TAG="${{ github.event.release.tag_name }}"
           if [[ -z "$RAW_TAG" ]]; then
             VER="0.0.0.${{ github.run_number }}"
@@ -50,15 +58,15 @@ jobs:
       - name: Restore
         run: dotnet restore GuacamoleClient-WinForms/GuacamoleClient-WinForms.csproj
 
-      - name: Publish app payload (input for ClickOnce packaging)
+      # 1) Publish app payload (RID-less) into ClickOnce folder
+      - name: Publish app payload (RID-less, framework-dependent)
         shell: pwsh
         run: |
           $out = Join-Path $env:GITHUB_WORKSPACE "${{ env.CLICKONCE_OUTDIR }}"
           New-Item -ItemType Directory -Force -Path $out | Out-Null
 
           dotnet publish .\GuacamoleClient-WinForms\GuacamoleClient-WinForms.csproj `
-            -c ${{ env.BUILD_CONFIGURATION }} `
-            -r win-x64 `
+            -c $env:BUILD_CONFIGURATION `
             --self-contained false `
             -o $out `
             -p:Version=${{ env.VERSION }} `
@@ -66,29 +74,82 @@ jobs:
             -p:AssemblyVersion=${{ env.VERSION }} `
             -p:InformationalVersion=${{ env.VERSION }}
 
-      # NOTE: ClickOnce packaging via dotnet.mage comes in the next milestone (MS3).
-      # Here we only stage the published payload and upload it as artifact/release asset.
+      # 2) Detect main EXE (robust) and store for subsequent steps
+      - name: Detect main EXE
+        shell: pwsh
+        run: |
+          $out = Join-Path $env:GITHUB_WORKSPACE "${{ env.CLICKONCE_OUTDIR }}"
 
-      - name: Upload artifact (ClickOnce staging payload)
-        uses: actions/upload-artifact@v4
-        with:
-          name: GuacamoleClient-WinForms_clickonce-staging_win-x64_${{ env.VERSION }}
-          path: ${{ env.CLICKONCE_OUTDIR }}/**
-          if-no-files-found: error
-          retention-days: 14
+          $exe = Get-ChildItem -Path $out -File -Filter *.exe |
+            Where-Object { $_.Name -notmatch '(?i)vshost|apphost|createdump|dotnet|host|test' } |
+            Sort-Object Length -Descending |
+            Select-Object -First 1
 
-      - name: Pack ClickOnce staging payload
+          if (-not $exe) {
+            throw "No suitable .exe found in $out"
+          }
+
+          "CLICKONCE_EXE_NAME=$($exe.Name)" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          Write-Host "Detected EXE: $($exe.Name)"
+
+      # 3) Create ClickOnce application manifest (*.exe.manifest)
+      - name: Create ClickOnce application manifest (dotnet mage)
+        shell: pwsh
+        run: |
+          $out = Join-Path $env:GITHUB_WORKSPACE "${{ env.CLICKONCE_OUTDIR }}"
+          $exePath = Join-Path $out $env:CLICKONCE_EXE_NAME
+
+          if (-not (Test-Path $exePath)) { throw "EXE not found: $exePath" }
+
+          # Create application manifest for folder contents
+          dotnet mage new application `
+            -n "${{ env.CLICKONCE_APP_NAME }}" `
+            -v "${{ env.VERSION }}" `
+            -p "$out" `
+            -o "$out"
+
+      # 4) Create ClickOnce deployment manifest (*.application)
+      - name: Create ClickOnce deployment manifest (dotnet mage)
+        shell: pwsh
+        run: |
+          $out = Join-Path $env:GITHUB_WORKSPACE "${{ env.CLICKONCE_OUTDIR }}"
+
+          $appManifest = Get-ChildItem -Path $out -File -Filter "*.exe.manifest" | Select-Object -First 1
+          if (-not $appManifest) {
+            throw "No *.exe.manifest found in $out (application manifest was not created?)"
+          }
+
+          dotnet mage new deployment `
+            -n "${{ env.CLICKONCE_APP_NAME }}" `
+            -v "${{ env.VERSION }}" `
+            -p "$out" `
+            -o "$out" `
+            -appUri "${{ env.CLICKONCE_PROVIDER_URL }}$($appManifest.Name)" `
+            -install true `
+            -update true
+
+      # 5) Upload artifact for inspection
+      - name: Pack ClickOnce output
         shell: pwsh
         run: |
           $src = Join-Path $env:GITHUB_WORKSPACE "${{ env.CLICKONCE_OUTDIR }}\*"
-          $dst = Join-Path $env:GITHUB_WORKSPACE "bin-winforms-clickonce-staging-${{ env.VERSION }}.zip"
+          $dst = Join-Path $env:GITHUB_WORKSPACE "bin-winforms-clickonce-${{ env.VERSION }}.zip"
           Compress-Archive -Path $src -DestinationPath $dst -Force
 
-      - name: Publish staging payload to the release
+      - name: Upload artifact (ClickOnce output)
+        uses: actions/upload-artifact@v4
+        with:
+          name: GuacamoleClient-WinForms_clickonce_${{ env.VERSION }}_anycpu
+          path: bin-winforms-clickonce-${{ env.VERSION }}.zip
+          if-no-files-found: error
+          retention-days: 14
+
+      # 6) Attach ClickOnce ZIP to GitHub release
+      - name: Publish ClickOnce ZIP to the release
         uses: softprops/action-gh-release@v2
         with:
           files: |
-            bin-winforms-clickonce-staging-${{ env.VERSION }}.zip
+            bin-winforms-clickonce-${{ env.VERSION }}.zip
           tag_name: ${{ github.event.release.tag_name || github.ref_name }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
