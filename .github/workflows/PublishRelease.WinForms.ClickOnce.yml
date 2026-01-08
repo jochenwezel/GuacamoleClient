@@ -97,36 +97,38 @@ jobs:
         shell: pwsh
         run: |
           $out = Join-Path $env:GITHUB_WORKSPACE "${{ env.CLICKONCE_OUTDIR }}"
-          $exePath = Join-Path $out $env:CLICKONCE_EXE_NAME
+          $exe = $env:CLICKONCE_EXE_NAME
+          $appManifest = Join-Path $out "$exe.manifest"
 
-          if (-not (Test-Path $exePath)) { throw "EXE not found: $exePath" }
+          dotnet mage -New Application `
+            -Name "${{ env.CLICKONCE_APP_NAME }}" `
+            -Version "${{ env.VERSION }}" `
+            -FromDirectory "$out" `
+            -ToFile "$appManifest" `
+            -Processor msil `
+            -TrustLevel FullTrust
 
-          # Create application manifest for folder contents
-          dotnet mage new application `
-            -n "${{ env.CLICKONCE_APP_NAME }}" `
-            -v "${{ env.VERSION }}" `
-            -p "$out" `
-            -o "$out"
+          if (-not (Test-Path $appManifest)) { throw "Application manifest not created: $appManifest" }
+
+          "CLICKONCE_APP_MANIFEST=$exe.manifest" | Out-File -Append $env:GITHUB_ENV
 
       # 4) Create ClickOnce deployment manifest (*.application)
       - name: Create ClickOnce deployment manifest (dotnet mage)
         shell: pwsh
         run: |
           $out = Join-Path $env:GITHUB_WORKSPACE "${{ env.CLICKONCE_OUTDIR }}"
+          $appManifest = $env:CLICKONCE_APP_MANIFEST
+          $deployManifest = Join-Path $out "${{ env.CLICKONCE_APP_NAME }}.application"
 
-          $appManifest = Get-ChildItem -Path $out -File -Filter "*.exe.manifest" | Select-Object -First 1
-          if (-not $appManifest) {
-            throw "No *.exe.manifest found in $out (application manifest was not created?)"
-          }
+          dotnet mage -New Deployment `
+            -Name "${{ env.CLICKONCE_APP_NAME }}" `
+            -Version "${{ env.VERSION }}" `
+            -AppManifest "$out\$appManifest" `
+            -ToFile "$deployManifest" `
+            -ProviderURL "${{ env.CLICKONCE_PROVIDER_URL }}" `
+            -Install true
 
-          dotnet mage new deployment `
-            -n "${{ env.CLICKONCE_APP_NAME }}" `
-            -v "${{ env.VERSION }}" `
-            -p "$out" `
-            -o "$out" `
-            -appUri "${{ env.CLICKONCE_PROVIDER_URL }}$($appManifest.Name)" `
-            -install true `
-            -update true
+          if (-not (Test-Path $deployManifest)) { throw "Deployment manifest not created: $deployManifest" }
 
       # 5) Upload artifact for inspection
       - name: Pack ClickOnce output
