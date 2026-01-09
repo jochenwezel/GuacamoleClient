@@ -245,6 +245,9 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
 
     steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
       - name: Configure GitHub Pages
         uses: actions/configure-pages@v5
 
@@ -268,22 +271,50 @@ jobs:
 
           # Ensure Git does NOT normalize/modify ClickOnce files (critical for hashes/signatures)
           # (Also hide these generated artifacts from GitHub language stats)
-          cat > "public/.gitattributes" <<'EOF'
-          # ClickOnce artifacts must remain byte-identical
-          *.application binary
-          *.manifest    binary
-          *.deploy      binary
-          *.exe         binary
-          *.dll         binary
-          *.config      binary
-          *.json        binary
-          *.dat         binary
+          if [[ -f ".gitattributes" ]]; then
+            cp -f ".gitattributes" "public/.gitattributes"
+          fi
 
-          # Optional: don't pollute GitHub language statistics
-          *.application linguist-generated
-          *.manifest    linguist-generated
-          *.deploy      linguist-generated
-          EOF
+      - name: Add INSTALL.md + RELEASE.md + Landing Page
+        shell: bash
+        env:
+          RELEASE_TAG: ${{ github.event.release.tag_name }}
+          RELEASE_NAME: ${{ github.event.release.name }}
+          RELEASE_BODY: ${{ github.event.release.body }}
+        run: |
+          # Static docs from repo
+          cp -f "docs/clickonce/INSTALL.md" "public/INSTALL.md"
+          cp -f "docs/clickonce/index.html" "public/index.html"
+
+          # RELEASE.md is generated from GitHub Release text (no per-release repo edits needed)
+          if [[ "${{ github.event_name }}" == "release" ]]; then
+            {
+              echo "# Release ${RELEASE_TAG#v}"
+              echo
+              if [[ -n "$RELEASE_NAME" ]]; then
+                echo "## ${RELEASE_NAME}"
+                echo
+              fi
+              echo "## Installation (Stable)"
+              echo "- https://jochenwezel.github.io/GuacamoleClient/clickonce/stable/GuacamoleClient.application"
+              echo
+              echo "## Release Notes"
+              echo
+              echo "$RELEASE_BODY"
+            } > "public/RELEASE.md"
+          else
+            {
+              echo "# Dev Build"
+              echo
+              echo "Diese Seite wurde über workflow_dispatch (Dev) deployed."
+              echo
+              echo "## Installation (Dev)"
+              echo "- https://jochenwezel.github.io/GuacamoleClient/clickonce/dev/GuacamoleClient.application"
+              echo
+              echo "## Release Notes"
+              echo "- Für Stable-Versionen siehe GitHub Releases."
+            } > "public/RELEASE.md"
+          fi
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
