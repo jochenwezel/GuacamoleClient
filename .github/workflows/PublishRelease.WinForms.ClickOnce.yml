@@ -1,11 +1,11 @@
-﻿name: PublishRelease - WinForms ClickOnce (MS3)
+﻿name: PublishRelease - WinForms ClickOnce
 
 # PLEASE NOTE: PUBLISHING/DEPLOYMENT
 #   * Release is to be created manually at GitHub releases management page
 #     * release name usually contains "1.2.3.4" (also supported: "v1.2.3.4")
 #   * After creating a GitHub release, following actions will automatically run:
-#     * Creating ClickOnce manifests (MS3)
-#     * Attaching a ClickOnce ZIP to GitHub release (for inspection / download)
+#     * Creating ClickOnce manifests
+#     * Attaching a ClickOnce release to GitHub Pages
 
 on:
   release:
@@ -25,12 +25,16 @@ concurrency:
 env:
   BUILD_CONFIGURATION: Release
   CLICKONCE_OUTDIR: artifacts/clickonce/anycpu
-  # ClickOnce app display name (free text)
   CLICKONCE_APP_NAME: GuacamoleClient
 
 jobs:
   winforms-clickonce:
     runs-on: windows-latest
+
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      pages_subdir: ${{ steps.pages.outputs.pages_subdir }}
+      provider_url: ${{ steps.pages.outputs.provider_url }}
 
     steps:
       - name: Checkout
@@ -42,6 +46,7 @@ jobs:
           dotnet-version: 8.0.x
 
       - name: Resolve version
+        id: version
         shell: bash
         run: |
           RAW_TAG="${{ github.event.release.tag_name }}"
@@ -51,18 +56,31 @@ jobs:
             VER="${RAW_TAG#v}"
           fi
           echo "VERSION=$VER" >> "$GITHUB_ENV"
+          echo "version=$VER" >> "$GITHUB_OUTPUT"
           echo "Resolved VERSION=$VER"
 
-      - name: Resolve ClickOnce ProviderURL
+      - name: Resolve GitHub Pages ProviderURL
+        id: pages
         shell: bash
         run: |
+          # Project Pages base URL for this repo:
+          # https://jochenwezel.github.io/GuacamoleClient/
           if [[ "${{ github.event_name }}" == "release" ]]; then
-            echo "CLICKONCE_PROVIDER_URL=https://jochenwezel.github.io/GuacamoleClient/clickonce/stable/" >> "$GITHUB_ENV"
-            echo "PAGES_SUBDIR=clickonce/stable" >> "$GITHUB_ENV"
+            PROVIDER_URL="https://jochenwezel.github.io/GuacamoleClient/clickonce/stable/"
+            SUBDIR="clickonce/stable"
           else
-            echo "CLICKONCE_PROVIDER_URL=https://jochenwezel.github.io/GuacamoleClient/clickonce/dev/" >> "$GITHUB_ENV"
-            echo "PAGES_SUBDIR=clickonce/dev" >> "$GITHUB_ENV"
+            PROVIDER_URL="https://jochenwezel.github.io/GuacamoleClient/clickonce/dev/"
+            SUBDIR="clickonce/dev"
           fi
+
+          echo "CLICKONCE_PROVIDER_URL=$PROVIDER_URL" >> "$GITHUB_ENV"
+          echo "PAGES_SUBDIR=$SUBDIR" >> "$GITHUB_ENV"
+
+          echo "provider_url=$PROVIDER_URL" >> "$GITHUB_OUTPUT"
+          echo "pages_subdir=$SUBDIR" >> "$GITHUB_OUTPUT"
+
+          echo "Resolved CLICKONCE_PROVIDER_URL=$PROVIDER_URL"
+          echo "Resolved PAGES_SUBDIR=$SUBDIR"
 
       - name: Restore Tools
         run: dotnet tool restore
@@ -74,16 +92,20 @@ jobs:
           dotnet --list-sdks
           dotnet --list-runtimes
 
-
       - name: Restore
         run: dotnet restore GuacamoleClient-WinForms/GuacamoleClient-WinForms.csproj
 
-      # 1) Publish app payload (RID-less) into ClickOnce folder
+      - name: Clean ClickOnce output directory
+        shell: pwsh
+        run: |
+          $out = Join-Path $env:GITHUB_WORKSPACE "${{ env.CLICKONCE_OUTDIR }}"
+          if (Test-Path $out) { Remove-Item -Recurse -Force $out }
+          New-Item -ItemType Directory -Force -Path $out | Out-Null
+
       - name: Publish app payload (RID-less, framework-dependent)
         shell: pwsh
         run: |
           $out = Join-Path $env:GITHUB_WORKSPACE "${{ env.CLICKONCE_OUTDIR }}"
-          New-Item -ItemType Directory -Force -Path $out | Out-Null
 
           dotnet publish .\GuacamoleClient-WinForms\GuacamoleClient-WinForms.csproj `
             -c $env:BUILD_CONFIGURATION `
@@ -94,7 +116,6 @@ jobs:
             -p:AssemblyVersion=${{ env.VERSION }} `
             -p:InformationalVersion=${{ env.VERSION }}
 
-      # 2) Detect main EXE (robust) and store for subsequent steps
       - name: Detect main EXE
         shell: pwsh
         run: |
@@ -105,14 +126,11 @@ jobs:
             Sort-Object Length -Descending |
             Select-Object -First 1
 
-          if (-not $exe) {
-            throw "No suitable .exe found in $out"
-          }
+          if (-not $exe) { throw "No suitable .exe found in $out" }
 
           "CLICKONCE_EXE_NAME=$($exe.Name)" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
           Write-Host "Detected EXE: $($exe.Name)"
 
-      # 3) Create ClickOnce application manifest (*.exe.manifest)
       - name: Create ClickOnce application manifest (dotnet mage)
         shell: pwsh
         run: |
@@ -120,6 +138,7 @@ jobs:
           $exe = $env:CLICKONCE_EXE_NAME
           $appManifest = Join-Path $out "$exe.manifest"
 
+          $ok = $false
           dotnet mage -New Application `
             -Name "${{ env.CLICKONCE_APP_NAME }}" `
             -Version "${{ env.VERSION }}" `
@@ -127,37 +146,46 @@ jobs:
             -ToFile "$appManifest" `
             -Processor msil
 
-          if (-not (Test-Path $appManifest)) { throw "Application manifest not created: $appManifest" }
+          if ($LASTEXITCODE -eq 0) 
+          { 
+            Write-Host "Application manifest creation process ran successfully: $appManifest" 
+          }
+          else {
+            Write-Host "Directory listing:"
+            Get-ChildItem -Path $out -Force | Sort-Object Name | Format-Table Name,Length | Out-String | Write-Host
+            throw "Application manifest creation process failed: $appManifest not created successfully"
+          }
+          if (-not (Test-Path $appManifest)) { throw "Application manifest not created: $appManifest" }          
 
-          "CLICKONCE_APP_MANIFEST=$exe.manifest" | Out-File -Append $env:GITHUB_ENV
+          "CLICKONCE_APP_MANIFEST=$exe.manifest" | Out-File -Append $env:GITHUB_ENV -Encoding utf8
 
-      # 4) Create ClickOnce deployment manifest (*.application)
       - name: Create ClickOnce deployment manifest (dotnet mage)
         shell: pwsh
         run: |
           $out = Join-Path $env:GITHUB_WORKSPACE "${{ env.CLICKONCE_OUTDIR }}"
-          $appManifest = $env:CLICKONCE_APP_MANIFEST
+          $appManifest = Join-Path $out $env:CLICKONCE_APP_MANIFEST
           $deployManifest = Join-Path $out "${{ env.CLICKONCE_APP_NAME }}.application"
+
+          if (-not (Test-Path $appManifest)) { throw "App manifest not found: $appManifest" }
 
           dotnet mage -New Deployment `
             -Name "${{ env.CLICKONCE_APP_NAME }}" `
             -Version "${{ env.VERSION }}" `
-            -AppManifest "$out\$appManifest" `
+            -AppManifest "$appManifest" `
             -ToFile "$deployManifest" `
             -ProviderURL "${{ env.CLICKONCE_PROVIDER_URL }}" `
             -Install true
 
           if (-not (Test-Path $deployManifest)) { throw "Deployment manifest not created: $deployManifest" }
 
-      # 5) Upload artifact for inspection
-      - name: Pack ClickOnce output
+      - name: Pack ClickOnce output (ZIP)
         shell: pwsh
         run: |
           $src = Join-Path $env:GITHUB_WORKSPACE "${{ env.CLICKONCE_OUTDIR }}\*"
           $dst = Join-Path $env:GITHUB_WORKSPACE "bin-winforms-clickonce-${{ env.VERSION }}.zip"
           Compress-Archive -Path $src -DestinationPath $dst -Force
 
-      - name: Upload artifact (ClickOnce output)
+      - name: Upload artifact (ClickOnce ZIP)
         uses: actions/upload-artifact@v4
         with:
           name: GuacamoleClient-WinForms_clickonce_${{ env.VERSION }}_anycpu
@@ -175,12 +203,21 @@ jobs:
       #  env:
       #    GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Upload artifact (ClickOnce folder for Pages)
+        uses: actions/upload-artifact@v4
+        with:
+          name: clickonce-folder
+          path: ${{ env.CLICKONCE_OUTDIR }}/**
+          if-no-files-found: error
+          retention-days: 1
+
   deploy-pages:
     needs: winforms-clickonce
     runs-on: ubuntu-latest
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
+
     steps:
       - name: Download ClickOnce folder artifact
         uses: actions/download-artifact@v4
@@ -191,8 +228,8 @@ jobs:
       - name: Prepare Pages site (place into subdir)
         shell: bash
         run: |
-          mkdir -p "public/${PAGES_SUBDIR}"
-          cp -R "site/." "public/${PAGES_SUBDIR}/"
+          mkdir -p "public/${{ needs.winforms-clickonce.outputs.pages_subdir }}"
+          cp -R "site/." "public/${{ needs.winforms-clickonce.outputs.pages_subdir }}/"
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
