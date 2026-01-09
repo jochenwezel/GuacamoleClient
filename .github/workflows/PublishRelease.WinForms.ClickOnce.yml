@@ -2,10 +2,10 @@
 
 # PLEASE NOTE: PUBLISHING/DEPLOYMENT
 #   * Release is to be created manually at GitHub releases management page
-#     * release name usually contains "1.2.3.4" (also supported: "v1.2.3.4")
+#     * release tag usually contains "1.2.3.4" (also supported: "v1.2.3.4")
 #   * After creating a GitHub release, following actions will automatically run:
 #     * Creating ClickOnce manifests
-#     * Attaching a ClickOnce release to GitHub Pages
+#     * Publishing ClickOnce files to GitHub Pages (Auto-Update URL)
 
 on:
   release:
@@ -138,7 +138,6 @@ jobs:
           $exe = $env:CLICKONCE_EXE_NAME
           $appManifest = Join-Path $out "$exe.manifest"
 
-          $ok = $false
           dotnet mage -New Application `
             -Name "${{ env.CLICKONCE_APP_NAME }}" `
             -Version "${{ env.VERSION }}" `
@@ -214,6 +213,7 @@ jobs:
   deploy-pages:
     needs: winforms-clickonce
     runs-on: ubuntu-latest
+
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
