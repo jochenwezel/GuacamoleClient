@@ -233,6 +233,31 @@ jobs:
           mkdir -p "public/${{ needs.winforms-clickonce.outputs.pages_subdir }}"
           cp -R "site/." "public/${{ needs.winforms-clickonce.outputs.pages_subdir }}/"
 
+      - name: Add .nojekyll + .gitattributes
+        shell: bash
+        run: |
+          # Ensure GitHub Pages serves files as-is (no Jekyll processing)
+          : > "public/.nojekyll"
+
+          # Ensure Git does NOT normalize/modify ClickOnce files (critical for hashes/signatures)
+          # (Also hide these generated artifacts from GitHub language stats)
+          cat > "public/.gitattributes" <<'EOF'
+          # ClickOnce artifacts must remain byte-identical
+          *.application binary
+          *.manifest    binary
+          *.deploy      binary
+          *.exe         binary
+          *.dll         binary
+          *.config      binary
+          *.json        binary
+          *.dat         binary
+
+          # Optional: don't pollute GitHub language statistics
+          *.application linguist-generated
+          *.manifest    linguist-generated
+          *.deploy      linguist-generated
+          EOF
+
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
         with:
