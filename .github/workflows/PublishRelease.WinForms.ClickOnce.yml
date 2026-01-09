@@ -13,17 +13,18 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write # needed for attaching assets to a release
+  #contents: write # needed for attaching assets to a release
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages-${{ github.ref }}
+  cancel-in-progress: true
 
 env:
   BUILD_CONFIGURATION: Release
-
-  # Variant C: RID-less publish (AnyCPU-ish), so no win-x64 folder name here
   CLICKONCE_OUTDIR: artifacts/clickonce/anycpu
-
-  # Placeholder provider URL for MS3. MS4 will replace this with the real GitHub Pages URL.
-  CLICKONCE_PROVIDER_URL: https://example.invalid/clickonce/
-
   # ClickOnce app display name (free text)
   CLICKONCE_APP_NAME: GuacamoleClient
 
@@ -51,6 +52,17 @@ jobs:
           fi
           echo "VERSION=$VER" >> "$GITHUB_ENV"
           echo "Resolved VERSION=$VER"
+
+      - name: Resolve ClickOnce ProviderURL
+        shell: bash
+        run: |
+          if [[ "${{ github.event_name }}" == "release" ]]; then
+            echo "CLICKONCE_PROVIDER_URL=https://jochenwezel.github.io/GuacamoleClient/clickonce/stable/" >> "$GITHUB_ENV"
+            echo "PAGES_SUBDIR=clickonce/stable" >> "$GITHUB_ENV"
+          else
+            echo "CLICKONCE_PROVIDER_URL=https://jochenwezel.github.io/GuacamoleClient/clickonce/dev/" >> "$GITHUB_ENV"
+            echo "PAGES_SUBDIR=clickonce/dev" >> "$GITHUB_ENV"
+          fi
 
       - name: Restore Tools
         run: dotnet tool restore
@@ -153,12 +165,40 @@ jobs:
           if-no-files-found: error
           retention-days: 14
 
-      # 6) Attach ClickOnce ZIP to GitHub release
-      - name: Publish ClickOnce ZIP to the release
-        uses: softprops/action-gh-release@v2
+      ## 6) Attach ClickOnce ZIP to GitHub release
+      #- name: Publish ClickOnce ZIP to the release
+      #  uses: softprops/action-gh-release@v2
+      #  with:
+      #    files: |
+      #      bin-winforms-clickonce-${{ env.VERSION }}.zip
+      #    tag_name: ${{ github.event.release.tag_name || github.ref_name }}
+      #  env:
+      #    GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  deploy-pages:
+    needs: winforms-clickonce
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Download ClickOnce folder artifact
+        uses: actions/download-artifact@v4
         with:
-          files: |
-            bin-winforms-clickonce-${{ env.VERSION }}.zip
-          tag_name: ${{ github.event.release.tag_name || github.ref_name }}
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          name: clickonce-folder
+          path: site
+
+      - name: Prepare Pages site (place into subdir)
+        shell: bash
+        run: |
+          mkdir -p "public/${PAGES_SUBDIR}"
+          cp -R "site/." "public/${PAGES_SUBDIR}/"
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: public
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
