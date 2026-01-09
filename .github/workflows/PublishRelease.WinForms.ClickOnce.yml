@@ -1,4 +1,4 @@
-﻿name: PublishRelease - WinForms ClickOnce
+﻿﻿name: PublishRelease - WinForms ClickOnce
 
 # PLEASE NOTE: PUBLISHING/DEPLOYMENT
 #   * Release is to be created manually at GitHub releases management page
@@ -66,10 +66,10 @@ jobs:
           # Project Pages base URL for this repo:
           # https://jochenwezel.github.io/GuacamoleClient/
           if [[ "${{ github.event_name }}" == "release" ]]; then
-            PROVIDER_URL="https://jochenwezel.github.io/GuacamoleClient/clickonce/stable/"
+            PROVIDER_URL="https://jochenwezel.github.io/GuacamoleClient/clickonce/stable/${{ env.CLICKONCE_APP_NAME }}.application"
             SUBDIR="clickonce/stable"
           else
-            PROVIDER_URL="https://jochenwezel.github.io/GuacamoleClient/clickonce/dev/"
+            PROVIDER_URL="https://jochenwezel.github.io/GuacamoleClient/clickonce/dev/${{ env.CLICKONCE_APP_NAME }}.application"
             SUBDIR="clickonce/dev"
           fi
 
@@ -196,8 +196,7 @@ jobs:
       #- name: Publish ClickOnce ZIP to the release
       #  uses: softprops/action-gh-release@v2
       #  with:
-      #    files: |
-      #      bin-winforms-clickonce-${{ env.VERSION }}.zip
+      #    files: bin-winforms-clickonce-${{ env.VERSION }}.zip
       #    tag_name: ${{ github.event.release.tag_name || github.ref_name }}
       #  env:
       #    GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -219,6 +218,9 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
 
     steps:
+      - name: Configure GitHub Pages
+        uses: actions/configure-pages@v5
+
       - name: Download ClickOnce folder artifact
         uses: actions/download-artifact@v4
         with:
