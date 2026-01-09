@@ -1,4 +1,5 @@
-﻿﻿name: PublishRelease - WinForms ClickOnce
+
+name: PublishRelease - WinForms ClickOnce
 
 # PLEASE NOTE: PUBLISHING/DEPLOYMENT
 #   * Release is to be created manually at GitHub releases management page
