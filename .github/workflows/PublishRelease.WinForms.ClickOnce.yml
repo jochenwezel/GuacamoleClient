@@ -177,6 +177,33 @@ jobs:
 
           if (-not (Test-Path $deployManifest)) { throw "Deployment manifest not created: $deployManifest" }
 
+      - name: Sign ClickOnce manifests (dotnet mage)
+        shell: pwsh
+        env:
+          CLICKONCE_SIGNING_PFX_BASE64: ${{ secrets.CLICKONCE_SIGNING_PFX_BASE64 }}
+          CLICKONCE_SIGNING_PFX_PASSWORD: ${{ secrets.CLICKONCE_SIGNING_PFX_PASSWORD }}
+        run: |
+          if ([string]::IsNullOrWhiteSpace($env:CLICKONCE_SIGNING_PFX_BASE64)) { throw "Missing secret: CLICKONCE_SIGNING_PFX_BASE64" }
+          if ([string]::IsNullOrWhiteSpace($env:CLICKONCE_SIGNING_PFX_PASSWORD)) { throw "Missing secret: CLICKONCE_SIGNING_PFX_PASSWORD" }
+
+          $out = Join-Path $env:GITHUB_WORKSPACE "${{ env.CLICKONCE_OUTDIR }}"
+          $appManifest = Join-Path $out $env:CLICKONCE_APP_MANIFEST
+          $deployManifest = Join-Path $out "${{ env.CLICKONCE_APP_NAME }}.application"
+
+          if (-not (Test-Path $appManifest)) { throw "App manifest not found: $appManifest" }
+          if (-not (Test-Path $deployManifest)) { throw "Deployment manifest not found: $deployManifest" }
+
+          $pfxPath = Join-Path $env:RUNNER_TEMP "clickonce-signing.pfx"
+          [IO.File]::WriteAllBytes($pfxPath, [Convert]::FromBase64String($env:CLICKONCE_SIGNING_PFX_BASE64))
+
+          # Update + sign application manifest
+          dotnet mage -Update "$appManifest" -CertFile "$pfxPath" -Password "$env:CLICKONCE_SIGNING_PFX_PASSWORD"
+          if ($LASTEXITCODE -ne 0) { throw "Failed to sign application manifest: $appManifest" }
+
+          # Update deployment manifest with appmanifest + sign deployment manifest
+          dotnet mage -Update "$deployManifest" -AppManifest "$appManifest" -CertFile "$pfxPath" -Password "$env:CLICKONCE_SIGNING_PFX_PASSWORD"
+          if ($LASTEXITCODE -ne 0) { throw "Failed to sign deployment manifest: $deployManifest" }
+
       - name: Pack ClickOnce output (ZIP)
         shell: pwsh
         run: |
