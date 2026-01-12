@@ -19,13 +19,26 @@ namespace GuacamoleClient.WinForms
 
         [Obsolete("For designer support only", true)]
         [System.ComponentModel.EditorBrowsable(System.ComponentModel.EditorBrowsableState.Never)]
-        public MainForm() : this(new Uri("https://guacamole.apache.org/"), new Uri("https://guacamole.apache.org/")) { }
+        public MainForm() : this(
+            new GuacamoleClient.Common.Settings.GuacamoleSettingsManager(
+                new GuacamoleClient.Common.Settings.JsonFileGuacamoleSettingsStore(GuacamoleClient.Common.Settings.GuacamoleSettingsPaths.GetSettingsFilePath("GuacamoleClient-Designer")),
+                new GuacamoleClient.Common.Settings.GuacamoleSettingsDocument()),
+            new GuacamoleClient.Common.Settings.GuacamoleServerProfile { Url = "https://guacamole.apache.org/" },
+            new Uri("https://guacamole.apache.org/"))
+        { }
 
-        public MainForm(Uri homeUrl, Uri startUrl)
+        private readonly GuacamoleClient.Common.Settings.GuacamoleSettingsManager _settings;
+        public GuacamoleClient.Common.Settings.GuacamoleServerProfile ServerProfile { get; }
+        private readonly Color _profilePrimaryColor;
+
+        public MainForm(GuacamoleClient.Common.Settings.GuacamoleSettingsManager settings, GuacamoleClient.Common.Settings.GuacamoleServerProfile serverProfile, Uri startUrl)
         {
-            this.HomeUrl = homeUrl;
+            _settings = settings ?? throw new ArgumentNullException(nameof(settings));
+            ServerProfile = serverProfile ?? throw new ArgumentNullException(nameof(serverProfile));
+            this.HomeUrl = new Uri(serverProfile.Url);
             this.StartUrl = startUrl;
-            _trustedHosts.Add(homeUrl.Host);
+            _trustedHosts.Add(this.HomeUrl.Host);
+            _profilePrimaryColor = UiColorHelpers.ResolveProfilePrimaryColor(serverProfile);
 
             InitializeComponent();
             InitializeControlFocusManagementWithKeyboardCapturingHandler();
@@ -33,7 +46,7 @@ namespace GuacamoleClient.WinForms
             //Form title + menu customization
             this.UpdateFormTitle(startUrl);
             KeyPreview = true;
-            mainMenuStrip!.SetMenuStripColorsRecursive(Color.OrangeRed, Color.OrangeRed, Color.DarkRed, Color.Black, Color.DarkGray);
+            ApplyProfileColors();
             testToolStripMenuItem.Available = TEST_MENU_ENABLED;
 
             //Assign commands to close timer
@@ -91,7 +104,13 @@ namespace GuacamoleClient.WinForms
         protected override void OnHandleCreated(EventArgs e)
         {
             base.OnHandleCreated(e);
-            TitleBarHelper.ApplyTitleBarColors(this, Color.OrangeRed, Color.Black);
+            TitleBarHelper.ApplyTitleBarColors(this, _profilePrimaryColor, Color.Black);
+        }
+
+        private void ApplyProfileColors()
+        {
+            // existing implementation supports all relevant color assignments - now driven by profile
+            mainMenuStrip!.SetMenuStripColorsRecursive(_profilePrimaryColor, _profilePrimaryColor, Color.DarkRed, Color.Black, Color.DarkGray);
         }
 
         /// <summary>
@@ -104,7 +123,7 @@ namespace GuacamoleClient.WinForms
         private void NewWindowRequested(object? sender, CoreWebView2NewWindowRequestedEventArgs e)
         {
             // Öffne neuen MainForm mit der Ziel-URL
-            var form = new MainForm(this.HomeUrl, new Uri(e.Uri));
+            var form = new MainForm(_settings, this.ServerProfile, new Uri(e.Uri));
             form.Show();
             // Verhindere das Öffnen im aktuellen WebView
             e.Handled = true;
@@ -353,6 +372,28 @@ namespace GuacamoleClient.WinForms
             _webview2_controller.AcceleratorKeyPressed += Controller_AcceleratorKeyPressed;
 
             _webview2_core = _webview2_controller.CoreWebView2;
+            // Certificate errors handling (per server profile)
+            _webview2_core.ServerCertificateErrorDetected += (s, e) =>
+            {
+                try
+                {
+                    if (ServerProfile.IgnoreCertificateErrors)
+                    {
+                        // Scope: this profile only. Restrict to same host as profile base URL.
+                        var requested = new Uri(e.RequestUri);
+                        if (string.Equals(requested.Host, this.HomeUrl.Host, StringComparison.OrdinalIgnoreCase))
+                        {
+                            e.Action = CoreWebView2ServerCertificateErrorAction.AlwaysAllow;
+                            return;
+                        }
+                    }
+                }
+                catch
+                {
+                    // fallback to default
+                }
+                e.Action = CoreWebView2ServerCertificateErrorAction.Cancel;
+            };
             _webview2_core.Settings.IsStatusBarEnabled = false;
             _webview2_core.Settings.AreDefaultContextMenusEnabled = true;
             _webview2_core.Settings.AreDevToolsEnabled = false;
@@ -513,7 +554,7 @@ namespace GuacamoleClient.WinForms
         /// <param name="e"></param>
         private void guacamoleConnectionConfigurationsToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            var form = new MainForm(this.HomeUrl, new Uri(this.GuacamoleConnectionConfigurationsUrl.ToString()));
+            var form = new MainForm(_settings, this.ServerProfile, new Uri(this.GuacamoleConnectionConfigurationsUrl.ToString()));
             form.Show();
         }
 
@@ -524,7 +565,7 @@ namespace GuacamoleClient.WinForms
         /// <param name="e"></param>
         private void guacamoleUserSettingsToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            var form = new MainForm(this.HomeUrl, new Uri(this.GuacamoleSettingsUrl.ToString()));
+            var form = new MainForm(_settings, this.ServerProfile, new Uri(this.GuacamoleSettingsUrl.ToString()));
             form.Show();
         }
 
@@ -535,7 +576,23 @@ namespace GuacamoleClient.WinForms
         /// <param name="e"></param>
         private void newWindowToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            var form = new MainForm(this.HomeUrl, this.StartUrl);
+            var form = new MainForm(_settings, this.ServerProfile, this.StartUrl);
+            form.Show();
+        }
+
+        /// <summary>
+        /// Open an additional window connected to another configured Guacamole server profile.
+        /// Current window remains on its server.
+        /// </summary>
+        private void openAnotherGuacamoleServerToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            using var dlg = new ChooseServerForm(_settings);
+            if (dlg.ShowDialog(this) != DialogResult.OK || dlg.SelectedProfile == null)
+                return;
+
+            var profile = dlg.SelectedProfile;
+            var home = new Uri(profile.Url);
+            var form = new MainForm(_settings, profile, home);
             form.Show();
         }
 

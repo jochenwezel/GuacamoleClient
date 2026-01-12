@@ -20,6 +20,7 @@ namespace GuacamoleClient.WinForms
         private ToolStripMenuItem guacamoleUserSettingsToolStripMenuItem;
         private ToolStripMenuItem guacamoleConnectionConfigurationsToolStripMenuItem;
         private ToolStripMenuItem newWindowToolStripMenuItem;
+        private ToolStripMenuItem openAnotherGuacamoleServerToolStripMenuItem;
         private Timer formTitleRefreshTimer;
         private System.ComponentModel.IContainer components;
         private ToolStripMenuItem connectionNameInFullScreenModeToolStripMenuItem;
@@ -54,6 +55,7 @@ namespace GuacamoleClient.WinForms
             guacamoleUserSettingsToolStripMenuItem = new ToolStripMenuItem();
             guacamoleConnectionConfigurationsToolStripMenuItem = new ToolStripMenuItem();
             newWindowToolStripMenuItem = new ToolStripMenuItem();
+            openAnotherGuacamoleServerToolStripMenuItem = new ToolStripMenuItem();
             toolStripSeparator1 = new ToolStripSeparator();
             quitToolStripMenuItem = new ToolStripMenuItem();
             testToolStripMenuItem = new ToolStripMenuItem();
@@ -79,7 +81,7 @@ namespace GuacamoleClient.WinForms
             // 
             // fileToolStripMenuItem
             // 
-            fileToolStripMenuItem.DropDownItems.AddRange(new ToolStripItem[] { connectionHomeToolStripMenuItem, guacamoleUserSettingsToolStripMenuItem, guacamoleConnectionConfigurationsToolStripMenuItem, newWindowToolStripMenuItem, toolStripSeparator1, quitToolStripMenuItem });
+            fileToolStripMenuItem.DropDownItems.AddRange(new ToolStripItem[] { connectionHomeToolStripMenuItem, guacamoleUserSettingsToolStripMenuItem, guacamoleConnectionConfigurationsToolStripMenuItem, newWindowToolStripMenuItem, openAnotherGuacamoleServerToolStripMenuItem, toolStripSeparator1, quitToolStripMenuItem });
             fileToolStripMenuItem.Name = "fileToolStripMenuItem";
             fileToolStripMenuItem.Size = new Size(81, 20);
             fileToolStripMenuItem.Text = "&Connection";
@@ -113,6 +115,13 @@ namespace GuacamoleClient.WinForms
             newWindowToolStripMenuItem.Size = new Size(330, 22);
             newWindowToolStripMenuItem.Text = "New Window";
             newWindowToolStripMenuItem.Click += newWindowToolStripMenuItem_Click;
+            // 
+            // openAnotherGuacamoleServerToolStripMenuItem
+            // 
+            openAnotherGuacamoleServerToolStripMenuItem.Name = "openAnotherGuacamoleServerToolStripMenuItem";
+            openAnotherGuacamoleServerToolStripMenuItem.Size = new Size(330, 22);
+            openAnotherGuacamoleServerToolStripMenuItem.Text = "Open another Guacamole server...";
+            openAnotherGuacamoleServerToolStripMenuItem.Click += openAnotherGuacamoleServerToolStripMenuItem_Click;
             // 
             // toolStripSeparator1
             // 
