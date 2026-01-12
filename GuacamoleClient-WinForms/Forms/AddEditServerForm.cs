@@ -33,8 +33,8 @@ namespace GuacamoleClient.WinForms
             _isFirstProfile = isFirstProfile;
 
             Text = editing == null
-                ? LocalizationProvider.Get(LocalizationKey.AddServer_Title)
-                : LocalizationProvider.Get(LocalizationKey.EditServer_Title);
+                ? LocalizationProvider.Get(LocalizationKeys.AddServer_Title)
+                : LocalizationProvider.Get(LocalizationKeys.EditServer_Title);
             StartPosition = FormStartPosition.CenterParent;
             MinimizeBox = false;
             MaximizeBox = false;
@@ -47,9 +47,9 @@ namespace GuacamoleClient.WinForms
             _cmbColor.SelectedIndexChanged += (_, __) => UpdateColorUi();
             _txtCustomHex.TextChanged += (_, __) => UpdateColorUi();
 
-            _chkIgnoreCert.Text = LocalizationProvider.Get(LocalizationKey.AddEdit_Check_IgnoreCertificateErrorsUnsafe);
-            _btnSave.Text = LocalizationProvider.Get(LocalizationKey.AddEdit_Button_Save);
-            _btnCancel.Text = LocalizationProvider.Get(LocalizationKey.Common_Button_Cancel);
+            _chkIgnoreCert.Text = LocalizationProvider.Get(LocalizationKeys.AddEdit_Check_IgnoreCertificateErrorsUnsafe);
+            _btnSave.Text = LocalizationProvider.Get(LocalizationKeys.AddEdit_Button_Save);
+            _btnCancel.Text = LocalizationProvider.Get(LocalizationKeys.Common_Button_Cancel);
 
             _btnSave.Click += async (_, __) => await SaveAsync();
 
@@ -74,19 +74,19 @@ namespace GuacamoleClient.WinForms
             layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 28));
             layout.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
 
-            layout.Controls.Add(new Label { Text = LocalizationProvider.Get(LocalizationKey.AddEdit_Label_ServerUrl), AutoSize = true, TextAlign = ContentAlignment.MiddleLeft }, 0, 0);
+            layout.Controls.Add(new Label { Text = LocalizationProvider.Get(LocalizationKeys.AddEdit_Label_ServerUrl), AutoSize = true, TextAlign = ContentAlignment.MiddleLeft }, 0, 0);
             layout.Controls.Add(_txtUrl, 1, 0);
             layout.SetColumnSpan(_txtUrl, 2);
 
-            layout.Controls.Add(new Label { Text = LocalizationProvider.Get(LocalizationKey.AddEdit_Label_DisplayNameOptional), AutoSize = true, TextAlign = ContentAlignment.MiddleLeft }, 0, 1);
+            layout.Controls.Add(new Label { Text = LocalizationProvider.Get(LocalizationKeys.AddEdit_Label_DisplayNameOptional), AutoSize = true, TextAlign = ContentAlignment.MiddleLeft }, 0, 1);
             layout.Controls.Add(_txtName, 1, 1);
             layout.SetColumnSpan(_txtName, 2);
 
-            layout.Controls.Add(new Label { Text = LocalizationProvider.Get(LocalizationKey.AddEdit_Label_ColorScheme), AutoSize = true, TextAlign = ContentAlignment.MiddleLeft }, 0, 2);
+            layout.Controls.Add(new Label { Text = LocalizationProvider.Get(LocalizationKeys.AddEdit_Label_ColorScheme), AutoSize = true, TextAlign = ContentAlignment.MiddleLeft }, 0, 2);
             layout.Controls.Add(_cmbColor, 1, 2);
             layout.Controls.Add(_pnlColorPreview, 2, 2);
 
-            layout.Controls.Add(new Label { Text = LocalizationProvider.Get(LocalizationKey.AddEdit_Label_CustomColorHex), AutoSize = true, TextAlign = ContentAlignment.MiddleLeft }, 0, 3);
+            layout.Controls.Add(new Label { Text = LocalizationProvider.Get(LocalizationKeys.AddEdit_Label_CustomColorHex), AutoSize = true, TextAlign = ContentAlignment.MiddleLeft }, 0, 3);
             layout.Controls.Add(_txtCustomHex, 1, 3);
             layout.SetColumnSpan(_txtCustomHex, 2);
 
@@ -174,8 +174,8 @@ namespace GuacamoleClient.WinForms
                 if (string.IsNullOrWhiteSpace(url))
                 {
                     MessageBox.Show(this,
-                        LocalizationProvider.Get(LocalizationKey.AddEdit_Validation_ServerUrlRequired),
-                        LocalizationProvider.Get(LocalizationKey.AddEdit_Validation_Title),
+                        LocalizationProvider.Get(LocalizationKeys.AddEdit_Validation_ServerUrlRequired),
+                        LocalizationProvider.Get(LocalizationKeys.AddEdit_Validation_Title),
                         MessageBoxButtons.OK,
                         MessageBoxIcon.Warning);
                     return;
@@ -184,8 +184,8 @@ namespace GuacamoleClient.WinForms
                 if (!GuacamoleUrlAndContentChecks.IsValidUrlAndAcceptedScheme(url))
                 {
                     MessageBox.Show(this,
-                        LocalizationProvider.Get(LocalizationKey.AddEdit_Validation_InvalidUrlScheme),
-                        LocalizationProvider.Get(LocalizationKey.AddEdit_Validation_Title),
+                        LocalizationProvider.Get(LocalizationKeys.AddEdit_Validation_InvalidUrlScheme),
+                        LocalizationProvider.Get(LocalizationKeys.AddEdit_Validation_Title),
                         MessageBoxButtons.OK,
                         MessageBoxIcon.Error);
                     return;
@@ -196,8 +196,8 @@ namespace GuacamoleClient.WinForms
                 if (_manager.UrlExists(url, exceptId))
                 {
                     MessageBox.Show(this,
-                        LocalizationProvider.Get(LocalizationKey.AddEdit_Validation_DuplicateUrl),
-                        LocalizationProvider.Get(LocalizationKey.AddEdit_Validation_Title),
+                        LocalizationProvider.Get(LocalizationKeys.AddEdit_Validation_DuplicateUrl),
+                        LocalizationProvider.Get(LocalizationKeys.AddEdit_Validation_Title),
                         MessageBoxButtons.OK,
                         MessageBoxIcon.Warning);
                     return;
@@ -206,8 +206,8 @@ namespace GuacamoleClient.WinForms
                 if (!ColorValueResolver.TryResolveToHex(colorValue, out var _))
                 {
                     MessageBox.Show(this,
-                        LocalizationProvider.Get(LocalizationKey.AddEdit_Validation_InvalidColor),
-                        LocalizationProvider.Get(LocalizationKey.AddEdit_Validation_Title),
+                        LocalizationProvider.Get(LocalizationKeys.AddEdit_Validation_InvalidColor),
+                        LocalizationProvider.Get(LocalizationKeys.AddEdit_Validation_Title),
                         MessageBoxButtons.OK,
                         MessageBoxIcon.Error);
                     return;
@@ -223,10 +223,10 @@ namespace GuacamoleClient.WinForms
 
                 if (collisions.Count > 0)
                 {
-                    var msg = LocalizationProvider.Get(LocalizationKey.AddEdit_Warn_ColorAlreadyInUse_Text, string.Join(", ", collisions));
+                    var msg = LocalizationProvider.Get(LocalizationKeys.AddEdit_Warn_ColorAlreadyInUse_Text, string.Join(", ", collisions));
                     if (MessageBox.Show(this,
                         msg,
-                        LocalizationProvider.Get(LocalizationKey.AddEdit_Warn_ColorAlreadyInUse_Title),
+                        LocalizationProvider.Get(LocalizationKeys.AddEdit_Warn_ColorAlreadyInUse_Title),
                         MessageBoxButtons.YesNo,
                         MessageBoxIcon.Warning) != DialogResult.Yes)
                         return;
@@ -237,8 +237,8 @@ namespace GuacamoleClient.WinForms
                 if (!ok)
                 {
                     MessageBox.Show(this,
-                        LocalizationProvider.Get(LocalizationKey.AddEdit_TestFailed_Text, "https://remote.example.com/guacamole/"),
-                        LocalizationProvider.Get(LocalizationKey.AddEdit_TestFailed_Title),
+                        LocalizationProvider.Get(LocalizationKeys.AddEdit_TestFailed_Text, "https://remote.example.com/guacamole/"),
+                        LocalizationProvider.Get(LocalizationKeys.AddEdit_TestFailed_Title),
                         MessageBoxButtons.OK,
                         MessageBoxIcon.Error);
                     return;

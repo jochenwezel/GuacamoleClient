@@ -1,10 +1,12 @@
 namespace GuacamoleClient.Common.Localization
 {
     /// <summary>
-    /// Keys used to retrieve localized UI strings.
-    /// Platform-agnostic (shared by WinForms and Avalonia).
+    /// Specifies the keys used to identify localized strings for user interface hints, tips, and warnings.
     /// </summary>
-    public enum LocalizationKey
+    /// <remarks>These keys are typically used to retrieve localized messages related to keyboard
+    /// shortcuts, application behavior, and user guidance. The enumeration values correspond to specific scenarios
+    /// where user feedback or instructions may be displayed in the application.</remarks>
+    public enum LocalizationKeys
     {
         // MainForm hints / tips
         Hint_CtrlAltF4_AppWillBeClosed,
@@ -14,9 +16,21 @@ namespace GuacamoleClient.Common.Localization
         Hint_CtrlAltIns_FullscreenModeOff,
         Hint_CtrlAltIns_FullscreenModeOn,
         Hint_CtrlShiftEsc_Catched_NotForwardableToRemoteServer,
+        /// <summary>
+        /// Gets the hint message indicating that pressing Ctrl+Alt+End has no effect in Remote Desktop sessions
+        /// (well-known keyboard shortcut from mstsc).
+        /// </summary>
         Hint_CtrlAltEnd_WithoutEffect_mstsc,
         FocussedAnotherControlWarning,
+        /// <summary>
+        /// Gets a tooltip string that instructs the user to stop keyboard grabbing in the Guacamole window using
+        /// the Ctrl+Alt+Scroll shortcut.
+        /// </summary>
         Tip_CtrlAltScroll_StopKeyboardGrabbingOfGuacamoleWindow,
+        /// <summary>
+        /// Gets a tooltip string that instructs the user to startkeyboard grabbing in the Guacamole window using
+        /// the Ctrl+Alt+Scroll shortcut.
+        /// </summary>
         Tip_CtrlAltScroll_StartKeyboardGrabbingOfGuacamoleWindow,
 
         // Menu

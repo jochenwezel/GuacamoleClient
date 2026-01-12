@@ -22,21 +22,21 @@ namespace GuacamoleClient.WinForms
         {
             _manager = manager ?? throw new ArgumentNullException(nameof(manager));
 
-            Text = LocalizationProvider.Get(LocalizationKey.ChooseServer_Title);
+            Text = LocalizationProvider.Get(LocalizationKeys.ChooseServer_Title);
             StartPosition = FormStartPosition.CenterParent;
             MinimizeBox = false;
             MaximizeBox = false;
             FormBorderStyle = FormBorderStyle.Sizable;
             ClientSize = new Size(820, 420);
 
-            _list.Columns.Add(LocalizationProvider.Get(LocalizationKey.ChooseServer_Column_Name), 220);
-            _list.Columns.Add(LocalizationProvider.Get(LocalizationKey.ChooseServer_Column_Url), 460);
-            _list.Columns.Add(LocalizationProvider.Get(LocalizationKey.ChooseServer_Column_Color), 100);
+            _list.Columns.Add(LocalizationProvider.Get(LocalizationKeys.ChooseServer_Column_Name), 220);
+            _list.Columns.Add(LocalizationProvider.Get(LocalizationKeys.ChooseServer_Column_Url), 460);
+            _list.Columns.Add(LocalizationProvider.Get(LocalizationKeys.ChooseServer_Column_Color), 100);
 
-            _btnOpen.Text = LocalizationProvider.Get(LocalizationKey.ChooseServer_Button_OpenNewWindow);
-            _btnManage.Text = LocalizationProvider.Get(LocalizationKey.ChooseServer_Button_Manage);
-            _btnSetDefault.Text = LocalizationProvider.Get(LocalizationKey.ChooseServer_Button_SetDefault);
-            _btnCancel.Text = LocalizationProvider.Get(LocalizationKey.Common_Button_Cancel);
+            _btnOpen.Text = LocalizationProvider.Get(LocalizationKeys.ChooseServer_Button_OpenNewWindow);
+            _btnManage.Text = LocalizationProvider.Get(LocalizationKeys.ChooseServer_Button_Manage);
+            _btnSetDefault.Text = LocalizationProvider.Get(LocalizationKeys.ChooseServer_Button_SetDefault);
+            _btnCancel.Text = LocalizationProvider.Get(LocalizationKeys.Common_Button_Cancel);
             _list.DoubleClick += (_, __) => OpenSelected();
             _list.SelectedIndexChanged += (_, __) => UpdateButtons();
 
@@ -71,7 +71,7 @@ namespace GuacamoleClient.WinForms
             foreach (var p in _manager.ServerProfiles)
             {
                 var name = p.GetDisplayText();
-                if (p.IsDefault) name += " " + LocalizationProvider.Get(LocalizationKey.Common_Suffix_Default);
+                if (p.IsDefault) name += " " + LocalizationProvider.Get(LocalizationKeys.Common_Suffix_Default);
                 var item = new ListViewItem(name) { Tag = p.Id };
                 item.SubItems.Add(p.Url);
                 item.SubItems.Add(ColorValueResolver.ResolveToHex(p.ColorValue));
