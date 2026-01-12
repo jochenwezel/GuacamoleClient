@@ -21,24 +21,24 @@ namespace GuacamoleClient.WinForms
         {
             _manager = manager ?? throw new ArgumentNullException(nameof(manager));
 
-            Text = LocalizationProvider.Get(LocalizationKey.ManageServers_Title);
+            Text = LocalizationProvider.Get(LocalizationKeys.ManageServers_Title);
             StartPosition = FormStartPosition.CenterParent;
             MinimizeBox = false;
             MaximizeBox = false;
             FormBorderStyle = FormBorderStyle.Sizable;
             ClientSize = new Size(820, 420);
 
-            _list.Columns.Add(LocalizationProvider.Get(LocalizationKey.ChooseServer_Column_Name), 200);
-            _list.Columns.Add(LocalizationProvider.Get(LocalizationKey.ChooseServer_Column_Url), 460);
-            _list.Columns.Add(LocalizationProvider.Get(LocalizationKey.ChooseServer_Column_Color), 100);
+            _list.Columns.Add(LocalizationProvider.Get(LocalizationKeys.ChooseServer_Column_Name), 200);
+            _list.Columns.Add(LocalizationProvider.Get(LocalizationKeys.ChooseServer_Column_Url), 460);
+            _list.Columns.Add(LocalizationProvider.Get(LocalizationKeys.ChooseServer_Column_Color), 100);
             _list.DoubleClick += (_, __) => EditSelected();
             _list.SelectedIndexChanged += (_, __) => UpdateButtons();
 
-            _btnAdd.Text = LocalizationProvider.Get(LocalizationKey.ManageServers_Button_Add);
-            _btnEdit.Text = LocalizationProvider.Get(LocalizationKey.ManageServers_Button_Edit);
-            _btnRemove.Text = LocalizationProvider.Get(LocalizationKey.ManageServers_Button_Remove);
-            _btnSetDefault.Text = LocalizationProvider.Get(LocalizationKey.ManageServers_Button_SetDefault);
-            _btnClose.Text = LocalizationProvider.Get(LocalizationKey.ManageServers_Button_Close);
+            _btnAdd.Text = LocalizationProvider.Get(LocalizationKeys.ManageServers_Button_Add);
+            _btnEdit.Text = LocalizationProvider.Get(LocalizationKeys.ManageServers_Button_Edit);
+            _btnRemove.Text = LocalizationProvider.Get(LocalizationKeys.ManageServers_Button_Remove);
+            _btnSetDefault.Text = LocalizationProvider.Get(LocalizationKeys.ManageServers_Button_SetDefault);
+            _btnClose.Text = LocalizationProvider.Get(LocalizationKeys.ManageServers_Button_Close);
 
             _btnAdd.Click += (_, __) => AddNew();
             _btnEdit.Click += (_, __) => EditSelected();
@@ -66,7 +66,7 @@ namespace GuacamoleClient.WinForms
             foreach (var p in _manager.ServerProfiles)
             {
                 var name = p.GetDisplayText();
-                if (p.IsDefault) name += " " + LocalizationProvider.Get(LocalizationKey.Common_Suffix_Default);
+                if (p.IsDefault) name += " " + LocalizationProvider.Get(LocalizationKeys.Common_Suffix_Default);
                 var item = new ListViewItem(name) { Tag = p.Id };
                 item.SubItems.Add(p.Url);
                 item.SubItems.Add(ColorValueResolver.ResolveToHex(p.ColorValue));
@@ -112,8 +112,8 @@ namespace GuacamoleClient.WinForms
             if (sel == null) return;
 
             if (MessageBox.Show(this,
-                    LocalizationProvider.Get(LocalizationKey.ManageServers_ConfirmRemove_Text),
-                    LocalizationProvider.Get(LocalizationKey.ManageServers_ConfirmRemove_Title),
+                    LocalizationProvider.Get(LocalizationKeys.ManageServers_ConfirmRemove_Text),
+                    LocalizationProvider.Get(LocalizationKeys.ManageServers_ConfirmRemove_Title),
                     MessageBoxButtons.YesNo,
                     MessageBoxIcon.Warning) != DialogResult.Yes)
                 return;

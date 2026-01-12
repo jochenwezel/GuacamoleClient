@@ -9,13 +9,13 @@ namespace GuacamoleClient.WinForms
         /// <summary>
         /// Show tooltip message on top of form.
         /// </summary>
-        public void ShowHint(LocalizationKey localizedString)
+        public void ShowHint(LocalizationKeys localizedString)
         {
             string text = LocalizedString(localizedString);
             try { _tip.Show(text, this, 20, 20, 5000); } catch { /*best effort*/ }
         }
 
-        internal static string LocalizedString(LocalizationKey key)
+        internal static string LocalizedString(LocalizationKeys key)
             => LocalizationProvider.Get(key);
     }
 }
