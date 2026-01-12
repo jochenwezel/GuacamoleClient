@@ -49,6 +49,36 @@ namespace GuacamoleClient.Common
         }
 
         /// <summary>
+        /// Determines whether the specified URL responds with a Guacamole start page, optionally ignoring TLS certificate errors.
+        /// </summary>
+        public static bool IsGuacamoleResponseWithStartPage(string? url, bool ignoreCertificateErrors)
+        {
+            if (url != null && Uri.TryCreate(url.Trim(), UriKind.Absolute, out var uri))
+            {
+                var handler = new System.Net.Http.HttpClientHandler();
+                if (ignoreCertificateErrors)
+                {
+                    handler.ServerCertificateCustomValidationCallback = (_, __, ___, ____) => true;
+                }
+                using var request = new System.Net.Http.HttpClient(handler);
+                try
+                {
+                    var response = request.GetAsync(uri).Result;
+                    if (!response.IsSuccessStatusCode)
+                        return false;
+                    var content = response.Content.ReadAsStringAsync().Result;
+                    return ContentIsGuacamoleStartPage(content);
+                }
+                catch
+                {
+                    return false;
+                }
+            }
+            else
+                return false;
+        }
+
+        /// <summary>
         /// Determines whether the specified HTTP response content represents a Guacamole login form.
         /// </summary>
         /// <param name="url">The url to the guacamole server</param>
