@@ -1,4 +1,5 @@
 ﻿using GuacamoleClient.Common;
+using GuacamoleClient.Common.Localization;
 using Microsoft.Web.WebView2.Core;
 using System;
 using System.Collections.Generic;
@@ -42,6 +43,9 @@ namespace GuacamoleClient.WinForms
 
             InitializeComponent();
             InitializeControlFocusManagementWithKeyboardCapturingHandler();
+
+            // Localization
+            openAnotherGuacamoleServerToolStripMenuItem.Text = LocalizationProvider.Get(LocalizationKey.Menu_OpenAnotherGuacamoleServer);
 
             //Form title + menu customization
             this.UpdateFormTitle(startUrl);
@@ -147,7 +151,7 @@ namespace GuacamoleClient.WinForms
             if (TEST_CONTROL_FOCUS_INFO_IN_FORM_TITLE && System.Diagnostics.Debugger.IsAttached)
             {
                 if (this.IsMenuOpen) focusWarning += " - " + this.ControlName(this.MainMenuStrip);
-                if (!this.WebBrowserHostPanel.Focused) focusWarning += " - " + LocalizedString(LocalizationKeys.FocussedAnotherControlWarning) + this.ControlName(this.ActiveControl);
+                if (!this.WebBrowserHostPanel.Focused) focusWarning += " - " + LocalizedString(LocalizationKey.FocussedAnotherControlWarning) + this.ControlName(this.ActiveControl);
             }
 
             if (string.IsNullOrEmpty(documentTitle))

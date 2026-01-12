@@ -1,4 +1,5 @@
 ﻿using GuacamoleClient.Common;
+using GuacamoleClient.Common.Localization;
 using Microsoft.Web.WebView2.Core;
 using System.ComponentModel;
 using System.Diagnostics;
@@ -50,7 +51,7 @@ namespace GuacamoleClient.WinForms
             if (e.VirtualKey == VK_F4 && ctrl && alt)
             {
                 e.Handled = true;
-                ShowHint(LocalizationKeys.Hint_CtrlAltF4_AppWillBeClosed);
+                ShowHint(LocalizationKey.Hint_CtrlAltF4_AppWillBeClosed);
                 _closeTimer.Start();
                 return;
             }
@@ -59,7 +60,7 @@ namespace GuacamoleClient.WinForms
             if (e.VirtualKey == VK_F4 && alt && !ctrl)
             {
                 e.Handled = true;
-                ShowHint(LocalizationKeys.Hint_AltF4_CatchedAndIgnored);
+                ShowHint(LocalizationKey.Hint_AltF4_CatchedAndIgnored);
                 return;
             }
 
@@ -82,7 +83,7 @@ namespace GuacamoleClient.WinForms
             if (e.VirtualKey == VK_ESC && ctrl && shift)
             {
                 e.Handled = true; // lokal abfangen
-                ShowHint(LocalizationKeys.Hint_CtrlShiftEsc_Catched_NotForwardableToRemoteServer);
+                ShowHint(LocalizationKey.Hint_CtrlShiftEsc_Catched_NotForwardableToRemoteServer);
                 return;
             }
 
@@ -91,7 +92,7 @@ namespace GuacamoleClient.WinForms
             {
                 // Wir lassen es durch – aber informieren, dass es i. d. R. nichts bewirkt.
                 e.Handled = false;
-                ShowHint(LocalizationKeys.Hint_CtrlAltEnd_WithoutEffect_mstsc);
+                ShowHint(LocalizationKey.Hint_CtrlAltEnd_WithoutEffect_mstsc);
                 return;
             }
 
@@ -100,7 +101,7 @@ namespace GuacamoleClient.WinForms
             if ((IsWinPressed() && e.VirtualKey == VK_R))
             {
                 e.Handled = true;
-                ShowHint(LocalizationKeys.Hint_WinR_Catched_NotForwardableToRemoteServer);
+                ShowHint(LocalizationKey.Hint_WinR_Catched_NotForwardableToRemoteServer);
                 return;
             }
 
@@ -108,7 +109,7 @@ namespace GuacamoleClient.WinForms
             {
                 e.Handled = true;
                 SwitchFullScreenMode(false);
-                ShowHint(LocalizationKeys.Hint_CtrlAltBreak_FullscreenModeOff);
+                ShowHint(LocalizationKey.Hint_CtrlAltBreak_FullscreenModeOff);
                 return;
             }
 
@@ -118,9 +119,9 @@ namespace GuacamoleClient.WinForms
                 e.Handled = true;
                 SwitchFullScreenMode(!fullScreenToolStripMenuItem.Checked);
                 if (!fullScreenToolStripMenuItem.Checked)
-                    ShowHint(LocalizationKeys.Hint_CtrlAltIns_FullscreenModeOff);
+                    ShowHint(LocalizationKey.Hint_CtrlAltIns_FullscreenModeOff);
                 else
-                    ShowHint(LocalizationKeys.Hint_CtrlAltIns_FullscreenModeOn);
+                    ShowHint(LocalizationKey.Hint_CtrlAltIns_FullscreenModeOn);
                 return;
             }
 
@@ -181,7 +182,7 @@ namespace GuacamoleClient.WinForms
             if (e.KeyCode == VK_F4 && ctrl && alt)
             {
                 e.Handled = true;
-                ShowHint(LocalizationKeys.Hint_CtrlAltF4_AppWillBeClosed);
+                ShowHint(LocalizationKey.Hint_CtrlAltF4_AppWillBeClosed);
                 _closeTimer.Start();
                 return;
             }
@@ -190,7 +191,7 @@ namespace GuacamoleClient.WinForms
             if (e.KeyCode == VK_F4 && alt && !ctrl)
             {
                 e.Handled = true;
-                ShowHint(LocalizationKeys.Hint_AltF4_CatchedAndIgnored);
+                ShowHint(LocalizationKey.Hint_AltF4_CatchedAndIgnored);
                 return;
             }
 
@@ -213,7 +214,7 @@ namespace GuacamoleClient.WinForms
             if (e.KeyCode == VK_ESC && ctrl && shift)
             {
                 e.Handled = true; // lokal abfangen
-                ShowHint(LocalizationKeys.Hint_CtrlShiftEsc_Catched_NotForwardableToRemoteServer);
+                ShowHint(LocalizationKey.Hint_CtrlShiftEsc_Catched_NotForwardableToRemoteServer);
                 return;
             }
 
@@ -222,7 +223,7 @@ namespace GuacamoleClient.WinForms
             {
                 // Wir lassen es durch – aber informieren, dass es i. d. R. nichts bewirkt.
                 e.Handled = false;
-                ShowHint(LocalizationKeys.Hint_CtrlAltEnd_WithoutEffect_mstsc);
+                ShowHint(LocalizationKey.Hint_CtrlAltEnd_WithoutEffect_mstsc);
                 return;
             }
 
@@ -231,7 +232,7 @@ namespace GuacamoleClient.WinForms
             if ((IsWinPressed() && e.KeyCode == VK_R))
             {
                 e.Handled = true;
-                ShowHint(LocalizationKeys.Hint_WinR_Catched_NotForwardableToRemoteServer);
+                ShowHint(LocalizationKey.Hint_WinR_Catched_NotForwardableToRemoteServer);
                 return;
             }
 
@@ -239,7 +240,7 @@ namespace GuacamoleClient.WinForms
             {
                 e.Handled = true;
                 SwitchFullScreenMode(false);
-                ShowHint(LocalizationKeys.Hint_CtrlAltBreak_FullscreenModeOff);
+                ShowHint(LocalizationKey.Hint_CtrlAltBreak_FullscreenModeOff);
                 return;
             }
 
@@ -249,9 +250,9 @@ namespace GuacamoleClient.WinForms
                 e.Handled = true;
                 SwitchFullScreenMode(!fullScreenToolStripMenuItem.Checked);
                 if (!fullScreenToolStripMenuItem.Checked)
-                    ShowHint(LocalizationKeys.Hint_CtrlAltIns_FullscreenModeOff);
+                    ShowHint(LocalizationKey.Hint_CtrlAltIns_FullscreenModeOff);
                 else
-                    ShowHint(LocalizationKeys.Hint_CtrlAltIns_FullscreenModeOn);
+                    ShowHint(LocalizationKey.Hint_CtrlAltIns_FullscreenModeOn);
                 return;
             }
 
@@ -307,7 +308,7 @@ namespace GuacamoleClient.WinForms
                 if (_altF4Detected)
                 {
                     _altF4Detected = false;
-                    ShowHint(LocalizationKeys.Hint_AltF4_CatchedAndIgnored);
+                    ShowHint(LocalizationKey.Hint_AltF4_CatchedAndIgnored);
                     return; // blockieren
                 }
             }

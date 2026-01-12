@@ -3,6 +3,7 @@ using System.Drawing;
 using System.Linq;
 using System.Windows.Forms;
 using GuacamoleClient.Common.Settings;
+using GuacamoleClient.Common.Localization;
 
 namespace GuacamoleClient.WinForms
 {
@@ -10,28 +11,34 @@ namespace GuacamoleClient.WinForms
     {
         private readonly GuacamoleSettingsManager _manager;
         private readonly ListView _list = new ListView { View = View.Details, FullRowSelect = true, HideSelection = false, Dock = DockStyle.Fill };
-        private readonly Button _btnAdd = new Button { Text = "Add..." };
-        private readonly Button _btnEdit = new Button { Text = "Edit..." };
-        private readonly Button _btnRemove = new Button { Text = "Remove" };
-        private readonly Button _btnSetDefault = new Button { Text = "Set default" };
-        private readonly Button _btnClose = new Button { Text = "Close", DialogResult = DialogResult.OK };
+        private readonly Button _btnAdd = new Button { };
+        private readonly Button _btnEdit = new Button { };
+        private readonly Button _btnRemove = new Button { };
+        private readonly Button _btnSetDefault = new Button { };
+        private readonly Button _btnClose = new Button { DialogResult = DialogResult.OK };
 
         public ManageServersForm(GuacamoleSettingsManager manager)
         {
             _manager = manager ?? throw new ArgumentNullException(nameof(manager));
 
-            Text = "Manage Guacamole servers";
+            Text = LocalizationProvider.Get(LocalizationKey.ManageServers_Title);
             StartPosition = FormStartPosition.CenterParent;
             MinimizeBox = false;
             MaximizeBox = false;
             FormBorderStyle = FormBorderStyle.Sizable;
             ClientSize = new Size(820, 420);
 
-            _list.Columns.Add("Name", 200);
-            _list.Columns.Add("URL", 460);
-            _list.Columns.Add("Color", 100);
+            _list.Columns.Add(LocalizationProvider.Get(LocalizationKey.ChooseServer_Column_Name), 200);
+            _list.Columns.Add(LocalizationProvider.Get(LocalizationKey.ChooseServer_Column_Url), 460);
+            _list.Columns.Add(LocalizationProvider.Get(LocalizationKey.ChooseServer_Column_Color), 100);
             _list.DoubleClick += (_, __) => EditSelected();
             _list.SelectedIndexChanged += (_, __) => UpdateButtons();
+
+            _btnAdd.Text = LocalizationProvider.Get(LocalizationKey.ManageServers_Button_Add);
+            _btnEdit.Text = LocalizationProvider.Get(LocalizationKey.ManageServers_Button_Edit);
+            _btnRemove.Text = LocalizationProvider.Get(LocalizationKey.ManageServers_Button_Remove);
+            _btnSetDefault.Text = LocalizationProvider.Get(LocalizationKey.ManageServers_Button_SetDefault);
+            _btnClose.Text = LocalizationProvider.Get(LocalizationKey.ManageServers_Button_Close);
 
             _btnAdd.Click += (_, __) => AddNew();
             _btnEdit.Click += (_, __) => EditSelected();
@@ -59,7 +66,7 @@ namespace GuacamoleClient.WinForms
             foreach (var p in _manager.ServerProfiles)
             {
                 var name = p.GetDisplayText();
-                if (p.IsDefault) name += " (Default)";
+                if (p.IsDefault) name += " " + LocalizationProvider.Get(LocalizationKey.Common_Suffix_Default);
                 var item = new ListViewItem(name) { Tag = p.Id };
                 item.SubItems.Add(p.Url);
                 item.SubItems.Add(ColorValueResolver.ResolveToHex(p.ColorValue));
@@ -104,7 +111,11 @@ namespace GuacamoleClient.WinForms
             var sel = GetSelected();
             if (sel == null) return;
 
-            if (MessageBox.Show(this, "Remove selected server profile?", "Confirm", MessageBoxButtons.YesNo, MessageBoxIcon.Warning) != DialogResult.Yes)
+            if (MessageBox.Show(this,
+                    LocalizationProvider.Get(LocalizationKey.ManageServers_ConfirmRemove_Text),
+                    LocalizationProvider.Get(LocalizationKey.ManageServers_ConfirmRemove_Title),
+                    MessageBoxButtons.YesNo,
+                    MessageBoxIcon.Warning) != DialogResult.Yes)
                 return;
 
             _manager.Remove(sel.Id);

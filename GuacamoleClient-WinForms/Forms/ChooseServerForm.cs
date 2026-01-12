@@ -3,6 +3,7 @@ using System.Drawing;
 using System.Linq;
 using System.Windows.Forms;
 using GuacamoleClient.Common.Settings;
+using GuacamoleClient.Common.Localization;
 
 namespace GuacamoleClient.WinForms
 {
@@ -10,10 +11,10 @@ namespace GuacamoleClient.WinForms
     {
         private readonly GuacamoleSettingsManager _manager;
         private readonly ListView _list = new ListView { View = View.Details, FullRowSelect = true, HideSelection = false, Dock = DockStyle.Fill };
-        private readonly Button _btnOpen = new Button { Text = "Open (new window)", Anchor = AnchorStyles.Bottom | AnchorStyles.Right };
-        private readonly Button _btnManage = new Button { Text = "Manage...", Anchor = AnchorStyles.Bottom | AnchorStyles.Right };
-        private readonly Button _btnSetDefault = new Button { Text = "Set default", Anchor = AnchorStyles.Bottom | AnchorStyles.Right };
-        private readonly Button _btnCancel = new Button { Text = "Cancel", DialogResult = DialogResult.Cancel, Anchor = AnchorStyles.Bottom | AnchorStyles.Right };
+        private readonly Button _btnOpen = new Button { Anchor = AnchorStyles.Bottom | AnchorStyles.Right };
+        private readonly Button _btnManage = new Button { Anchor = AnchorStyles.Bottom | AnchorStyles.Right };
+        private readonly Button _btnSetDefault = new Button { Anchor = AnchorStyles.Bottom | AnchorStyles.Right };
+        private readonly Button _btnCancel = new Button { DialogResult = DialogResult.Cancel, Anchor = AnchorStyles.Bottom | AnchorStyles.Right };
 
         public GuacamoleServerProfile? SelectedProfile { get; private set; }
 
@@ -21,16 +22,21 @@ namespace GuacamoleClient.WinForms
         {
             _manager = manager ?? throw new ArgumentNullException(nameof(manager));
 
-            Text = "Choose Guacamole server";
+            Text = LocalizationProvider.Get(LocalizationKey.ChooseServer_Title);
             StartPosition = FormStartPosition.CenterParent;
             MinimizeBox = false;
             MaximizeBox = false;
             FormBorderStyle = FormBorderStyle.Sizable;
             ClientSize = new Size(820, 420);
 
-            _list.Columns.Add("Name", 220);
-            _list.Columns.Add("URL", 460);
-            _list.Columns.Add("Color", 100);
+            _list.Columns.Add(LocalizationProvider.Get(LocalizationKey.ChooseServer_Column_Name), 220);
+            _list.Columns.Add(LocalizationProvider.Get(LocalizationKey.ChooseServer_Column_Url), 460);
+            _list.Columns.Add(LocalizationProvider.Get(LocalizationKey.ChooseServer_Column_Color), 100);
+
+            _btnOpen.Text = LocalizationProvider.Get(LocalizationKey.ChooseServer_Button_OpenNewWindow);
+            _btnManage.Text = LocalizationProvider.Get(LocalizationKey.ChooseServer_Button_Manage);
+            _btnSetDefault.Text = LocalizationProvider.Get(LocalizationKey.ChooseServer_Button_SetDefault);
+            _btnCancel.Text = LocalizationProvider.Get(LocalizationKey.Common_Button_Cancel);
             _list.DoubleClick += (_, __) => OpenSelected();
             _list.SelectedIndexChanged += (_, __) => UpdateButtons();
 
@@ -65,7 +71,7 @@ namespace GuacamoleClient.WinForms
             foreach (var p in _manager.ServerProfiles)
             {
                 var name = p.GetDisplayText();
-                if (p.IsDefault) name += " (Default)";
+                if (p.IsDefault) name += " " + LocalizationProvider.Get(LocalizationKey.Common_Suffix_Default);
                 var item = new ListViewItem(name) { Tag = p.Id };
                 item.SubItems.Add(p.Url);
                 item.SubItems.Add(ColorValueResolver.ResolveToHex(p.ColorValue));
