@@ -3,6 +3,53 @@ namespace GuacamoleClient.Common.Settings
 {
     public class GuacamoleColorScheme
     {
+        internal static PaletteBrightness GetPaletteBrightness(string primaryColor)
+        {
+            switch (primaryColor)
+            {
+                case "Green":
+                case "DeepOrange":
+                case "Red":
+                case "DeepPurple":
+                case "DarkRed":
+                case "Indigo":
+                case "Blue":
+                case "Brown":
+                case "DarkCyan":
+                case "Teal":
+                    return PaletteBrightness.LightTextOnDarkBackground;
+
+                case "DarkGray":
+                case "Gray":
+                case "BlueGray":
+                    return PaletteBrightness.LightTextOnDarkGrayBackground;
+
+                case "Pink":
+                case "LightBlue":
+                case "Cyan":
+                case "Purple":
+                case "LightGreen":
+                case "Lime":
+                case "Yellow":
+                case "Orange":
+                case "OrangeRed":
+                    return PaletteBrightness.DarkTextOnLightBackground;
+
+                case "LightGray":
+                    return PaletteBrightness.DarkTextOnLightGrayBackground;
+
+                case "White":
+                    return PaletteBrightness.DarkTextOnVeryLightBackground;
+
+                case "Black":
+                    return PaletteBrightness.LightTextOnVeryDarkBackground;
+
+                default:
+                    // TODO: identify light vs. dark colors more reliably
+                    return PaletteBrightness.DarkTextOnLightBackground;
+            }
+        }
+
         public GuacamoleColorScheme(string primaryColor)
         {
             PrimaryColorValue = primaryColor;
@@ -71,12 +118,22 @@ namespace GuacamoleClient.Common.Settings
         public string PrimaryColorValue { get; init; } = "OrangeRed";
 
         /// <summary>
+        /// Primary color used in UI for this server profile
+        /// </summary>
+        public string PrimaryColorHexValue { get { return GuacamoleColorPalette.ResolveToHex(PrimaryColorValue); } }
+
+        /// <summary>
         /// Text fore color for regular/active controls on top of primary color background
         /// </summary>
         /// <remarks>
         /// Color value either from palette key (e.g. "OrangeRed") or a custom hex string ("#RRGGBB" or "RRGGBB").
         /// </remarks>
         public string TextColorValue { get; init; } = "Black";
+
+        /// <summary>
+        /// Text fore color for regular/active controls on top of primary color background
+        /// </summary>
+        public string TextColorHexValue { get { return GuacamoleColorPalette.ResolveToHex(TextColorValue); } }
 
         /// <summary>
         /// Text fore color for inactive controls on top of primary color background
@@ -87,12 +144,22 @@ namespace GuacamoleClient.Common.Settings
         public string InactiveTextColorValue { get; init; } = "Gray";
 
         /// <summary>
+        /// Text fore color for inactive controls on top of primary color background
+        /// </summary>
+        public string InactiveTextColorHexValue { get { return GuacamoleColorPalette.ResolveToHex(InactiveTextColorValue); } }
+
+        /// <summary>
         /// Primary color substitution for a hovering menu item in UI for this server profile
         /// </summary>
         /// <remarks>
         /// Color value either from palette key (e.g. "OrangeRed") or a custom hex string ("#RRGGBB" or "RRGGBB").
         /// </remarks>
         public string HoverBackgroundColorValue { get; init; } = "LightBlue";
+
+        /// <summary>
+        /// Primary color substitution for a hovering menu item in UI for this server profile
+        /// </summary>
+        public string HoverBackgroundColorHexValue { get { return GuacamoleColorPalette.ResolveToHex(HoverBackgroundColorValue); } }
 
         /// <summary>
         /// Text fore color for a hovering menu item in UI for this server profile
@@ -103,6 +170,11 @@ namespace GuacamoleClient.Common.Settings
         public string HoverTextColorValue { get; init; } = "Black";
 
         /// <summary>
+        /// Text fore color for a hovering menu item in UI for this server profile
+        /// </summary>
+        public string HoverTextColorHexValue { get { return GuacamoleColorPalette.ResolveToHex(HoverTextColorValue); } }
+
+        /// <summary>
         /// Primary color substitution for a selected menu item in UI for this server profile
         /// </summary>
         /// <remarks>
@@ -111,12 +183,25 @@ namespace GuacamoleClient.Common.Settings
         public string SelectedItemBackgroundColorValue { get; init; } = "White";
 
         /// <summary>
+        /// Primary color substitution for a selected menu item in UI for this server profile
+        /// </summary>
+        public string SelectedItemBackgroundColorHexValue { get { return GuacamoleColorPalette.ResolveToHex(SelectedItemBackgroundColorValue); } }
+
+        /// <summary>
         /// Text fore color for a selected menu item in UI for this server profile
         /// </summary>
         /// <remarks>
         /// Color value either from palette key (e.g. "OrangeRed") or a custom hex string ("#RRGGBB" or "RRGGBB").
         /// </remarks>
         public string SelectedItemTextColorValue { get; init; } = "Black";
+
+        /// <summary>
+        /// Text fore color for a selected menu item in UI for this server profile
+        /// </summary>
+        /// <remarks>
+        /// Color value either from palette key (e.g. "OrangeRed") or a custom hex string ("#RRGGBB" or "RRGGBB").
+        /// </remarks>
+        public string SelectedItemTextColorHexValue { get { return GuacamoleColorPalette.ResolveToHex(SelectedItemTextColorValue); } }
 
         public PaletteBrightness BrightnessOfPrimaryColor { get; init; }
 
@@ -128,52 +213,6 @@ namespace GuacamoleClient.Common.Settings
             DarkTextOnLightBackground,
             DarkTextOnVeryLightBackground,
             DarkTextOnLightGrayBackground,
-        }
-
-        internal static PaletteBrightness GetPaletteBrightness(string primaryColor)
-        {
-            switch (primaryColor)
-            {
-                case "Green":
-                case "DeepOrange":
-                case "Red":
-                case "DeepPurple":
-                case "Indigo":
-                case "Blue":
-                case "Brown":
-                case "DarkCyan":
-                case "Teal":
-                    return PaletteBrightness.LightTextOnDarkBackground;
-
-                case "DarkGray":
-                case "Gray":
-                case "BlueGray":
-                    return PaletteBrightness.LightTextOnDarkGrayBackground;
-
-                case "Pink":
-                case "LightBlue":
-                case "Cyan":
-                case "Purple":
-                case "LightGreen":
-                case "Lime":
-                case "Yellow":
-                case "Orange":
-                case "OrangeRed":
-                    return PaletteBrightness.DarkTextOnLightBackground;
-
-                case "LightGray":
-                    return PaletteBrightness.DarkTextOnLightGrayBackground;
-
-                case "White":
-                    return PaletteBrightness.DarkTextOnVeryLightBackground;
-
-                case "Black":
-                    return PaletteBrightness.LightTextOnVeryDarkBackground;
-
-                default:
-                    // TODO: identify light vs. dark colors more reliably
-                    return PaletteBrightness.DarkTextOnLightBackground;
-            }
         }
     }
 }

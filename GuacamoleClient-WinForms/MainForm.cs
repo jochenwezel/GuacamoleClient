@@ -30,7 +30,6 @@ namespace GuacamoleClient.WinForms
 
         private readonly GuacamoleClient.Common.Settings.GuacamoleSettingsManager _settings;
         public GuacamoleClient.Common.Settings.GuacamoleServerProfile ServerProfile { get; }
-        private readonly Color _profilePrimaryColor;
 
         public MainForm(GuacamoleClient.Common.Settings.GuacamoleSettingsManager settings, GuacamoleClient.Common.Settings.GuacamoleServerProfile serverProfile, Uri startUrl)
         {
@@ -39,7 +38,6 @@ namespace GuacamoleClient.WinForms
             this.HomeUrl = new Uri(serverProfile.Url);
             this.StartUrl = startUrl;
             _trustedHosts.Add(this.HomeUrl.Host);
-            _profilePrimaryColor = UITools.ResolveProfilePrimaryColor(serverProfile);
 
             InitializeComponent();
             InitializeControlFocusManagementWithKeyboardCapturingHandler();
@@ -106,13 +104,13 @@ namespace GuacamoleClient.WinForms
         protected override void OnHandleCreated(EventArgs e)
         {
             base.OnHandleCreated(e);
-            TitleBarHelper.ApplyTitleBarColors(this, _profilePrimaryColor, Color.Black);
+            TitleBarHelper.ApplyTitleBarColors(this, this.ServerProfile.LookupColorScheme());
         }
 
         private void ApplyProfileColors()
         {
             // existing implementation supports all relevant color assignments - now driven by profile
-            mainMenuStrip!.SetMenuStripColorsRecursive(_profilePrimaryColor, _profilePrimaryColor, Color.DarkRed, Color.Black, Color.DarkGray);
+            mainMenuStrip!.SetMenuStripColorsRecursive(this.ServerProfile.LookupColorScheme());
         }
 
         /// <summary>

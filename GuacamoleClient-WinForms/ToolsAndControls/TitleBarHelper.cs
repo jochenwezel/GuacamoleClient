@@ -1,4 +1,5 @@
-﻿using System;
+﻿using GuacamoleClient.Common.Settings;
+using System;
 using System.Drawing;
 using System.Runtime.InteropServices;
 using System.Windows.Forms;
@@ -26,7 +27,18 @@ namespace GuacamoleClient.WinForms
         /// Setzt eine TitleBar mit frei definierbarer Hintergrund- und Textfarbe.
         /// Schlägt auf nicht unterstützten Windows-Versionen stillschweigend fehl.
         /// </summary>
-        public static void ApplyTitleBarColors(Form form, Color backgroundColor, Color textColor)
+        public static void ApplyTitleBarColors(Form form, GuacamoleColorScheme colorScheme) =>
+            ApplyTitleBarColors(
+                form,
+                UITools.ParseHexColor(colorScheme.PrimaryColorHexValue),
+                UITools.ParseHexColor(colorScheme.TextColorHexValue)
+            );
+
+        /// <summary>
+        /// Setzt eine TitleBar mit frei definierbarer Hintergrund- und Textfarbe.
+        /// Schlägt auf nicht unterstützten Windows-Versionen stillschweigend fehl.
+        /// </summary>
+        private static void ApplyTitleBarColors(Form form, Color backgroundColor, Color textColor)
         {
             if (form == null)
                 throw new ArgumentNullException(nameof(form));

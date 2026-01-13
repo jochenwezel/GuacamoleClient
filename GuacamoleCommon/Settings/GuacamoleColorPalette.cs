@@ -14,6 +14,7 @@ namespace GuacamoleClient.Common.Settings
         public static readonly IReadOnlyDictionary<string, string> Colors = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
         {
             { "Red", "#D32F2F" },
+            { "DarkRed", "#B71C1C" },
             { "Pink", "#C2185B" },
             { "Purple", "#7B1FA2" },
             { "DeepPurple", "#512DA8" },
