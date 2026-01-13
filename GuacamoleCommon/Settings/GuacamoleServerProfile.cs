@@ -21,9 +21,9 @@ namespace GuacamoleClient.Common.Settings
         public string? DisplayName { get; set; }
 
         /// <summary>
-        /// Color value either from palette key (e.g. "Red") or a custom hex string ("#RRGGBB" or "RRGGBB").
+        /// Color value either from palette key (e.g. "OrangeRed") or a custom hex string ("#RRGGBB" or "RRGGBB").
         /// </summary>
-        public string ColorValue { get; set; } = "Red";
+        public string ColorValue { get; set; } = "OrangeRed";
 
         /// <summary>
         /// If true, certificate errors should be ignored for this profile only.
