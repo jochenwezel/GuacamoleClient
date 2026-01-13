@@ -39,7 +39,7 @@ namespace GuacamoleClient.WinForms
             this.HomeUrl = new Uri(serverProfile.Url);
             this.StartUrl = startUrl;
             _trustedHosts.Add(this.HomeUrl.Host);
-            _profilePrimaryColor = UiColorHelpers.ResolveProfilePrimaryColor(serverProfile);
+            _profilePrimaryColor = UITools.ResolveProfilePrimaryColor(serverProfile);
 
             InitializeComponent();
             InitializeControlFocusManagementWithKeyboardCapturingHandler();
@@ -51,7 +51,7 @@ namespace GuacamoleClient.WinForms
             this.UpdateFormTitle(startUrl);
             KeyPreview = true;
             ApplyProfileColors();
-            testToolStripMenuItem.Available = TEST_MENU_ENABLED;
+            UITools.SwitchToolStripVisibility(testToolStripMenuItem, TEST_MENU_ENABLED, false);
 
             //Assign commands to close timer
             _closeTimer.Tick += (_, __) => { _closeTimer.Stop(); Close(); };
@@ -259,16 +259,17 @@ namespace GuacamoleClient.WinForms
             //Check for login form and show menu items accordingly
             if (GuacamoleUrlAndContentChecks.ContentIsGuacamoleLoginForm(currentHtml))
             {
-                guacamoleUserSettingsToolStripMenuItem!.Available = false;
-                guacamoleConnectionConfigurationsToolStripMenuItem!.Available = false;
-                newWindowToolStripMenuItem!.Available = false;
+                UITools.SwitchToolStripVisibility(guacamoleUserSettingsToolStripMenuItem, false, false);
+                UITools.SwitchToolStripVisibility(guacamoleConnectionConfigurationsToolStripMenuItem, false, false);
+                UITools.SwitchToolStripVisibility(newWindowToolStripMenuItem, false, false);
             }
             else
             {
-                guacamoleUserSettingsToolStripMenuItem!.Available = true;
-                guacamoleConnectionConfigurationsToolStripMenuItem!.Available = true;
-                newWindowToolStripMenuItem!.Available = true;
+                UITools.SwitchToolStripVisibility(guacamoleUserSettingsToolStripMenuItem, true, false);
+                UITools.SwitchToolStripVisibility(guacamoleConnectionConfigurationsToolStripMenuItem, true, false);
+                UITools.SwitchToolStripVisibility(newWindowToolStripMenuItem, true, false);
             }
+            UITools.SwitchSeparatorLinesVisibility(fileToolStripMenuItem.DropDownItems);
         }
 
         /// <summary>
@@ -534,8 +535,8 @@ namespace GuacamoleClient.WinForms
                 //Screen screen = Screen.FromControl(this);
                 //Rectangle r = screen.Bounds;
             }
-            this.stopFullScreenModeToolStripMenuItem.Available = fullScreen;
-            this.connectionNameInFullScreenModeToolStripMenuItem.Available = fullScreen;
+            UITools.SwitchToolStripVisibility(stopFullScreenModeToolStripMenuItem, fullScreen, false);
+            UITools.SwitchToolStripVisibility(connectionNameInFullScreenModeToolStripMenuItem, fullScreen, false);
             this.connectionNameInFullScreenModeToolStripMenuItem.Enabled = false;
             this.connectionNameInFullScreenModeToolStripMenuItem.ForeColor = Color.Black;
             this.connectionNameInFullScreenModeToolStripMenuItem.Font = new Font(this.connectionNameInFullScreenModeToolStripMenuItem.Font, FontStyle.Bold);

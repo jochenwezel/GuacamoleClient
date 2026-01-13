@@ -67,6 +67,8 @@ namespace GuacamoleClient.WinForms
             WebBrowserHostPanel = new Panel();
             formTitleRefreshTimer = new Timer(components);
             _focusSink = new TextBox();
+            toolStripSeparator2 = new ToolStripSeparator();
+            toolStripSeparator3 = new ToolStripSeparator();
             mainMenuStrip.SuspendLayout();
             SuspendLayout();
             // 
@@ -81,7 +83,7 @@ namespace GuacamoleClient.WinForms
             // 
             // fileToolStripMenuItem
             // 
-            fileToolStripMenuItem.DropDownItems.AddRange(new ToolStripItem[] { connectionHomeToolStripMenuItem, guacamoleUserSettingsToolStripMenuItem, guacamoleConnectionConfigurationsToolStripMenuItem, newWindowToolStripMenuItem, openAnotherGuacamoleServerToolStripMenuItem, toolStripSeparator1, quitToolStripMenuItem });
+            fileToolStripMenuItem.DropDownItems.AddRange(new ToolStripItem[] { connectionHomeToolStripMenuItem, newWindowToolStripMenuItem, toolStripSeparator3, guacamoleUserSettingsToolStripMenuItem, guacamoleConnectionConfigurationsToolStripMenuItem, toolStripSeparator2, openAnotherGuacamoleServerToolStripMenuItem, toolStripSeparator1, quitToolStripMenuItem });
             fileToolStripMenuItem.Name = "fileToolStripMenuItem";
             fileToolStripMenuItem.Size = new Size(81, 20);
             fileToolStripMenuItem.Text = "&Connection";
@@ -203,6 +205,16 @@ namespace GuacamoleClient.WinForms
             _focusSink.TabStop = false;
             _focusSink.Visible = false;
             // 
+            // toolStripSeparator2
+            // 
+            toolStripSeparator2.Name = "toolStripSeparator2";
+            toolStripSeparator2.Size = new Size(327, 6);
+            // 
+            // toolStripSeparator3
+            // 
+            toolStripSeparator3.Name = "toolStripSeparator3";
+            toolStripSeparator3.Size = new Size(327, 6);
+            // 
             // MainForm
             // 
             ClientSize = new Size(1264, 725);
@@ -222,5 +234,8 @@ namespace GuacamoleClient.WinForms
             PerformLayout();
 
         }
+
+        private ToolStripSeparator toolStripSeparator3;
+        private ToolStripSeparator toolStripSeparator2;
     }
 }

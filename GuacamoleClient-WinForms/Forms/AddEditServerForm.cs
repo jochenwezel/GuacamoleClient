@@ -149,7 +149,7 @@ namespace GuacamoleClient.WinForms
             string colorValue = isCustom ? _txtCustomHex.Text : (sel ?? "Red");
             if (ColorValueResolver.TryResolveToHex(colorValue, out var hex))
             {
-                _pnlColorPreview.BackColor = UiColorHelpers.ParseHexColor(hex);
+                _pnlColorPreview.BackColor = UITools.ParseHexColor(hex);
             }
             else
             {
