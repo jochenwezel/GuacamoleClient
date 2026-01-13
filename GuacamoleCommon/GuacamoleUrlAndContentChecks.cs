@@ -23,34 +23,10 @@ namespace GuacamoleClient.Common
 
         /// <summary>
         /// Determines whether the specified HTTP response content represents a Guacamole start page.
+        /// NOTE: HTML content must be the raw HTML before any JavaScript execution.
         /// </summary>
         /// <param name="url">The url to the guacamole server</param>
         /// <returns>true if the content contains a Guacamole start page; otherwise, false.</returns>
-        public static bool IsGuacamoleResponseWithStartPage(string? url)
-        {
-            if (url != null && Uri.TryCreate(url.Trim(), UriKind.Absolute, out var uri))
-            {
-                System.Net.Http.HttpClient request = new System.Net.Http.HttpClient();
-                try
-                {
-                    var response = request.GetAsync(uri).Result;
-                    if (!response.IsSuccessStatusCode)
-                        return false;
-                    var content = response.Content.ReadAsStringAsync().Result;
-                    return ContentIsGuacamoleStartPage(content);
-                }
-                catch
-                {
-                    return false;
-                }
-            }
-            else
-                return false;
-        }
-
-        /// <summary>
-        /// Determines whether the specified URL responds with a Guacamole start page, optionally ignoring TLS certificate errors.
-        /// </summary>
         public static bool IsGuacamoleResponseWithStartPage(string? url, bool ignoreCertificateErrors)
         {
             if (url != null && Uri.TryCreate(url.Trim(), UriKind.Absolute, out var uri))
@@ -80,14 +56,21 @@ namespace GuacamoleClient.Common
 
         /// <summary>
         /// Determines whether the specified HTTP response content represents a Guacamole login form.
+        /// NOTE: HTML content must be the dynamic HTML result after JavaScript execution.
         /// </summary>
         /// <param name="url">The url to the guacamole server</param>
         /// <returns>true if the content contains a Guacamole login form; otherwise, false.</returns>
-        public static bool IsGuacamoleResponseWithLoginForm(string url)
+        [Obsolete("This method may not work as expected because it does not execute JavaScript. Use ContentIsGuacamoleLoginForm with dynamic HTML content from browser instead.")]
+        public static bool IsGuacamoleResponseWithLoginForm(string url, bool ignoreCertificateErrors)
         {
             if (url != null && Uri.TryCreate(url.Trim(), UriKind.Absolute, out var uri))
             {
-                System.Net.Http.HttpClient request = new System.Net.Http.HttpClient();
+                var handler = new System.Net.Http.HttpClientHandler();
+                if (ignoreCertificateErrors)
+                {
+                    handler.ServerCertificateCustomValidationCallback = (_, __, ___, ____) => true;
+                }
+                using var request = new System.Net.Http.HttpClient(handler);
                 try
                 {
                     var response = request.GetAsync(uri).Result;
@@ -105,11 +88,27 @@ namespace GuacamoleClient.Common
                 return false;
         }
 
+        /// <summary>
+        /// Determines whether the specified HTML content represents a Guacamole login form.
+        /// NOTE: HTML content must be the dynamic HTML result after JavaScript execution.
+        /// </summary>
+        /// <remarks>This method checks for specific HTML markers commonly found in Guacamole login forms,
+        /// such as certain class and field names. It does not perform a full HTML parse and may return false positives
+        /// if the content contains similar elements.</remarks>
+        /// <param name="content">The HTML content to examine for the presence of a Guacamole login form. Cannot be null or whitespace.</param>
+        /// <returns>true if the content contains the expected elements of a Guacamole login form; otherwise, false.</returns>
         public static bool ContentIsGuacamoleLoginForm(string content)
         {
             if (string.IsNullOrWhiteSpace(content)) return false;
             return content.Contains("class=\"login-fields\"") && content.Contains("id=\"guac-field-") && content.Contains("name=\"username\"") && content.Contains("name=\"password\"");
         }
+
+        /// <summary>
+        /// Determines whether the specified content represents a Guacamole start page.
+        /// NOTE: HTML content must be the raw HTML before any JavaScript execution.
+        /// </summary>
+        /// <param name="content">The HTML content to examine for the presence of a Guacamole start page. Can be null or empty.</param>
+        /// <returns>true if the content contains a Guacamole start page marker; otherwise, false.</returns>
         public static bool ContentIsGuacamoleStartPage(string content)
         {
             if (string.IsNullOrWhiteSpace(content)) return false;
