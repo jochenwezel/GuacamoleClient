@@ -43,23 +43,7 @@ namespace GuacamoleClient.WinForms
 
             InitializeComponent();
             InitializeControlFocusManagementWithKeyboardCapturingHandler();
-
-            // Localization
-            openAnotherGuacamoleServerToolStripMenuItem.Text = LocalizationProvider.Get(LocalizationKeys.Menu_OpenAnotherGuacamoleServer);
-            fileToolStripMenuItem.Text = LocalizationProvider.Get(LocalizationKeys.Menu_Connection);
-            viewToolStripMenuItem.Text = LocalizationProvider.Get(LocalizationKeys.Menu_View);
-            fullScreenToolStripMenuItem.Text = LocalizationProvider.Get(LocalizationKeys.Menu_ViewFullScreen);
-            quitToolStripMenuItem.Text = LocalizationProvider.Get(LocalizationKeys.Menu_Quit);
-            newWindowToolStripMenuItem.Text = LocalizationProvider.Get(LocalizationKeys.Menu_NewWindow);
-            connectionHomeToolStripMenuItem.Text = LocalizationProvider.Get(LocalizationKeys.Menu_ConnectionHome);
-            guacamoleUserSettingsToolStripMenuItem.Text = LocalizationProvider.Get(LocalizationKeys.Menu_GuacamoleUserSettings);
-            guacamoleConnectionConfigurationsToolStripMenuItem.Text = LocalizationProvider.Get(LocalizationKeys.Menu_GuacamoleConnectionConfigurations);
-            connectionHomeToolStripMenuItem.ShortcutKeyDisplayString = LocalizationProvider.Get(LocalizationKeys.ShortcutKeystroke_ConnectionHome);
-            newWindowToolStripMenuItem.ShortcutKeyDisplayString = LocalizationProvider.Get(LocalizationKeys.ShortcutKeystroke_NewWindowToolStripMenuItem);
-            quitToolStripMenuItem.ShortcutKeyDisplayString = LocalizationProvider.Get(LocalizationKeys.ShortcutKeystroke_QuitToolStripMenuItem);
-            fullScreenToolStripMenuItem.ShortcutKeyDisplayString = LocalizationProvider.Get(LocalizationKeys.ShortcutKeystroke_FullScreenToolStripMenuItem);
-            stopFullScreenModeToolStripMenuItem.ShortcutKeyDisplayString = LocalizationProvider.Get(LocalizationKeys.ShortcutKeystroke_StopFullScreenModeToolStripMenuItem);
-            HintStopWebcontrol2FocusShortcut.Text = LocalizationProvider.Get(LocalizationKeys.ShortcutKeystroke_HintStopWebcontrol2FocusShortcut);
+            InitializeLocalization();
 
             //Form title + menu customization
             this.UpdateFormTitle(startUrl);
@@ -194,6 +178,7 @@ namespace GuacamoleClient.WinForms
         /// <summary>
         /// The URL for the connections configuation page of guacamole
         /// </summary>
+        /// <remarks>This URL might be available for guacamole admin users only and if guacamole uses mysql provider for connections management.</remarks>
         public Uri GuacamoleConnectionConfigurationsUrl
         {
             get
