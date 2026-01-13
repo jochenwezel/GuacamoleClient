@@ -15,6 +15,8 @@ namespace GuacamoleClient.WinForms
         private Button _btnSetDefault;
         private Button _btnClose;
         private FlowLayoutPanel _right;
+        private Label _spacer1;
+        private Label _spacer2;
 
         protected override void Dispose(bool disposing)
         {
@@ -27,47 +29,136 @@ namespace GuacamoleClient.WinForms
 
         private void InitializeComponent()
         {
-            components = new System.ComponentModel.Container();
+            _list = new ListView();
+            _btnAdd = new Button();
+            _btnEdit = new Button();
+            _btnRemove = new Button();
+            _btnSetDefault = new Button();
+            _btnClose = new Button();
+            _right = new FlowLayoutPanel();
+            _spacer1 = new Label();
+            _spacer2 = new Label();
+            _right.SuspendLayout();
+            SuspendLayout();
 
-            _list = new ListView
-            {
-                View = View.Details,
-                FullRowSelect = true,
-                HideSelection = false,
-                Dock = DockStyle.Fill
-            };
+            // 
+            // _list
+            // 
+            _list.Dock = DockStyle.Fill;
+            _list.FullRowSelect = true;
+            _list.HideSelection = false;
+            _list.Location = new Point(0, 0);
+            _list.Name = "_list";
+            _list.Size = new Size(680, 420);
+            _list.TabIndex = 0;
+            _list.UseCompatibleStateImageBehavior = false;
+            _list.View = View.Details;
 
-            _btnAdd = new Button { Text = nameof(_btnAdd) };
-            _btnEdit = new Button { Text = nameof(_btnEdit), Enabled = false };
-            _btnRemove = new Button { Text = nameof(_btnRemove), Enabled = false };
-            _btnSetDefault = new Button { Text = nameof(_btnSetDefault), Enabled = false };
-            _btnClose = new Button { Text = nameof(_btnClose), DialogResult = DialogResult.OK };
+            // 
+            // _btnAdd
+            // 
+            _btnAdd.Location = new Point(11, 11);
+            _btnAdd.Name = "_btnAdd";
+            _btnAdd.Size = new Size(120, 27);
+            _btnAdd.TabIndex = 0;
+            _btnAdd.Text = "_btnAdd";
+            _btnAdd.UseVisualStyleBackColor = true;
 
-            _right = new FlowLayoutPanel
-            {
-                Dock = DockStyle.Right,
-                Width = 140,
-                FlowDirection = FlowDirection.TopDown,
-                Padding = new Padding(8)
-            };
+            // 
+            // _btnEdit
+            // 
+            _btnEdit.Enabled = false;
+            _btnEdit.Location = new Point(11, 44);
+            _btnEdit.Name = "_btnEdit";
+            _btnEdit.Size = new Size(120, 27);
+            _btnEdit.TabIndex = 1;
+            _btnEdit.Text = "_btnEdit";
+            _btnEdit.UseVisualStyleBackColor = true;
+
+            // 
+            // _btnRemove
+            // 
+            _btnRemove.Enabled = false;
+            _btnRemove.Location = new Point(11, 77);
+            _btnRemove.Name = "_btnRemove";
+            _btnRemove.Size = new Size(120, 27);
+            _btnRemove.TabIndex = 2;
+            _btnRemove.Text = "_btnRemove";
+            _btnRemove.UseVisualStyleBackColor = true;
+
+            // 
+            // _spacer1
+            // 
+            _spacer1.Location = new Point(11, 110);
+            _spacer1.Name = "_spacer1";
+            _spacer1.Size = new Size(120, 10);
+            _spacer1.TabIndex = 3;
+
+            // 
+            // _btnSetDefault
+            // 
+            _btnSetDefault.Enabled = false;
+            _btnSetDefault.Location = new Point(11, 126);
+            _btnSetDefault.Name = "_btnSetDefault";
+            _btnSetDefault.Size = new Size(120, 27);
+            _btnSetDefault.TabIndex = 4;
+            _btnSetDefault.Text = "_btnSetDefault";
+            _btnSetDefault.UseVisualStyleBackColor = true;
+
+            // 
+            // _spacer2
+            // 
+            _spacer2.Location = new Point(11, 159);
+            _spacer2.Name = "_spacer2";
+            _spacer2.Size = new Size(120, 20);
+            _spacer2.TabIndex = 5;
+
+            // 
+            // _btnClose
+            // 
+            _btnClose.DialogResult = DialogResult.OK;
+            _btnClose.Location = new Point(11, 185);
+            _btnClose.Name = "_btnClose";
+            _btnClose.Size = new Size(120, 27);
+            _btnClose.TabIndex = 6;
+            _btnClose.Text = "_btnClose";
+            _btnClose.UseVisualStyleBackColor = true;
+
+            // 
+            // _right
+            // 
             _right.Controls.Add(_btnAdd);
             _right.Controls.Add(_btnEdit);
             _right.Controls.Add(_btnRemove);
-            _right.Controls.Add(new Label { Height = 10 });
+            _right.Controls.Add(_spacer1);
             _right.Controls.Add(_btnSetDefault);
-            _right.Controls.Add(new Label { Height = 20 });
+            _right.Controls.Add(_spacer2);
             _right.Controls.Add(_btnClose);
+            _right.Dock = DockStyle.Right;
+            _right.FlowDirection = FlowDirection.TopDown;
+            _right.Location = new Point(680, 0);
+            _right.Name = "_right";
+            _right.Padding = new Padding(8);
+            _right.Size = new Size(140, 420);
+            _right.TabIndex = 1;
+            _right.WrapContents = false;
 
+            // 
+            // ManageServersForm
+            // 
+            AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(820, 420);
+            Controls.Add(_list);
+            Controls.Add(_right);
             FormBorderStyle = FormBorderStyle.Sizable;
             MaximizeBox = false;
             MinimizeBox = false;
+            Name = "ManageServersForm";
             StartPosition = FormStartPosition.CenterParent;
             Text = "ManageServersForm";
-
-            Controls.Add(_list);
-            Controls.Add(_right);
+            _right.ResumeLayout(false);
+            ResumeLayout(false);
         }
     }
 }
