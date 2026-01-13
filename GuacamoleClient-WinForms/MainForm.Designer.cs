@@ -190,7 +190,7 @@ namespace GuacamoleClient.WinForms
             HintStopWebcontrol2FocusShortcut.Alignment = ToolStripItemAlignment.Right;
             HintStopWebcontrol2FocusShortcut.Name = "HintStopWebcontrol2FocusShortcut";
             HintStopWebcontrol2FocusShortcut.Size = new Size(248, 20);
-            HintStopWebcontrol2FocusShortcut.Text = "Ctrl+Alt+Scroll to capture/release keyboard";
+            HintStopWebcontrol2FocusShortcut.Text = "Ctrl+Alt+Backspace to capture/release keyboard";
             HintStopWebcontrol2FocusShortcut.Click += HintStopWebcontrol2FocusShortcut_Click;
             // 
             // WebBrowserHostPanel

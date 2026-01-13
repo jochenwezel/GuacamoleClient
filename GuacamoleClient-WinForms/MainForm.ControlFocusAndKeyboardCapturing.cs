@@ -157,11 +157,11 @@ namespace GuacamoleClient.WinForms
                 switch (value)
                 {
                     case KeyboardCaptureMode.GrabbingEnabled_ShowKeyboardShortcutInfo:
-                        this.HintStopWebcontrol2FocusShortcut.Text = LocalizedString(LocalizationKeys.Tip_CtrlAltScroll_StopKeyboardGrabbingOfGuacamoleWindow);
+                        this.HintStopWebcontrol2FocusShortcut.Text = LocalizedString(LocalizationKeys.Tip_CtrlAltBackspace_StopKeyboardGrabbingOfGuacamoleWindow);
                         this.HintStopWebcontrol2FocusShortcut.Visible = true;
                         break;
                     case KeyboardCaptureMode.GrabbingDisabled_ShowKeyboardShortcutInfo:
-                        this.HintStopWebcontrol2FocusShortcut.Text = LocalizedString(LocalizationKeys.Tip_CtrlAltScroll_StartKeyboardGrabbingOfGuacamoleWindow);
+                        this.HintStopWebcontrol2FocusShortcut.Text = LocalizedString(LocalizationKeys.Tip_CtrlAltBackspace_StartKeyboardGrabbingOfGuacamoleWindow);
                         this.HintStopWebcontrol2FocusShortcut.Visible = true;
                         break;
                     case KeyboardCaptureMode.GrabbingDisabled_HideKeyboardShortcutInfo:

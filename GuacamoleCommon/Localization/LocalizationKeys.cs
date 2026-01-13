@@ -24,14 +24,14 @@ namespace GuacamoleClient.Common.Localization
         FocussedAnotherControlWarning,
         /// <summary>
         /// Gets a tooltip string that instructs the user to stop keyboard grabbing in the Guacamole window using
-        /// the Ctrl+Alt+Scroll shortcut.
+        /// the Ctrl+Alt+Backspace shortcut.
         /// </summary>
-        Tip_CtrlAltScroll_StopKeyboardGrabbingOfGuacamoleWindow,
+        Tip_CtrlAltBackspace_StopKeyboardGrabbingOfGuacamoleWindow,
         /// <summary>
         /// Gets a tooltip string that instructs the user to startkeyboard grabbing in the Guacamole window using
-        /// the Ctrl+Alt+Scroll shortcut.
+        /// the Ctrl+Alt+Backspace shortcut.
         /// </summary>
-        Tip_CtrlAltScroll_StartKeyboardGrabbingOfGuacamoleWindow,
+        Tip_CtrlAltBackspace_StartKeyboardGrabbingOfGuacamoleWindow,
 
         // Menu
         Menu_OpenAnotherGuacamoleServer,
