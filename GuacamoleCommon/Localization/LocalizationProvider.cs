@@ -8,8 +8,20 @@ namespace GuacamoleClient.Common.Localization
     /// </summary>
     public static class LocalizationProvider
     {
+        /// <summary>
+        /// Retrieves the localized string associated with the specified localization key.
+        /// </summary>
+        /// <param name="key">The key that identifies the localized string to retrieve.</param>
+        /// <returns>The localized string corresponding to the specified key. If no localized value is found, English text is
+        /// returned as a fallback.</returns>
         public static string Get(LocalizationKeys key) => Get(key, Array.Empty<object>());
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="key"></param>
+        /// <param name="args"></param>
+        /// <returns></returns>
         public static string Get(LocalizationKeys key, params object[] args)
         {
             var template = LocalizedString(key, CultureInfo.CurrentUICulture);
@@ -31,7 +43,7 @@ namespace GuacamoleClient.Common.Localization
         {
             if (System.Diagnostics.Debugger.IsAttached)
                 LocalizedFallbackString(key); //just call it once to ensure all fallback values are implemented
-            
+
             // German localization
             if (string.Equals(culture.TwoLetterISOLanguageName, "de", StringComparison.OrdinalIgnoreCase))
             {
@@ -61,9 +73,39 @@ namespace GuacamoleClient.Common.Localization
                     case LocalizationKeys.FocussedAnotherControlWarning:
                         return "ACHTUNG: Eingabe-Fokus liegt aktuell bei ";
 
+                    // Shortcut keystroke descriptions
+                    case LocalizationKeys.ShortcutKeystroke_ConnectionHome:
+                        return "Strg+Alt+Pos1 / Alt-Gr+Pos1";
+                    case LocalizationKeys.ShortcutKeystroke_NewWindowToolStripMenuItem:
+                        return "Strg+Alt+N / Alt-Gr+N";
+                    case LocalizationKeys.ShortcutKeystroke_QuitToolStripMenuItem:
+                        return "Strg+Alt+F4 / Alt-Gr+F4";
+                    case LocalizationKeys.ShortcutKeystroke_FullScreenToolStripMenuItem:
+                        return "Strg+Alt+Einfg / Alt-Gr+Einfg";
+                    case LocalizationKeys.ShortcutKeystroke_StopFullScreenModeToolStripMenuItem:
+                        return "Strg+Alt+Untbr / Alt-Gr+Untbr";
+                    case LocalizationKeys.ShortcutKeystroke_HintStopWebcontrol2FocusShortcut:
+                        return "Strg+Alt+Rücktaste zum Einfangen/Freigeben der Tastatur";
+
                     // Menu
                     case LocalizationKeys.Menu_OpenAnotherGuacamoleServer:
                         return "Weiteren Guacamole-Server öffnen…";
+                    case LocalizationKeys.Menu_Connection:
+                        return "Verbindung";
+                    case LocalizationKeys.Menu_View:
+                        return "Ansicht";
+                    case LocalizationKeys.Menu_ViewFullScreen:
+                        return "Vollbild-Modus";
+                    case LocalizationKeys.Menu_Quit:
+                        return "Beenden";
+                    case LocalizationKeys.Menu_NewWindow:
+                        return "Neues Fenster";
+                    case LocalizationKeys.Menu_ConnectionHome:
+                        return "Verbindungen Startseite";
+                    case LocalizationKeys.Menu_GuacamoleUserSettings:
+                        return "Guacamole Benutzer-Einstellungen";
+                    case LocalizationKeys.Menu_GuacamoleConnectionConfigurations:
+                        return "Guacamole Verbindungs-Konfiguration";
 
                     // Choose server dialog
                     case LocalizationKeys.ChooseServer_Title:
@@ -180,9 +222,39 @@ namespace GuacamoleClient.Common.Localization
                 case LocalizationKeys.FocussedAnotherControlWarning:
                     return "ATTENTION: input focus currently at control ";
 
+                // Shortcut keystroke descriptions
+                case LocalizationKeys.ShortcutKeystroke_ConnectionHome:
+                    return "Ctrl+Alt+Pos1 / Alt-Gr+Pos1";
+                case LocalizationKeys.ShortcutKeystroke_NewWindowToolStripMenuItem:
+                    return "Ctrl+Alt+N / Alt-Gr+N";
+                case LocalizationKeys.ShortcutKeystroke_QuitToolStripMenuItem:
+                    return "Ctrl+Alt+F4 / Alt-Gr+F4";
+                case LocalizationKeys.ShortcutKeystroke_FullScreenToolStripMenuItem:
+                    return "Ctrl+Alt+Insert / Alt-Gr+Insert";
+                case LocalizationKeys.ShortcutKeystroke_StopFullScreenModeToolStripMenuItem:
+                    return "Ctrl+Alt+Break / Alt-Gr+Break";
+                case LocalizationKeys.ShortcutKeystroke_HintStopWebcontrol2FocusShortcut:
+                    return "Ctrl+Alt+Backspace to capture/release keyboard";
+
                 // Menu
                 case LocalizationKeys.Menu_OpenAnotherGuacamoleServer:
                     return "Open another Guacamole server…";
+                case LocalizationKeys.Menu_Connection:
+                    return "Connection";
+                case LocalizationKeys.Menu_View:
+                    return "View";
+                case LocalizationKeys.Menu_ViewFullScreen:
+                    return "Full-Screen";
+                case LocalizationKeys.Menu_Quit:
+                    return "Quit";
+                case LocalizationKeys.Menu_NewWindow:
+                    return "New window";
+                case LocalizationKeys.Menu_ConnectionHome:
+                    return "Connection Home";
+                case LocalizationKeys.Menu_GuacamoleUserSettings:
+                    return "Guacamole User Settings";
+                case LocalizationKeys.Menu_GuacamoleConnectionConfigurations:
+                    return "Guacamole Connections Configuration";
 
                 // Choose server dialog
                 case LocalizationKeys.ChooseServer_Title:

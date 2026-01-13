@@ -46,6 +46,20 @@ namespace GuacamoleClient.WinForms
 
             // Localization
             openAnotherGuacamoleServerToolStripMenuItem.Text = LocalizationProvider.Get(LocalizationKeys.Menu_OpenAnotherGuacamoleServer);
+            fileToolStripMenuItem.Text = LocalizationProvider.Get(LocalizationKeys.Menu_Connection);
+            viewToolStripMenuItem.Text = LocalizationProvider.Get(LocalizationKeys.Menu_View);
+            fullScreenToolStripMenuItem.Text = LocalizationProvider.Get(LocalizationKeys.Menu_ViewFullScreen);
+            quitToolStripMenuItem.Text = LocalizationProvider.Get(LocalizationKeys.Menu_Quit);
+            newWindowToolStripMenuItem.Text = LocalizationProvider.Get(LocalizationKeys.Menu_NewWindow);
+            connectionHomeToolStripMenuItem.Text = LocalizationProvider.Get(LocalizationKeys.Menu_ConnectionHome);
+            guacamoleUserSettingsToolStripMenuItem.Text = LocalizationProvider.Get(LocalizationKeys.Menu_GuacamoleUserSettings);
+            guacamoleConnectionConfigurationsToolStripMenuItem.Text = LocalizationProvider.Get(LocalizationKeys.Menu_GuacamoleConnectionConfigurations);
+            connectionHomeToolStripMenuItem.ShortcutKeyDisplayString = LocalizationProvider.Get(LocalizationKeys.ShortcutKeystroke_ConnectionHome);
+            newWindowToolStripMenuItem.ShortcutKeyDisplayString = LocalizationProvider.Get(LocalizationKeys.ShortcutKeystroke_NewWindowToolStripMenuItem);
+            quitToolStripMenuItem.ShortcutKeyDisplayString = LocalizationProvider.Get(LocalizationKeys.ShortcutKeystroke_QuitToolStripMenuItem);
+            fullScreenToolStripMenuItem.ShortcutKeyDisplayString = LocalizationProvider.Get(LocalizationKeys.ShortcutKeystroke_FullScreenToolStripMenuItem);
+            stopFullScreenModeToolStripMenuItem.ShortcutKeyDisplayString = LocalizationProvider.Get(LocalizationKeys.ShortcutKeystroke_StopFullScreenModeToolStripMenuItem);
+            HintStopWebcontrol2FocusShortcut.Text = LocalizationProvider.Get(LocalizationKeys.ShortcutKeystroke_HintStopWebcontrol2FocusShortcut);
 
             //Form title + menu customization
             this.UpdateFormTitle(startUrl);
