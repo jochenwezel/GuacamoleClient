@@ -7,57 +7,46 @@ using GuacamoleClient.Common.Localization;
 
 namespace GuacamoleClient.WinForms
 {
-    internal sealed class ManageServersForm : Form
+    internal sealed partial class ManageServersForm : Form
     {
         private readonly GuacamoleSettingsManager _manager;
-        private readonly ListView _list = new ListView { View = View.Details, FullRowSelect = true, HideSelection = false, Dock = DockStyle.Fill };
-        private readonly Button _btnAdd = new Button { };
-        private readonly Button _btnEdit = new Button { };
-        private readonly Button _btnRemove = new Button { };
-        private readonly Button _btnSetDefault = new Button { };
-        private readonly Button _btnClose = new Button { DialogResult = DialogResult.OK };
+        // Controls are defined in ManageServersForm.Designer.cs
 
         public ManageServersForm(GuacamoleSettingsManager manager)
         {
             _manager = manager ?? throw new ArgumentNullException(nameof(manager));
 
-            Text = LocalizationProvider.Get(LocalizationKeys.ManageServers_Title);
-            StartPosition = FormStartPosition.CenterParent;
-            MinimizeBox = false;
-            MaximizeBox = false;
-            FormBorderStyle = FormBorderStyle.Sizable;
-            ClientSize = new Size(820, 420);
+            InitializeComponent();
 
-            _list.Columns.Add(LocalizationProvider.Get(LocalizationKeys.ChooseServer_Column_Name), 200);
-            _list.Columns.Add(LocalizationProvider.Get(LocalizationKeys.ChooseServer_Column_Url), 460);
-            _list.Columns.Add(LocalizationProvider.Get(LocalizationKeys.ChooseServer_Column_Color), 100);
             _list.DoubleClick += (_, __) => EditSelected();
             _list.SelectedIndexChanged += (_, __) => UpdateButtons();
-
-            _btnAdd.Text = LocalizationProvider.Get(LocalizationKeys.ManageServers_Button_Add);
-            _btnEdit.Text = LocalizationProvider.Get(LocalizationKeys.ManageServers_Button_Edit);
-            _btnRemove.Text = LocalizationProvider.Get(LocalizationKeys.ManageServers_Button_Remove);
-            _btnSetDefault.Text = LocalizationProvider.Get(LocalizationKeys.ManageServers_Button_SetDefault);
-            _btnClose.Text = LocalizationProvider.Get(LocalizationKeys.ManageServers_Button_Close);
 
             _btnAdd.Click += (_, __) => AddNew();
             _btnEdit.Click += (_, __) => EditSelected();
             _btnRemove.Click += (_, __) => RemoveSelected();
             _btnSetDefault.Click += (_, __) => SetDefaultSelected();
 
-            var right = new FlowLayoutPanel { Dock = DockStyle.Right, Width = 140, FlowDirection = FlowDirection.TopDown, Padding = new Padding(8) };
-            right.Controls.Add(_btnAdd);
-            right.Controls.Add(_btnEdit);
-            right.Controls.Add(_btnRemove);
-            right.Controls.Add(new Label { Height = 10 });
-            right.Controls.Add(_btnSetDefault);
-            right.Controls.Add(new Label { Height = 20 });
-            right.Controls.Add(_btnClose);
+            Load += (_, __) =>
+            {
+                ApplyLocalization();
+                RefreshList();
+            };
+        }
 
-            Controls.Add(_list);
-            Controls.Add(right);
+        private void ApplyLocalization()
+        {
+            Text = LocalizationProvider.Get(LocalizationKeys.ManageServers_Title);
 
-            Load += (_, __) => RefreshList();
+            _list.Columns.Clear();
+            _list.Columns.Add(LocalizationProvider.Get(LocalizationKeys.ChooseServer_Column_Name), 200);
+            _list.Columns.Add(LocalizationProvider.Get(LocalizationKeys.ChooseServer_Column_Url), 460);
+            _list.Columns.Add(LocalizationProvider.Get(LocalizationKeys.ChooseServer_Column_Color), 100);
+
+            _btnAdd.Text = LocalizationProvider.Get(LocalizationKeys.ManageServers_Button_Add);
+            _btnEdit.Text = LocalizationProvider.Get(LocalizationKeys.ManageServers_Button_Edit);
+            _btnRemove.Text = LocalizationProvider.Get(LocalizationKeys.ManageServers_Button_Remove);
+            _btnSetDefault.Text = LocalizationProvider.Get(LocalizationKeys.ManageServers_Button_SetDefault);
+            _btnClose.Text = LocalizationProvider.Get(LocalizationKeys.ManageServers_Button_Close);
         }
 
         private void RefreshList()

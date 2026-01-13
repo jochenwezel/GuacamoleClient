@@ -7,14 +7,10 @@ using GuacamoleClient.Common.Localization;
 
 namespace GuacamoleClient.WinForms
 {
-    internal sealed class ChooseServerForm : Form
+    internal sealed partial class ChooseServerForm : Form
     {
         private readonly GuacamoleSettingsManager _manager;
-        private readonly ListView _list = new ListView { View = View.Details, FullRowSelect = true, HideSelection = false, Dock = DockStyle.Fill };
-        private readonly Button _btnOpen = new Button { Anchor = AnchorStyles.Bottom | AnchorStyles.Right };
-        private readonly Button _btnManage = new Button { Anchor = AnchorStyles.Bottom | AnchorStyles.Right };
-        private readonly Button _btnSetDefault = new Button { Anchor = AnchorStyles.Bottom | AnchorStyles.Right };
-        private readonly Button _btnCancel = new Button { DialogResult = DialogResult.Cancel, Anchor = AnchorStyles.Bottom | AnchorStyles.Right };
+        // Controls are defined in ChooseServerForm.Designer.cs
 
         public GuacamoleServerProfile? SelectedProfile { get; private set; }
 
@@ -22,13 +18,27 @@ namespace GuacamoleClient.WinForms
         {
             _manager = manager ?? throw new ArgumentNullException(nameof(manager));
 
-            Text = LocalizationProvider.Get(LocalizationKeys.ChooseServer_Title);
-            StartPosition = FormStartPosition.CenterParent;
-            MinimizeBox = false;
-            MaximizeBox = false;
-            FormBorderStyle = FormBorderStyle.Sizable;
-            ClientSize = new Size(820, 420);
+            InitializeComponent();
 
+            _list.DoubleClick += (_, __) => OpenSelected();
+            _list.SelectedIndexChanged += (_, __) => UpdateButtons();
+
+            _btnOpen.Click += (_, __) => OpenSelected();
+            _btnManage.Click += (_, __) => Manage();
+            _btnSetDefault.Click += (_, __) => SetDefaultSelected();
+
+            Load += (_, __) =>
+            {
+                ApplyLocalization();
+                RefreshList();
+            };
+        }
+
+        private void ApplyLocalization()
+        {
+            Text = LocalizationProvider.Get(LocalizationKeys.ChooseServer_Title);
+
+            _list.Columns.Clear();
             _list.Columns.Add(LocalizationProvider.Get(LocalizationKeys.ChooseServer_Column_Name), 220);
             _list.Columns.Add(LocalizationProvider.Get(LocalizationKeys.ChooseServer_Column_Url), 460);
             _list.Columns.Add(LocalizationProvider.Get(LocalizationKeys.ChooseServer_Column_Color), 100);
@@ -37,32 +47,6 @@ namespace GuacamoleClient.WinForms
             _btnManage.Text = LocalizationProvider.Get(LocalizationKeys.ChooseServer_Button_Manage);
             _btnSetDefault.Text = LocalizationProvider.Get(LocalizationKeys.ChooseServer_Button_SetDefault);
             _btnCancel.Text = LocalizationProvider.Get(LocalizationKeys.Common_Button_Cancel);
-            _list.DoubleClick += (_, __) => OpenSelected();
-            _list.SelectedIndexChanged += (_, __) => UpdateButtons();
-
-            _btnOpen.Click += (_, __) => OpenSelected();
-            _btnManage.Click += (_, __) => Manage();
-            _btnSetDefault.Click += (_, __) => SetDefaultSelected();
-
-            var buttons = new FlowLayoutPanel
-            {
-                Dock = DockStyle.Bottom,
-                FlowDirection = FlowDirection.RightToLeft,
-                Padding = new Padding(12),
-                Height = 52
-            };
-            buttons.Controls.Add(_btnCancel);
-            buttons.Controls.Add(_btnOpen);
-            buttons.Controls.Add(_btnManage);
-            buttons.Controls.Add(_btnSetDefault);
-
-            Controls.Add(_list);
-            Controls.Add(buttons);
-
-            AcceptButton = _btnOpen;
-            CancelButton = _btnCancel;
-
-            Load += (_, __) => RefreshList();
         }
 
         private void RefreshList()
