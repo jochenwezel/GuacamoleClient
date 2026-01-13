@@ -24,7 +24,7 @@ namespace GuacamoleClient.WinForms
             new GuacamoleClient.Common.Settings.GuacamoleSettingsManager(
                 new GuacamoleClient.Common.Settings.JsonFileGuacamoleSettingsStore(GuacamoleClient.Common.Settings.GuacamoleSettingsPaths.GetSettingsFilePath("GuacamoleClient-Designer")),
                 new GuacamoleClient.Common.Settings.GuacamoleSettingsDocument()),
-            new GuacamoleClient.Common.Settings.GuacamoleServerProfile { Url = "https://guacamole.apache.org/" },
+            new GuacamoleClient.Common.Settings.GuacamoleServerProfile("https://guacamole.apache.org/", null!, "Gray", false, false),
             new Uri("https://guacamole.apache.org/"))
         { }
 

@@ -58,7 +58,7 @@ namespace GuacamoleClient.WinForms
                 if (p.IsDefault) name += " " + LocalizationProvider.Get(LocalizationKeys.Common_Suffix_Default);
                 var item = new ListViewItem(name) { Tag = p.Id };
                 item.SubItems.Add(p.Url);
-                item.SubItems.Add(ColorValueResolver.ResolveToHex(p.ColorValue));
+                item.SubItems.Add(GuacamoleColorPalette.ResolveToHex(p.PrimaryColorValue));
                 _list.Items.Add(item);
             }
 
