@@ -8,21 +8,13 @@ using GuacamoleClient.Common.Localization;
 
 namespace GuacamoleClient.WinForms
 {
-    internal sealed class AddEditServerForm : Form
+    internal sealed partial class AddEditServerForm : Form
     {
         private readonly GuacamoleSettingsManager _manager;
         private readonly GuacamoleServerProfile? _editing;
         private readonly bool _isFirstProfile;
 
-        private readonly TextBox _txtUrl = new TextBox { Anchor = AnchorStyles.Left | AnchorStyles.Right | AnchorStyles.Top };
-        private readonly TextBox _txtName = new TextBox { Anchor = AnchorStyles.Left | AnchorStyles.Right | AnchorStyles.Top };
-        private readonly ComboBox _cmbColor = new ComboBox { DropDownStyle = ComboBoxStyle.DropDownList, Anchor = AnchorStyles.Left | AnchorStyles.Right | AnchorStyles.Top };
-        private readonly TextBox _txtCustomHex = new TextBox { Anchor = AnchorStyles.Left | AnchorStyles.Right | AnchorStyles.Top, Visible = false };
-        private readonly Panel _pnlColorPreview = new Panel { Width = 32, Height = 18, BorderStyle = BorderStyle.FixedSingle };
-        private readonly CheckBox _chkIgnoreCert = new CheckBox { AutoSize = true };
-
-        private readonly Button _btnSave = new Button { DialogResult = DialogResult.None, Anchor = AnchorStyles.Bottom | AnchorStyles.Right };
-        private readonly Button _btnCancel = new Button { DialogResult = DialogResult.Cancel, Anchor = AnchorStyles.Bottom | AnchorStyles.Right };
+        // Controls are defined in AddEditServerForm.Designer.cs
 
         public GuacamoleServerProfile? ResultProfile { get; private set; }
 
@@ -32,81 +24,36 @@ namespace GuacamoleClient.WinForms
             _editing = editing;
             _isFirstProfile = isFirstProfile;
 
-            Text = editing == null
-                ? LocalizationProvider.Get(LocalizationKeys.AddServer_Title)
-                : LocalizationProvider.Get(LocalizationKeys.EditServer_Title);
-            StartPosition = FormStartPosition.CenterParent;
-            MinimizeBox = false;
-            MaximizeBox = false;
-            FormBorderStyle = FormBorderStyle.FixedDialog;
-            ShowInTaskbar = false;
-            ClientSize = new Size(620, 250);
+            InitializeComponent();
 
             _cmbColor.Items.AddRange(GuacamoleColorPalette.Keys.OrderBy(k => k).Cast<object>().ToArray());
             _cmbColor.Items.Add("Custom");
             _cmbColor.SelectedIndexChanged += (_, __) => UpdateColorUi();
             _txtCustomHex.TextChanged += (_, __) => UpdateColorUi();
 
+            _btnSave.Click += async (_, __) => await SaveAsync();
+
+            Load += (_, __) =>
+            {
+                ApplyLocalization();
+                Populate();
+            };
+        }
+
+        private void ApplyLocalization()
+        {
+            Text = _editing == null
+                ? LocalizationProvider.Get(LocalizationKeys.AddServer_Title)
+                : LocalizationProvider.Get(LocalizationKeys.EditServer_Title);
+
+            _lblUrl.Text = LocalizationProvider.Get(LocalizationKeys.AddEdit_Label_ServerUrl);
+            _lblName.Text = LocalizationProvider.Get(LocalizationKeys.AddEdit_Label_DisplayNameOptional);
+            _lblColor.Text = LocalizationProvider.Get(LocalizationKeys.AddEdit_Label_ColorScheme);
+            _lblCustomHex.Text = LocalizationProvider.Get(LocalizationKeys.AddEdit_Label_CustomColorHex);
+
             _chkIgnoreCert.Text = LocalizationProvider.Get(LocalizationKeys.AddEdit_Check_IgnoreCertificateErrorsUnsafe);
             _btnSave.Text = LocalizationProvider.Get(LocalizationKeys.AddEdit_Button_Save);
             _btnCancel.Text = LocalizationProvider.Get(LocalizationKeys.Common_Button_Cancel);
-
-            _btnSave.Click += async (_, __) => await SaveAsync();
-
-            AcceptButton = _btnSave;
-            CancelButton = _btnCancel;
-
-            var layout = new TableLayoutPanel
-            {
-                Dock = DockStyle.Fill,
-                ColumnCount = 3,
-                RowCount = 6,
-                Padding = new Padding(12),
-            };
-            layout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 160));
-            layout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
-            layout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 60));
-
-            layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 28));
-            layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 28));
-            layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 28));
-            layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 28));
-            layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 28));
-            layout.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
-
-            layout.Controls.Add(new Label { Text = LocalizationProvider.Get(LocalizationKeys.AddEdit_Label_ServerUrl), AutoSize = true, TextAlign = ContentAlignment.MiddleLeft }, 0, 0);
-            layout.Controls.Add(_txtUrl, 1, 0);
-            layout.SetColumnSpan(_txtUrl, 2);
-
-            layout.Controls.Add(new Label { Text = LocalizationProvider.Get(LocalizationKeys.AddEdit_Label_DisplayNameOptional), AutoSize = true, TextAlign = ContentAlignment.MiddleLeft }, 0, 1);
-            layout.Controls.Add(_txtName, 1, 1);
-            layout.SetColumnSpan(_txtName, 2);
-
-            layout.Controls.Add(new Label { Text = LocalizationProvider.Get(LocalizationKeys.AddEdit_Label_ColorScheme), AutoSize = true, TextAlign = ContentAlignment.MiddleLeft }, 0, 2);
-            layout.Controls.Add(_cmbColor, 1, 2);
-            layout.Controls.Add(_pnlColorPreview, 2, 2);
-
-            layout.Controls.Add(new Label { Text = LocalizationProvider.Get(LocalizationKeys.AddEdit_Label_CustomColorHex), AutoSize = true, TextAlign = ContentAlignment.MiddleLeft }, 0, 3);
-            layout.Controls.Add(_txtCustomHex, 1, 3);
-            layout.SetColumnSpan(_txtCustomHex, 2);
-
-            layout.Controls.Add(_chkIgnoreCert, 1, 4);
-            layout.SetColumnSpan(_chkIgnoreCert, 2);
-
-            var buttons = new FlowLayoutPanel
-            {
-                Dock = DockStyle.Bottom,
-                FlowDirection = FlowDirection.RightToLeft,
-                Padding = new Padding(12),
-                Height = 48,
-            };
-            buttons.Controls.Add(_btnSave);
-            buttons.Controls.Add(_btnCancel);
-
-            Controls.Add(layout);
-            Controls.Add(buttons);
-
-            Load += (_, __) => Populate();
         }
 
         private void Populate()
