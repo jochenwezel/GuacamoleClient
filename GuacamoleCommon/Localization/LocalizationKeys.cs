@@ -33,8 +33,24 @@ namespace GuacamoleClient.Common.Localization
         /// </summary>
         Tip_CtrlAltBackspace_StartKeyboardGrabbingOfGuacamoleWindow,
 
+        // Shortcut keystroke descriptions
+        ShortcutKeystroke_ConnectionHome,
+        ShortcutKeystroke_NewWindowToolStripMenuItem,
+        ShortcutKeystroke_QuitToolStripMenuItem,
+        ShortcutKeystroke_FullScreenToolStripMenuItem,
+        ShortcutKeystroke_StopFullScreenModeToolStripMenuItem,
+        ShortcutKeystroke_HintStopWebcontrol2FocusShortcut,
+
         // Menu
         Menu_OpenAnotherGuacamoleServer,
+        Menu_Connection,
+        Menu_View,
+        Menu_ViewFullScreen,
+        Menu_Quit,
+        Menu_NewWindow,
+        Menu_ConnectionHome,
+        Menu_GuacamoleUserSettings,
+        Menu_GuacamoleConnectionConfigurations,
 
         // Choose server dialog
         ChooseServer_Title,
