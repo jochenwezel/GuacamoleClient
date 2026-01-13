@@ -55,6 +55,16 @@ namespace GuacamoleClient.Common.Settings
                                              && (exceptId == null || p.Id != exceptId.Value));
         }
 
+        /// <summary>
+        /// Adds a new Guacamole server profile or updates an existing one with the specified values.
+        /// </summary>
+        /// <remarks>If a profile with the same Id already exists, its properties are updated with the
+        /// values from the provided profile. If no such profile exists, a new one is added. The CreatedUtc and
+        /// UpdatedUtc timestamps are set automatically. The IsDefault property is managed separately and is not
+        /// modified by this method.</remarks>
+        /// <param name="profile">The server profile to add or update. Must not be null, and its Url property must not be null or whitespace.</param>
+        /// <exception cref="ArgumentNullException">Thrown if the profile parameter is null.</exception>
+        /// <exception cref="ArgumentException">Thrown if the Url property of profile is null or consists only of white-space characters.</exception>
         public void Upsert(GuacamoleServerProfile profile)
         {
             if (profile == null) throw new ArgumentNullException(nameof(profile));
@@ -103,6 +113,14 @@ namespace GuacamoleClient.Common.Settings
 
         public string SettingsFilePath => _store.SettingsFilePath;
 
+        /// <summary>
+        /// Ensures that the default server profile flags and identifiers are consistent within the server profiles
+        /// collection.
+        /// </summary>
+        /// <remarks>This method synchronizes the default server profile by updating both the default
+        /// server identifier and the IsDefault flag on each profile. If neither is set, the first server profile in the
+        /// collection is designated as the default. This helps maintain a single, unambiguous default server
+        /// profile.</remarks>
         private void NormalizeDefaultFlags()
         {
             // Keep IsDefault and DefaultServerId consistent.
