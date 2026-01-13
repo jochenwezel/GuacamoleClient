@@ -26,46 +26,102 @@ namespace GuacamoleClient.WinForms
 
         private void InitializeComponent()
         {
-            components = new System.ComponentModel.Container();
+            _list = new ListView();
+            _btnOpen = new Button();
+            _btnManage = new Button();
+            _btnSetDefault = new Button();
+            _btnCancel = new Button();
+            _buttons = new FlowLayoutPanel();
+            _buttons.SuspendLayout();
+            SuspendLayout();
 
-            _list = new ListView
-            {
-                View = View.Details,
-                FullRowSelect = true,
-                HideSelection = false,
-                Dock = DockStyle.Fill
-            };
+            // 
+            // _list
+            // 
+            _list.Dock = DockStyle.Fill;
+            _list.FullRowSelect = true;
+            _list.HideSelection = false;
+            _list.Location = new Point(0, 0);
+            _list.Name = "_list";
+            _list.Size = new Size(820, 368);
+            _list.TabIndex = 0;
+            _list.UseCompatibleStateImageBehavior = false;
+            _list.View = View.Details;
 
-            _btnOpen = new Button { Anchor = AnchorStyles.Bottom | AnchorStyles.Right, Text = nameof(_btnOpen) };
-            _btnManage = new Button { Anchor = AnchorStyles.Bottom | AnchorStyles.Right, Text = nameof(_btnManage) };
-            _btnSetDefault = new Button { Anchor = AnchorStyles.Bottom | AnchorStyles.Right, Text = nameof(_btnSetDefault) };
-            _btnCancel = new Button { Anchor = AnchorStyles.Bottom | AnchorStyles.Right, DialogResult = DialogResult.Cancel, Text = nameof(_btnCancel) };
+            // 
+            // _btnOpen
+            // 
+            _btnOpen.Location = new Point(3, 3);
+            _btnOpen.Name = "_btnOpen";
+            _btnOpen.Size = new Size(140, 27);
+            _btnOpen.TabIndex = 0;
+            _btnOpen.Text = "_btnOpen";
+            _btnOpen.UseVisualStyleBackColor = true;
 
-            _buttons = new FlowLayoutPanel
-            {
-                Dock = DockStyle.Bottom,
-                FlowDirection = FlowDirection.RightToLeft,
-                Padding = new Padding(12),
-                Height = 52
-            };
+            // 
+            // _btnManage
+            // 
+            _btnManage.Location = new Point(149, 3);
+            _btnManage.Name = "_btnManage";
+            _btnManage.Size = new Size(140, 27);
+            _btnManage.TabIndex = 1;
+            _btnManage.Text = "_btnManage";
+            _btnManage.UseVisualStyleBackColor = true;
+
+            // 
+            // _btnSetDefault
+            // 
+            _btnSetDefault.Location = new Point(295, 3);
+            _btnSetDefault.Name = "_btnSetDefault";
+            _btnSetDefault.Size = new Size(140, 27);
+            _btnSetDefault.TabIndex = 2;
+            _btnSetDefault.Text = "_btnSetDefault";
+            _btnSetDefault.UseVisualStyleBackColor = true;
+
+            // 
+            // _btnCancel
+            // 
+            _btnCancel.DialogResult = DialogResult.Cancel;
+            _btnCancel.Location = new Point(441, 3);
+            _btnCancel.Name = "_btnCancel";
+            _btnCancel.Size = new Size(140, 27);
+            _btnCancel.TabIndex = 3;
+            _btnCancel.Text = "_btnCancel";
+            _btnCancel.UseVisualStyleBackColor = true;
+
+            // 
+            // _buttons
+            // 
             _buttons.Controls.Add(_btnCancel);
             _buttons.Controls.Add(_btnOpen);
             _buttons.Controls.Add(_btnManage);
             _buttons.Controls.Add(_btnSetDefault);
+            _buttons.Dock = DockStyle.Bottom;
+            _buttons.FlowDirection = FlowDirection.RightToLeft;
+            _buttons.Location = new Point(0, 368);
+            _buttons.Name = "_buttons";
+            _buttons.Padding = new Padding(12);
+            _buttons.Size = new Size(820, 52);
+            _buttons.TabIndex = 1;
 
+            // 
+            // ChooseServerForm
+            // 
             AcceptButton = _btnOpen;
-            CancelButton = _btnCancel;
-
+            AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
+            CancelButton = _btnCancel;
             ClientSize = new Size(820, 420);
+            Controls.Add(_list);
+            Controls.Add(_buttons);
             FormBorderStyle = FormBorderStyle.Sizable;
             MaximizeBox = false;
             MinimizeBox = false;
+            Name = "ChooseServerForm";
             StartPosition = FormStartPosition.CenterParent;
             Text = "ChooseServerForm";
-
-            Controls.Add(_list);
-            Controls.Add(_buttons);
+            _buttons.ResumeLayout(false);
+            ResumeLayout(false);
         }
     }
 }
