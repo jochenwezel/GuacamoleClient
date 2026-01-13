@@ -37,14 +37,7 @@ namespace GuacamoleClient.WinForms
             if (!GuacamoleUrlAndContentChecks.IsValidUrlAndAcceptedScheme(legacyUrl)) return false;
 
             // Note: legacy config had only one URL.
-            var profile = new GuacamoleServerProfile
-            {
-                Url = legacyUrl,
-                DisplayName = null,
-                ColorValue = "Red",
-                IgnoreCertificateErrors = false,
-                IsDefault = true,
-            };
+            var profile = new GuacamoleServerProfile(legacyUrl, null!, "OrangeRed", false, true);
             manager.Upsert(profile);
             manager.SetDefault(profile.Id);
             return true;

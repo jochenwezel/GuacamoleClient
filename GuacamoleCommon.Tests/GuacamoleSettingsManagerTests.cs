@@ -11,8 +11,8 @@ public class GuacamoleSettingsManagerTests
     public void Default_IsAutoAssigned_WhenMissing()
     {
         var doc = new GuacamoleSettingsDocument();
-        var p1 = new GuacamoleServerProfile { Id = Guid.NewGuid(), Url = "https://a" };
-        var p2 = new GuacamoleServerProfile { Id = Guid.NewGuid(), Url = "https://b" };
+        var p1 = new GuacamoleServerProfile("https://a", null!, "OrangeRed", false, false);
+        var p2 = new GuacamoleServerProfile("https://b", null!, "OrangeRed", false, false);
         doc.ServerProfiles.Add(p1);
         doc.ServerProfiles.Add(p2);
         doc.DefaultServerId = null;
@@ -29,7 +29,7 @@ public class GuacamoleSettingsManagerTests
     [Test]
     public void UrlExists_DetectsDuplicates_AndHonorsExceptId()
     {
-        var p1 = new GuacamoleServerProfile { Id = Guid.NewGuid(), Url = "https://x" };
+        var p1 = new GuacamoleServerProfile("https://x", null!, "OrangeRed", false, false);
         var doc = new GuacamoleSettingsDocument();
         doc.ServerProfiles.Add(p1);
 

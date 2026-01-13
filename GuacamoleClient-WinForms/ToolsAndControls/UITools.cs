@@ -10,7 +10,7 @@ namespace GuacamoleClient.WinForms
         public static Color ResolveProfilePrimaryColor(GuacamoleServerProfile profile)
         {
             if (profile == null) throw new ArgumentNullException(nameof(profile));
-            var hex = ColorValueResolver.ResolveToHex(profile.ColorValue);
+            var hex = GuacamoleColorPalette.ResolveToHex(profile.PrimaryColorValue);
             return ParseHexColor(hex);
         }
 

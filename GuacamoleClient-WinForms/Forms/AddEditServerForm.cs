@@ -64,14 +64,14 @@ namespace GuacamoleClient.WinForms
                 _txtName.Text = _editing.DisplayName ?? string.Empty;
                 _chkIgnoreCert.Checked = _editing.IgnoreCertificateErrors;
                 // Determine selection
-                if (GuacamoleColorPalette.Colors.ContainsKey(_editing.ColorValue))
+                if (GuacamoleColorPalette.Colors.ContainsKey(_editing.PrimaryColorValue))
                 {
-                    _cmbColor.SelectedItem = _editing.ColorValue;
+                    _cmbColor.SelectedItem = _editing.PrimaryColorValue;
                 }
                 else
                 {
                     _cmbColor.SelectedItem = "Custom";
-                    _txtCustomHex.Text = _editing.ColorValue;
+                    _txtCustomHex.Text = _editing.PrimaryColorValue;
                 }
             }
             else
@@ -94,7 +94,7 @@ namespace GuacamoleClient.WinForms
             _txtCustomHex.Visible = isCustom;
 
             string colorValue = isCustom ? _txtCustomHex.Text : (sel ?? "Red");
-            if (ColorValueResolver.TryResolveToHex(colorValue, out var hex))
+            if (GuacamoleColorPalette.TryResolveToHex(colorValue, out var hex))
             {
                 _pnlColorPreview.BackColor = UITools.ParseHexColor(hex);
             }
@@ -150,7 +150,7 @@ namespace GuacamoleClient.WinForms
                     return;
                 }
 
-                if (!ColorValueResolver.TryResolveToHex(colorValue, out var _))
+                if (!GuacamoleColorPalette.TryResolveToHex(colorValue, out var _))
                 {
                     MessageBox.Show(this,
                         LocalizationProvider.Get(LocalizationKeys.AddEdit_Validation_InvalidColor),
@@ -161,10 +161,10 @@ namespace GuacamoleClient.WinForms
                 }
 
                 // Color collision warning (only warning)
-                var normalizedHex = ColorValueResolver.ResolveToHex(colorValue);
+                var normalizedHex = GuacamoleColorPalette.ResolveToHex(colorValue);
                 var collisions = _manager.ServerProfiles
                     .Where(p => _editing == null || p.Id != _editing.Id)
-                    .Where(p => string.Equals(ColorValueResolver.ResolveToHex(p.ColorValue), normalizedHex, StringComparison.OrdinalIgnoreCase))
+                    .Where(p => string.Equals(GuacamoleColorPalette.ResolveToHex(p.PrimaryColorValue), normalizedHex, StringComparison.OrdinalIgnoreCase))
                     .Select(p => p.GetDisplayText())
                     .ToList();
 
@@ -191,14 +191,10 @@ namespace GuacamoleClient.WinForms
                     return;
                 }
 
+                string primaryColorValue = string.Equals(sel, "Custom", StringComparison.OrdinalIgnoreCase) ? normalizedHex : sel;
                 var profile = _editing != null
-                    ? new GuacamoleServerProfile { Id = _editing.Id }
-                    : new GuacamoleServerProfile();
-
-                profile.Url = url;
-                profile.DisplayName = displayName;
-                profile.IgnoreCertificateErrors = ignoreCert;
-                profile.ColorValue = string.Equals(sel, "Custom", StringComparison.OrdinalIgnoreCase) ? normalizedHex : sel;
+                    ? _editing.CloneAndUpdate(url, displayName!, primaryColorValue, ignoreCert)
+                    : new GuacamoleServerProfile(url, displayName!, primaryColorValue, ignoreCert, false);
 
                 bool creating = _editing == null;
                 _manager.Upsert(profile);
