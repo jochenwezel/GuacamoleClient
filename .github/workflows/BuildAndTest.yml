@@ -69,9 +69,26 @@ jobs:
               if: always() && (!(startsWith(matrix.os, 'macos')))
               run: dotnet build --configuration=${{env.BUILD_CONFIGURATION}} --no-restore
 
-            - name: Build (Mac)
-              if: always() && ((startsWith(matrix.os, 'macos')))
-              run: dotnet build GuacamoleClient-Avalonia/GuacamoleClient-Avalonia.csproj --configuration=${{env.BUILD_CONFIGURATION}} --no-restore
+            #DISABLED dotnet build for Mac due to missing files during build
+            #/Users/runner/.dotnet/sdk/10.0.101/Microsoft.Common.CurrentVersion.targets(5381,5): error MSB3030: Could not copy the file "/Users/runner/work/GuacamoleClient/GuacamoleClient/GuacamoleClient-Avalonia/bin/CI_CD/net8.0/libGLESv2.dylib" because it was not found. [/Users/runner/work/GuacamoleClient/GuacamoleClient/GuacamoleClient-Avalonia/GuacamoleClient-Avalonia.csproj]
+            #/Users/runner/.dotnet/sdk/10.0.101/Microsoft.Common.CurrentVersion.targets(5381,5): error MSB3030: Could not copy the file "/Users/runner/work/GuacamoleClient/GuacamoleClient/GuacamoleClient-Avalonia/bin/CI_CD/net8.0/libEGL.dylib" because it was not found. [/Users/runner/work/GuacamoleClient/GuacamoleClient/GuacamoleClient-Avalonia/GuacamoleClient-Avalonia.csproj]
+            #/Users/runner/.dotnet/sdk/10.0.101/Microsoft.Common.CurrentVersion.targets(5381,5): error MSB3030: Could not copy the file "/Users/runner/work/GuacamoleClient/GuacamoleClient/GuacamoleClient-Avalonia/bin/CI_CD/net8.0/libvk_swiftshader.dylib" because it was not found. [/Users/runner/work/GuacamoleClient/GuacamoleClient/GuacamoleClient-Avalonia/GuacamoleClient-Avalonia.csproj]
+            #- name: Build (Mac)
+            #  if: always() && ((startsWith(matrix.os, 'macos')))
+            #  run: dotnet build GuacamoleClient-Avalonia/GuacamoleClient-Avalonia.csproj --configuration=${{env.BUILD_CONFIGURATION}} --no-restore
+            #
+            #INSTEAD: dotnet public works on Mac
+            # macOS: RID-Publish für die Avalonia-App (zieht CEF-Natives)
+            - name: Publish Avalonia (macOS, osx-arm64)
+              if: matrix.os == 'macos-latest'
+              run: >
+                dotnet publish
+                GuacamoleClient-Avalonia/GuacamoleClient-Avalonia.csproj
+                -c Debug
+                -r osx-arm64
+                --self-contained false
+                /p:PublishSingleFile=false
+                /p:IncludeNativeLibrariesForSelfExtract=false
 
             - name: Run Unit Tests
               run: dotnet test -v n --results-directory test-results --logger junit --configuration=${{env.BUILD_CONFIGURATION}} --no-restore
