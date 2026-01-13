@@ -54,10 +54,10 @@ namespace GuacamoleClient.Common.Localization
                         return "Hinweis: Strg+Alt+Einfügen >> Full Screen wurde deaktiviert";
                     case LocalizationKeys.Hint_CtrlAltIns_FullscreenModeOn:
                         return "Hinweis: Strg+Alt+Einfügen >> Full Screen wurde aktiviert";
-                    case LocalizationKeys.Tip_CtrlAltScroll_StopKeyboardGrabbingOfGuacamoleWindow:
-                        return "Strg+Alt+Rollen zum Tastaturfokus freigeben";
-                    case LocalizationKeys.Tip_CtrlAltScroll_StartKeyboardGrabbingOfGuacamoleWindow:
-                        return "Strg+Alt+Rollen zum Tastaturfokus einfangen";
+                    case LocalizationKeys.Tip_CtrlAltBackspace_StopKeyboardGrabbingOfGuacamoleWindow:
+                        return "Strg+Alt+Rücktaste zum Tastaturfokus freigeben";
+                    case LocalizationKeys.Tip_CtrlAltBackspace_StartKeyboardGrabbingOfGuacamoleWindow:
+                        return "Strg+Alt+Rücktaste zum Tastaturfokus einfangen";
                     case LocalizationKeys.FocussedAnotherControlWarning:
                         return "ACHTUNG: Eingabe-Fokus liegt aktuell bei ";
 
@@ -173,10 +173,10 @@ namespace GuacamoleClient.Common.Localization
                     return "Hint: Ctrl+Alt+Insert >> Full Screen has been disabled";
                 case LocalizationKeys.Hint_CtrlAltIns_FullscreenModeOn:
                     return "Hint: Ctrl+Alt+Insert >> Full Screen has been enabled";
-                case LocalizationKeys.Tip_CtrlAltScroll_StopKeyboardGrabbingOfGuacamoleWindow:
-                    return "Ctrl+Alt+Scroll to release keyboard focus";
-                case LocalizationKeys.Tip_CtrlAltScroll_StartKeyboardGrabbingOfGuacamoleWindow:
-                    return "Ctrl+Alt+Scroll to capture keyboard focus";
+                case LocalizationKeys.Tip_CtrlAltBackspace_StopKeyboardGrabbingOfGuacamoleWindow:
+                    return "Ctrl+Alt+Backspace to release keyboard focus";
+                case LocalizationKeys.Tip_CtrlAltBackspace_StartKeyboardGrabbingOfGuacamoleWindow:
+                    return "Ctrl+Alt+Backspace to capture keyboard focus";
                 case LocalizationKeys.FocussedAnotherControlWarning:
                     return "ATTENTION: input focus currently at control ";
 

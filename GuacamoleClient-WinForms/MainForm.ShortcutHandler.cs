@@ -34,7 +34,7 @@ namespace GuacamoleClient.WinForms
             const uint VK_END = (uint)Keys.End;
             const uint VK_ESC = (uint)Keys.Escape;
             const uint VK_R = (uint)Keys.R;
-            const uint VK_SCROLL = (uint)Keys.Scroll;
+            const uint VK_BACKSPACE = (uint)Keys.Back;
             //const int VK_F4 = 0x73;
             //const int VK_END = 0x23;
             //const int VK_ESC = 0x1B;
@@ -71,8 +71,8 @@ namespace GuacamoleClient.WinForms
                 return;
             }
 
-            // --- App-Policy: Ctrl+Alt+Scroll gibt Tastaturfokus frei ---
-            if (e.VirtualKey == VK_SCROLL && ctrl && alt)
+            // --- App-Policy: Ctrl+Alt+Backspace gibt Tastaturfokus frei ---
+            if (e.VirtualKey == VK_BACKSPACE && ctrl && alt)
             {
                 e.Handled = true;
                 DetachWebViewFocus(false);
@@ -165,7 +165,7 @@ namespace GuacamoleClient.WinForms
             const Keys VK_ESC = Keys.Escape;
             const Keys VK_R = Keys.R;
             const Keys VK_N = Keys.N;
-            const Keys VK_SCROLL = Keys.Scroll;
+            const Keys VK_BACKSPACE = Keys.Back;
             //const int VK_F4 = 0x73;
             //const int VK_END = 0x23;
             //const int VK_ESC = 0x1B;
@@ -202,8 +202,8 @@ namespace GuacamoleClient.WinForms
                 return;
             }
 
-            // --- App-Policy: Ctrl+Alt+Scroll gibt Tastaturfokus frei ---
-            if (e.KeyCode == VK_SCROLL && ctrl && alt)
+            // --- App-Policy: Ctrl+Alt+Backspace gibt Tastaturfokus frei ---
+            if (e.KeyCode == VK_BACKSPACE && ctrl && alt)
             {
                 e.Handled = true;
                 SetFocusToWebview2Control();
