@@ -29,6 +29,7 @@ namespace GuacamoleClient.Common.Settings
             { "Brown", "#5D4037" },
             { "Grey", "#616161" },
             { "BlueGrey", "#455A64" },
+            { "OrangeRed", "#FF4500" }
         };
 
         public static IEnumerable<string> Keys => Colors.Keys;
