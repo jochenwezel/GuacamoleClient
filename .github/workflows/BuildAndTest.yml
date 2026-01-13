@@ -27,6 +27,7 @@ env:
   BUILD_CONFIGURATION: CI_CD
 
   BUILD_OUTPUT: GuacamoleClient/bin/Debug
+  RESULTS_PATH: TestResults.xml
   
 jobs:
 
@@ -65,18 +66,36 @@ jobs:
               run: dotnet restore
 
             - name: Build
-              if: matrix.os != 'macos-latest'
               run: dotnet build --configuration=${{env.BUILD_CONFIGURATION}} --no-restore
 
-            # macOS: RID-Publish für die Avalonia-App (zieht CEF-Natives)
-            - name: Publish Avalonia (macOS, osx-arm64)
-              if: matrix.os == 'macos-latest'
-              run: >
-                dotnet publish
-                GuacamoleClient-Avalonia/GuacamoleClient-Avalonia.csproj
-                -c Debug
-                -r osx-arm64
-                --self-contained false
-                /p:PublishSingleFile=false
-                /p:IncludeNativeLibrariesForSelfExtract=false
+            - name: Run Unit Tests
+              run: dotnet test -v n --results-directory test-results --logger junit --configuration=${{env.BUILD_CONFIGURATION}} --no-restore
 
+            - name: Unit Test Results (Linux)
+              uses: EnricoMi/publish-unit-test-result-action@v2
+              if: always() && startsWith(matrix.os, 'ubuntu')
+              with:
+                  github_token: ${{ secrets.GITHUB_TOKEN }}
+                  files: "test-results/TestResults.xml"
+                  check_run_annotations: all tests
+                  comment_title: Unit Test Statistics (${{matrix.os}})
+                  check_name: Unit Test Results (${{matrix.os}})
+                  report_individual_runs: true
+
+            - name: Unit Test Results (Win/Mac)
+              uses: EnricoMi/publish-unit-test-result-action/composite@v2
+              if: always() && (!(startsWith(matrix.os, 'ubuntu')))
+              with:
+                  github_token: ${{ secrets.GITHUB_TOKEN }}
+                  files: "test-results/TestResults.xml"
+                  check_run_annotations: all tests
+                  comment_title: Unit Test Statistics (${{matrix.os}})
+                  check_name: Unit Test Results (${{matrix.os}})
+                  report_individual_runs: true
+
+            - name: Publish Unit Test Results (.NET Core)
+              uses: actions/upload-artifact@v4
+              if: always()
+              with:
+                  name: NUnit Test Results ${{ matrix.os }}
+                  path: test-results/TestResults.xml
