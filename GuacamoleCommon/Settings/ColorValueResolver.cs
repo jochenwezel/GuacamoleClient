@@ -9,12 +9,12 @@ namespace GuacamoleClient.Common.Settings
 
         /// <summary>
         /// Resolve a color value to a normalized hex string (#RRGGBB).
-        /// Accepts palette keys (e.g. "Red") or hex strings ("#RRGGBB" or "RRGGBB").
+        /// Accepts palette keys (e.g. "OrangeRed") or hex strings ("#RRGGBB" or "RRGGBB").
         /// </summary>
         public static string ResolveToHex(string? colorValue)
         {
             if (string.IsNullOrWhiteSpace(colorValue))
-                return GuacamoleColorPalette.GetHexOrThrow("Red");
+                return GuacamoleColorPalette.GetHexOrThrow("OrangeRed");
 
             var v = colorValue.Trim();
             if (v.StartsWith("#")) v = v.Substring(1);
@@ -27,7 +27,7 @@ namespace GuacamoleClient.Common.Settings
             if (HexRegex.IsMatch(v))
                 return "#" + v.ToUpperInvariant();
 
-            throw new FormatException("Invalid color value. Use palette key or hex (e.g. #A1B2C3).");
+            throw new FormatException("Invalid color value " + colorValue + ". Use palette key or hex (e.g. #A1B2C3).");
         }
 
         public static bool TryResolveToHex(string? colorValue, out string hex)
