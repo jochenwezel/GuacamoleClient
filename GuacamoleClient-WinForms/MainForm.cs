@@ -138,7 +138,7 @@ namespace GuacamoleClient.WinForms
         /// </summary>
         /// <param name="currentUrl">The current URL used to determine the new form title.</param>
         public void UpdateFormTitle(Uri currentUrl) => this.UpdateFormTitle(currentUrl, String.Empty);
-        
+
         /// <summary>
         /// Updates the form's title and the full screen mode menu item to reflect the current document and URL.
         /// </summary>
@@ -403,7 +403,7 @@ namespace GuacamoleClient.WinForms
             _webview2_core.Settings.AreDefaultContextMenusEnabled = true;
             _webview2_core.Settings.AreDevToolsEnabled = false;
 
-            _webview2_core.Navigate(StartUrl.ToString());            
+            _webview2_core.Navigate(StartUrl.ToString());
             SetFocusToWebview2Control();
         }
 
@@ -467,7 +467,7 @@ namespace GuacamoleClient.WinForms
             if (_webview2_controller == null) return;
             var r = this.WebBrowserHostPanel!.ClientRectangle;
             _webview2_controller.Bounds = new Rectangle(r.X, r.Y, r.Width, r.Height);
-        }       
+        }
 
         /// <summary>
         /// Close window
@@ -540,7 +540,7 @@ namespace GuacamoleClient.WinForms
             this.connectionNameInFullScreenModeToolStripMenuItem.Enabled = false;
             this.connectionNameInFullScreenModeToolStripMenuItem.ForeColor = Color.Black;
             this.connectionNameInFullScreenModeToolStripMenuItem.Font = new Font(this.connectionNameInFullScreenModeToolStripMenuItem.Font, FontStyle.Bold);
-        } 
+        }
 
         /// <summary>
         /// Stop full screen mode
@@ -642,7 +642,7 @@ namespace GuacamoleClient.WinForms
                     //ignore repeated exceptions
                 }
             }
-        }         
+        }
 
         /// <summary>
         /// Immediately update form title on mouse click
@@ -744,5 +744,6 @@ namespace GuacamoleClient.WinForms
 
 
         #endregion
+
     }
 }
