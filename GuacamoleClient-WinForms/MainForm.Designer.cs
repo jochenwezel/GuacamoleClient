@@ -52,9 +52,11 @@ namespace GuacamoleClient.WinForms
             mainMenuStrip = new CustomMenuStrip();
             fileToolStripMenuItem = new ToolStripMenuItem();
             connectionHomeToolStripMenuItem = new ToolStripMenuItem();
+            newWindowToolStripMenuItem = new ToolStripMenuItem();
+            toolStripSeparator3 = new ToolStripSeparator();
             guacamoleUserSettingsToolStripMenuItem = new ToolStripMenuItem();
             guacamoleConnectionConfigurationsToolStripMenuItem = new ToolStripMenuItem();
-            newWindowToolStripMenuItem = new ToolStripMenuItem();
+            toolStripSeparator2 = new ToolStripSeparator();
             openAnotherGuacamoleServerToolStripMenuItem = new ToolStripMenuItem();
             toolStripSeparator1 = new ToolStripSeparator();
             quitToolStripMenuItem = new ToolStripMenuItem();
@@ -67,8 +69,6 @@ namespace GuacamoleClient.WinForms
             WebBrowserHostPanel = new Panel();
             formTitleRefreshTimer = new Timer(components);
             _focusSink = new TextBox();
-            toolStripSeparator2 = new ToolStripSeparator();
-            toolStripSeparator3 = new ToolStripSeparator();
             mainMenuStrip.SuspendLayout();
             SuspendLayout();
             // 
@@ -96,6 +96,19 @@ namespace GuacamoleClient.WinForms
             connectionHomeToolStripMenuItem.Text = "Connection Home";
             connectionHomeToolStripMenuItem.Click += connectionHomeToolStripMenuItem_Click;
             // 
+            // newWindowToolStripMenuItem
+            // 
+            newWindowToolStripMenuItem.Name = "newWindowToolStripMenuItem";
+            newWindowToolStripMenuItem.ShortcutKeyDisplayString = "Ctrl+Alt+N / Alt-Gr+N";
+            newWindowToolStripMenuItem.Size = new Size(330, 22);
+            newWindowToolStripMenuItem.Text = "New Window";
+            newWindowToolStripMenuItem.Click += newWindowToolStripMenuItem_Click;
+            // 
+            // toolStripSeparator3
+            // 
+            toolStripSeparator3.Name = "toolStripSeparator3";
+            toolStripSeparator3.Size = new Size(327, 6);
+            // 
             // guacamoleUserSettingsToolStripMenuItem
             // 
             guacamoleUserSettingsToolStripMenuItem.Name = "guacamoleUserSettingsToolStripMenuItem";
@@ -110,13 +123,10 @@ namespace GuacamoleClient.WinForms
             guacamoleConnectionConfigurationsToolStripMenuItem.Text = "Connection Configurations";
             guacamoleConnectionConfigurationsToolStripMenuItem.Click += guacamoleConnectionConfigurationsToolStripMenuItem_Click;
             // 
-            // newWindowToolStripMenuItem
+            // toolStripSeparator2
             // 
-            newWindowToolStripMenuItem.Name = "newWindowToolStripMenuItem";
-            newWindowToolStripMenuItem.ShortcutKeyDisplayString = "Ctrl+Alt+N / Alt-Gr+N";
-            newWindowToolStripMenuItem.Size = new Size(330, 22);
-            newWindowToolStripMenuItem.Text = "New Window";
-            newWindowToolStripMenuItem.Click += newWindowToolStripMenuItem_Click;
+            toolStripSeparator2.Name = "toolStripSeparator2";
+            toolStripSeparator2.Size = new Size(327, 6);
             // 
             // openAnotherGuacamoleServerToolStripMenuItem
             // 
@@ -178,10 +188,10 @@ namespace GuacamoleClient.WinForms
             // HintStopWebcontrol2FocusShortcut
             // 
             HintStopWebcontrol2FocusShortcut.Alignment = ToolStripItemAlignment.Right;
-            HintStopWebcontrol2FocusShortcut.Enabled = false;
             HintStopWebcontrol2FocusShortcut.Name = "HintStopWebcontrol2FocusShortcut";
             HintStopWebcontrol2FocusShortcut.Size = new Size(248, 20);
             HintStopWebcontrol2FocusShortcut.Text = "Ctrl+Alt+Scroll to capture/release keyboard";
+            HintStopWebcontrol2FocusShortcut.Click += HintStopWebcontrol2FocusShortcut_Click;
             // 
             // WebBrowserHostPanel
             // 
@@ -204,16 +214,6 @@ namespace GuacamoleClient.WinForms
             _focusSink.TabIndex = 0;
             _focusSink.TabStop = false;
             _focusSink.Visible = false;
-            // 
-            // toolStripSeparator2
-            // 
-            toolStripSeparator2.Name = "toolStripSeparator2";
-            toolStripSeparator2.Size = new Size(327, 6);
-            // 
-            // toolStripSeparator3
-            // 
-            toolStripSeparator3.Name = "toolStripSeparator3";
-            toolStripSeparator3.Size = new Size(327, 6);
             // 
             // MainForm
             // 
