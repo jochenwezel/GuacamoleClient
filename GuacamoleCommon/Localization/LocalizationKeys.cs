@@ -52,29 +52,23 @@ namespace GuacamoleClient.Common.Localization
         Menu_GuacamoleUserSettings,
         Menu_GuacamoleConnectionConfigurations,
 
-        // Choose server dialog
-        ChooseServer_Title,
+        // Choose/Manage servers dialog
         ChooseServer_Column_Name,
         ChooseServer_Column_Url,
         ChooseServer_Column_Color,
-        ChooseServer_Button_OpenNewWindow,
-        ChooseServer_Button_Manage,
+        ChooseServer_Title,
+        ChooseServer_Button_Open,
+        ChooseServer_Button_Add,
+        ChooseServer_Button_Edit,
+        ChooseServer_Button_Remove,
         ChooseServer_Button_SetDefault,
-        Common_Button_Cancel,
-
-        // Manage servers dialog
-        ManageServers_Title,
-        ManageServers_Button_Add,
-        ManageServers_Button_Edit,
-        ManageServers_Button_Remove,
-        ManageServers_Button_SetDefault,
-        ManageServers_Button_Close,
-        ManageServers_ConfirmRemove_Title,
-        ManageServers_ConfirmRemove_Text,
+        ChooseServer_Button_Close,
+        ChooseServer_ConfirmRemove_Title,
+        ChooseServer_ConfirmRemove_Text,
 
         // Add/Edit dialog
-        AddServer_Title,
-        EditServer_Title,
+        AddEdit_ModeAddServer_Title,
+        AddEdit_ModeEditServer_Title,
         AddEdit_Label_ServerUrl,
         AddEdit_Label_DisplayNameOptional,
         AddEdit_Label_ColorScheme,
@@ -91,7 +85,14 @@ namespace GuacamoleClient.Common.Localization
         AddEdit_TestFailed_Title,
         AddEdit_TestFailed_Text,
 
-        // Suffixes
+        // Common buttons and labels
+        /// <summary>
+        /// Cancel button text used in various dialogs.
+        /// </summary>
+        Common_Button_Cancel,
+        /// <summary>
+        /// Suffix appended to default server profile names to indicate that they are the default choice.
+        /// </summary>
         Common_Suffix_Default,
     }
 }

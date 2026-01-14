@@ -31,6 +31,9 @@ namespace GuacamoleClient.WinForms
         private readonly GuacamoleClient.Common.Settings.GuacamoleSettingsManager _settings;
         public GuacamoleClient.Common.Settings.GuacamoleServerProfile ServerProfile { get; }
 
+        public MainForm(GuacamoleClient.Common.Settings.GuacamoleSettingsManager settings, GuacamoleClient.Common.Settings.GuacamoleServerProfile serverProfile) : this(settings, serverProfile, new Uri(serverProfile.Url))
+        { }
+
         public MainForm(GuacamoleClient.Common.Settings.GuacamoleSettingsManager settings, GuacamoleClient.Common.Settings.GuacamoleServerProfile serverProfile, Uri startUrl)
         {
             _settings = settings ?? throw new ArgumentNullException(nameof(settings));
