@@ -36,6 +36,7 @@ namespace GuacamoleClient.WinForms
 
         private void InitializeComponent()
         {
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(AddEditServerForm));
             _txtUrl = new TextBox();
             _txtName = new TextBox();
             _cmbColor = new ComboBox();
@@ -217,6 +218,7 @@ namespace GuacamoleClient.WinForms
             Controls.Add(_layout);
             Controls.Add(_buttons);
             FormBorderStyle = FormBorderStyle.FixedDialog;
+            Icon = (Icon)resources.GetObject("$this.Icon");
             MaximizeBox = false;
             MinimizeBox = false;
             Name = "AddEditServerForm";

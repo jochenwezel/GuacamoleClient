@@ -10,9 +10,7 @@ namespace GuacamoleClient.WinForms
     internal sealed partial class ChooseServerForm : Form
     {
         private readonly GuacamoleSettingsManager _manager;
-        // Controls are defined in ChooseServerForm.Designer.cs
-
-        public GuacamoleServerProfile? SelectedProfile { get; private set; }
+        // Controls are defined in ManageServersForm.Designer.cs
 
         public ChooseServerForm(GuacamoleSettingsManager manager)
         {
@@ -24,7 +22,9 @@ namespace GuacamoleClient.WinForms
             _list.SelectedIndexChanged += (_, __) => UpdateButtons();
 
             _btnOpen.Click += (_, __) => OpenSelected();
-            _btnManage.Click += (_, __) => Manage();
+            _btnAdd.Click += (_, __) => AddNew();
+            _btnEdit.Click += (_, __) => EditSelected();
+            _btnRemove.Click += (_, __) => RemoveSelected();
             _btnSetDefault.Click += (_, __) => SetDefaultSelected();
 
             Load += (_, __) =>
@@ -34,19 +34,22 @@ namespace GuacamoleClient.WinForms
             };
         }
 
+        public GuacamoleServerProfile? SelectedProfile { get; private set; }
+
         private void ApplyLocalization()
         {
             Text = LocalizationProvider.Get(LocalizationKeys.ChooseServer_Title);
 
             _list.Columns.Clear();
-            _list.Columns.Add(LocalizationProvider.Get(LocalizationKeys.ChooseServer_Column_Name), 220);
+            _list.Columns.Add(LocalizationProvider.Get(LocalizationKeys.ChooseServer_Column_Name), 200);
             _list.Columns.Add(LocalizationProvider.Get(LocalizationKeys.ChooseServer_Column_Url), 460);
-            _list.Columns.Add(LocalizationProvider.Get(LocalizationKeys.ChooseServer_Column_Color), 100);
 
-            _btnOpen.Text = LocalizationProvider.Get(LocalizationKeys.ChooseServer_Button_OpenNewWindow);
-            _btnManage.Text = LocalizationProvider.Get(LocalizationKeys.ChooseServer_Button_Manage);
+            _btnOpen.Text = LocalizationProvider.Get(LocalizationKeys.ChooseServer_Button_Open);
+            _btnAdd.Text = LocalizationProvider.Get(LocalizationKeys.ChooseServer_Button_Add);
+            _btnEdit.Text = LocalizationProvider.Get(LocalizationKeys.ChooseServer_Button_Edit);
+            _btnRemove.Text = LocalizationProvider.Get(LocalizationKeys.ChooseServer_Button_Remove);
             _btnSetDefault.Text = LocalizationProvider.Get(LocalizationKeys.ChooseServer_Button_SetDefault);
-            _btnCancel.Text = LocalizationProvider.Get(LocalizationKeys.Common_Button_Cancel);
+            _btnClose.Text = LocalizationProvider.Get(LocalizationKeys.ChooseServer_Button_Close);
         }
 
         private void RefreshList()
@@ -58,17 +61,18 @@ namespace GuacamoleClient.WinForms
                 if (p.IsDefault) name += " " + LocalizationProvider.Get(LocalizationKeys.Common_Suffix_Default);
                 var item = new ListViewItem(name) { Tag = p.Id };
                 item.SubItems.Add(p.Url);
-                item.SubItems.Add(GuacamoleColorPalette.ResolveToHex(p.PrimaryColorValue));
+                var colorScheme = p.LookupColorScheme();
+                item.BackColor = UITools.ParseHexColor(colorScheme.PrimaryColorHexValue);
+                item.ForeColor = UITools.ParseHexColor(colorScheme.TextColorHexValue);
                 _list.Items.Add(item);
             }
-
             UpdateButtons();
         }
 
         private GuacamoleServerProfile? GetSelected()
         {
             if (_list.SelectedItems.Count == 0) return null;
-            var id = (Guid)_list.SelectedItems[0].Tag;
+            var id = (Guid)_list.SelectedItems[0].Tag!;
             return _manager.ServerProfiles.FirstOrDefault(p => p.Id == id);
         }
 
@@ -76,22 +80,41 @@ namespace GuacamoleClient.WinForms
         {
             var has = _list.SelectedItems.Count > 0;
             _btnOpen.Enabled = has;
+            _btnEdit.Enabled = has;
+            _btnRemove.Enabled = has;
             _btnSetDefault.Enabled = has;
         }
 
-        private void OpenSelected()
+        private void AddNew()
+        {
+            using var dlg = new AddEditServerForm(_manager, null, isFirstProfile: _manager.ServerProfiles.Count == 0);
+            if (dlg.ShowDialog(this) == DialogResult.OK)
+                RefreshList();
+        }
+
+        private void EditSelected()
         {
             var sel = GetSelected();
             if (sel == null) return;
-            SelectedProfile = sel;
-            DialogResult = DialogResult.OK;
-            Close();
+            using var dlg = new AddEditServerForm(_manager, sel, isFirstProfile: false);
+            if (dlg.ShowDialog(this) == DialogResult.OK)
+                RefreshList();
         }
 
-        private void Manage()
+        private void RemoveSelected()
         {
-            using var dlg = new ManageServersForm(_manager);
-            dlg.ShowDialog(this);
+            var sel = GetSelected();
+            if (sel == null) return;
+
+            if (MessageBox.Show(this,
+                    LocalizationProvider.Get(LocalizationKeys.ChooseServer_ConfirmRemove_Text),
+                    LocalizationProvider.Get(LocalizationKeys.ChooseServer_ConfirmRemove_Title),
+                    MessageBoxButtons.YesNo,
+                    MessageBoxIcon.Warning) != DialogResult.Yes)
+                return;
+
+            _manager.Remove(sel.Id);
+            _manager.SaveAsync().GetAwaiter().GetResult();
             RefreshList();
         }
 
@@ -102,6 +125,15 @@ namespace GuacamoleClient.WinForms
             _manager.SetDefault(sel.Id);
             _manager.SaveAsync().GetAwaiter().GetResult();
             RefreshList();
+        }
+
+        private void OpenSelected()
+        {
+            var sel = GetSelected();
+            if (sel == null) return;
+            SelectedProfile = sel;
+            DialogResult = DialogResult.OK;
+            Close();
         }
     }
 }

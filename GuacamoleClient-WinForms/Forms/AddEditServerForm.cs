@@ -43,8 +43,8 @@ namespace GuacamoleClient.WinForms
         private void ApplyLocalization()
         {
             Text = _editing == null
-                ? LocalizationProvider.Get(LocalizationKeys.AddServer_Title)
-                : LocalizationProvider.Get(LocalizationKeys.EditServer_Title);
+                ? LocalizationProvider.Get(LocalizationKeys.AddEdit_ModeAddServer_Title)
+                : LocalizationProvider.Get(LocalizationKeys.AddEdit_ModeEditServer_Title);
 
             _lblUrl.Text = LocalizationProvider.Get(LocalizationKeys.AddEdit_Label_ServerUrl);
             _lblName.Text = LocalizationProvider.Get(LocalizationKeys.AddEdit_Label_DisplayNameOptional);

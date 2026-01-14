@@ -108,45 +108,37 @@ namespace GuacamoleClient.Common.Localization
                         return "Guacamole Verbindungs-Konfiguration";
 
                     // Choose server dialog
-                    case LocalizationKeys.ChooseServer_Title:
-                        return "Guacamole-Server auswählen";
                     case LocalizationKeys.ChooseServer_Column_Name:
                         return "Name";
                     case LocalizationKeys.ChooseServer_Column_Url:
                         return "URL";
                     case LocalizationKeys.ChooseServer_Column_Color:
                         return "Farbe";
-                    case LocalizationKeys.ChooseServer_Button_OpenNewWindow:
-                        return "Öffnen (neues Fenster)";
-                    case LocalizationKeys.ChooseServer_Button_Manage:
-                        return "Verwalten…";
-                    case LocalizationKeys.ChooseServer_Button_SetDefault:
-                        return "Als Standard";
+                    case LocalizationKeys.ChooseServer_Button_Open:
+                        return "Verbinden";
                     case LocalizationKeys.Common_Button_Cancel:
                         return "Abbrechen";
-
-                    // Manage servers dialog
-                    case LocalizationKeys.ManageServers_Title:
-                        return "Guacamole-Server verwalten";
-                    case LocalizationKeys.ManageServers_Button_Add:
+                    case LocalizationKeys.ChooseServer_Title:
+                        return "Guacamole-Server auswählen";
+                    case LocalizationKeys.ChooseServer_Button_Add:
                         return "Hinzufügen…";
-                    case LocalizationKeys.ManageServers_Button_Edit:
+                    case LocalizationKeys.ChooseServer_Button_Edit:
                         return "Bearbeiten…";
-                    case LocalizationKeys.ManageServers_Button_Remove:
+                    case LocalizationKeys.ChooseServer_Button_Remove:
                         return "Entfernen";
-                    case LocalizationKeys.ManageServers_Button_SetDefault:
+                    case LocalizationKeys.ChooseServer_Button_SetDefault:
                         return "Als Standard";
-                    case LocalizationKeys.ManageServers_Button_Close:
+                    case LocalizationKeys.ChooseServer_Button_Close:
                         return "Schließen";
-                    case LocalizationKeys.ManageServers_ConfirmRemove_Title:
+                    case LocalizationKeys.ChooseServer_ConfirmRemove_Title:
                         return "Bestätigen";
-                    case LocalizationKeys.ManageServers_ConfirmRemove_Text:
+                    case LocalizationKeys.ChooseServer_ConfirmRemove_Text:
                         return "Ausgewähltes Serverprofil entfernen?";
 
                     // Add/Edit dialog
-                    case LocalizationKeys.AddServer_Title:
+                    case LocalizationKeys.AddEdit_ModeAddServer_Title:
                         return "Guacamole-Server hinzufügen";
-                    case LocalizationKeys.EditServer_Title:
+                    case LocalizationKeys.AddEdit_ModeEditServer_Title:
                         return "Guacamole-Server bearbeiten";
                     case LocalizationKeys.AddEdit_Label_ServerUrl:
                         return "Server-URL";
@@ -257,45 +249,37 @@ namespace GuacamoleClient.Common.Localization
                     return "Guacamole Connections Configuration";
 
                 // Choose server dialog
-                case LocalizationKeys.ChooseServer_Title:
-                    return "Choose Guacamole server";
                 case LocalizationKeys.ChooseServer_Column_Name:
                     return "Name";
                 case LocalizationKeys.ChooseServer_Column_Url:
                     return "URL";
                 case LocalizationKeys.ChooseServer_Column_Color:
                     return "Color";
-                case LocalizationKeys.ChooseServer_Button_OpenNewWindow:
-                    return "Open (new window)";
-                case LocalizationKeys.ChooseServer_Button_Manage:
-                    return "Manage…";
-                case LocalizationKeys.ChooseServer_Button_SetDefault:
-                    return "Set default";
+                case LocalizationKeys.ChooseServer_Button_Open:
+                    return "Connect";
                 case LocalizationKeys.Common_Button_Cancel:
                     return "Cancel";
-
-                // Manage servers dialog
-                case LocalizationKeys.ManageServers_Title:
-                    return "Manage Guacamole servers";
-                case LocalizationKeys.ManageServers_Button_Add:
+                case LocalizationKeys.ChooseServer_Title:
+                    return "Choose Guacamole servers";
+                case LocalizationKeys.ChooseServer_Button_Add:
                     return "Add…";
-                case LocalizationKeys.ManageServers_Button_Edit:
+                case LocalizationKeys.ChooseServer_Button_Edit:
                     return "Edit…";
-                case LocalizationKeys.ManageServers_Button_Remove:
+                case LocalizationKeys.ChooseServer_Button_Remove:
                     return "Remove";
-                case LocalizationKeys.ManageServers_Button_SetDefault:
+                case LocalizationKeys.ChooseServer_Button_SetDefault:
                     return "Set default";
-                case LocalizationKeys.ManageServers_Button_Close:
+                case LocalizationKeys.ChooseServer_Button_Close:
                     return "Close";
-                case LocalizationKeys.ManageServers_ConfirmRemove_Title:
+                case LocalizationKeys.ChooseServer_ConfirmRemove_Title:
                     return "Confirm";
-                case LocalizationKeys.ManageServers_ConfirmRemove_Text:
+                case LocalizationKeys.ChooseServer_ConfirmRemove_Text:
                     return "Remove selected server profile?";
 
                 // Add/Edit dialog
-                case LocalizationKeys.AddServer_Title:
+                case LocalizationKeys.AddEdit_ModeAddServer_Title:
                     return "Add Guacamole server";
-                case LocalizationKeys.EditServer_Title:
+                case LocalizationKeys.AddEdit_ModeEditServer_Title:
                     return "Edit Guacamole server";
                 case LocalizationKeys.AddEdit_Label_ServerUrl:
                     return "Server URL";
