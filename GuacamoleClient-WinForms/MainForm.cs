@@ -678,47 +678,10 @@ namespace GuacamoleClient.WinForms
         /// <param name="e"></param>
         private async void testToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            string json = await CaptureGuacamoleSessionAndStorageKeysAsync();
-            MessageBox.Show(this, $"Guacamole Auth Token - chance 1:\n{json}", "Test", MessageBoxButtons.OK, MessageBoxIcon.Information);
             var token = await GetGuacamoleAuthTokenAsync();
-            MessageBox.Show(this, $"Guacamole Auth Token - chance 2:\n{token}", "Test", MessageBoxButtons.OK, MessageBoxIcon.Information);
-        }
-
-        /// <summary>
-        /// Capture cached login session details or other valuable keys to analyse how to check of is-logged-on-state
-        /// </summary>
-        /// <returns></returns>
-        private async Task<string> CaptureGuacamoleSessionAndStorageKeysAsync()
-        {
-            var json = await _webview2_core!.ExecuteScriptAsync(@"
-(() => JSON.stringify({
-  keys: Object.keys(localStorage),
-  guac_auth: localStorage.getItem('GUAC_AUTH') || null
-}))()");
-            //            MessageBox.Show(this, $"Guacamole Auth Token:\n{json}", "Test", MessageBoxButtons.OK, MessageBoxIcon.Information);
 
             // Dump aller Keys + GUAC_AUTH anzeigen
-            var script = @"
-(() => {
-  const ls = (typeof localStorage !== 'undefined') ? localStorage : null;
-  const ss = (typeof sessionStorage !== 'undefined') ? sessionStorage : null;
-  const res = {
-    origin: location.origin,
-    path: location.pathname,
-    localKeys: ls ? Object.keys(ls) : [],
-    sessionKeys: ss ? Object.keys(ss) : [],
-    guacLocal: ls ? ls.getItem('GUAC_AUTH') : null,
-    guacSession: ss ? ss.getItem('GUAC_AUTH') : null
-  };
-  return JSON.stringify(res);
-})()";
-            var json2 = await _webview2_core!.ExecuteScriptAsync(script);
-            // json ist ein C#-String mit Anführungszeichen – ggf. unescapen/parsen:
-            var payload = System.Text.Json.JsonDocument.Parse(json2.Trim('"').Replace("\\\"", "\""));
-            // -> payload.RootElement.GetProperty("guacLocal").GetString()
-            //            MessageBox.Show(this, $"Guacamole Auth Token:\n{json2}", "Test", MessageBoxButtons.OK, MessageBoxIcon.Information);
-
-            return json2;
+            MessageBox.Show($"Guacamole Auth Token:\n{token}", "Test", MessageBoxButtons.OK, MessageBoxIcon.Information);
         }
 
         /// <summary>
@@ -727,19 +690,27 @@ namespace GuacamoleClient.WinForms
         /// <returns></returns>
         public async Task<string?> GetGuacamoleAuthTokenAsync()
         {
-            var cookieManager = _webview2_core!.CookieManager;
-            var cookies = await cookieManager.GetCookiesAsync(this.StartUrl.ToString()).ConfigureAwait(false);
-            foreach (var c in cookies)
+            var js = await _webview2_core!.ExecuteScriptAsync(@"
+                (() => JSON.stringify({
+                  guac_auth_token_local: localStorage.getItem('GUAC_AUTH_TOKEN')
+                }))()");
+
+            // 1) äußere JS-String-Escapes entfernen
+            var unescaped = System.Text.Json.JsonSerializer.Deserialize<string>(js)!;
+            using var doc = System.Text.Json.JsonDocument.Parse(unescaped);
+
+            // 2) Token auslesen
+            var raw = doc.RootElement.GetProperty("guac_auth_token_local").GetString();
+
+            // 3) falls der Token selbst nochmal JSON-string-escaped ist: ein zweites Mal deserialisieren
+            string? token = raw;
+            if (!string.IsNullOrEmpty(token) && token.Length >= 2 && token[0] == '"' && token[^1] == '"')
             {
-                Console.WriteLine($"{c.Name} = {c.Value} ; HttpOnly={c.IsHttpOnly} ; Secure={c.IsSecure} ; SameSite={c.SameSite}");
-                if (c.Name == "GUAC_AUTH" || c.Name == "guac.token")
-                {
-                    string token = c.Value;
-                    // token verwenden
-                    return token;
-                }
+                token = System.Text.Json.JsonSerializer.Deserialize<string>(token);
             }
-            return null;
+
+            // token ist jetzt ohne Zusatzquotes
+            return token;
         }
 
 
