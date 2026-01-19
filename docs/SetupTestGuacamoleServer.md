@@ -43,16 +43,16 @@ services:
             -- 999-seed.sql
             -- Creates users 'admin' and 'demo' with fixed password hash/salt
             -- and grants 'admin' the same system permissions as 'guacadmin'.
-            
+
             -- Ensure entities exist
             INSERT INTO guacamole_entity (name, type)
             SELECT 'admin', 'USER'
             WHERE NOT EXISTS (SELECT 1 FROM guacamole_entity WHERE name='admin' AND type='USER');
-            
+
             INSERT INTO guacamole_entity (name, type)
             SELECT 'demo', 'USER'
             WHERE NOT EXISTS (SELECT 1 FROM guacamole_entity WHERE name='demo' AND type='USER');
-            
+
             -- Create admin user (if missing) with fixed hash+salt
             INSERT INTO guacamole_user (
               entity_id, password_hash, password_salt, password_date, disabled, expired
@@ -69,7 +69,7 @@ services:
               AND NOT EXISTS (
                 SELECT 1 FROM guacamole_user u WHERE u.entity_id = e.entity_id
               );
-            
+
             -- Create demo user (if missing) with fixed hash+salt
             INSERT INTO guacamole_user (
               entity_id, password_hash, password_salt, password_date, disabled, expired
@@ -86,7 +86,7 @@ services:
               AND NOT EXISTS (
                 SELECT 1 FROM guacamole_user u WHERE u.entity_id = e.entity_id
               );
-            
+
             -- Grant admin the same system permissions as guacadmin (idempotent)
             INSERT INTO guacamole_system_permission (entity_id, permission)
             SELECT
@@ -110,22 +110,20 @@ services:
             -- -------------------------------------------------------------------
             -- SSH connections: sandbox1 + sandbox2
             -- admin + guacadmin: ADMINISTER (inkl. bearbeiten)
-            -- demo: READ (nur sehen/benutzen)
+            -- demo: READ (sehen/benutzen/connecten)
             -- -------------------------------------------------------------------
-            
+
             -- 1) Connections anlegen (falls nicht vorhanden)
-            
             INSERT INTO guacamole_connection (connection_name, protocol, max_connections, max_connections_per_user)
             SELECT 'SSH - sandbox1', 'ssh', NULL, NULL
             WHERE NOT EXISTS (SELECT 1 FROM guacamole_connection WHERE connection_name='SSH - sandbox1');
-            
+
             INSERT INTO guacamole_connection (connection_name, protocol, max_connections, max_connections_per_user)
             SELECT 'SSH - sandbox2', 'ssh', NULL, NULL
             WHERE NOT EXISTS (SELECT 1 FROM guacamole_connection WHERE connection_name='SSH - sandbox2');
-            
-            
+
             -- 2) Parameter setzen (idempotent)
-            
+
             -- sandbox1 params
             INSERT INTO guacamole_connection_parameter (connection_id, parameter_name, parameter_value)
             SELECT c.connection_id, p.parameter_name, p.parameter_value
@@ -133,16 +131,16 @@ services:
             JOIN (
               VALUES
                 ('hostname', 'sshbox1'),
-                ('port',     '22'),
-                ('username', 'demo'),
-                ('password', 'guest')
+                ('port',     '2222'),
+                ('username', 'sandbox1'),
+                ('password', 'sandbox1')
             ) AS p(parameter_name, parameter_value) ON TRUE
             WHERE c.connection_name='SSH - sandbox1'
             AND NOT EXISTS (
               SELECT 1 FROM guacamole_connection_parameter x
               WHERE x.connection_id=c.connection_id AND x.parameter_name=p.parameter_name
             );
-            
+
             -- sandbox2 params
             INSERT INTO guacamole_connection_parameter (connection_id, parameter_name, parameter_value)
             SELECT c.connection_id, p.parameter_name, p.parameter_value
@@ -150,17 +148,16 @@ services:
             JOIN (
               VALUES
                 ('hostname', 'sshbox2'),
-                ('port',     '22'),
-                ('username', 'demo'),
-                ('password', 'guest')
+                ('port',     '2222'),
+                ('username', 'sandbox2'),
+                ('password', 'sandbox2')
             ) AS p(parameter_name, parameter_value) ON TRUE
             WHERE c.connection_name='SSH - sandbox2'
             AND NOT EXISTS (
               SELECT 1 FROM guacamole_connection_parameter x
               WHERE x.connection_id=c.connection_id AND x.parameter_name=p.parameter_name
             );
-            
-            
+
             -- 3) Rechte vergeben
             -- demo: READ
             INSERT INTO guacamole_connection_permission (entity_id, connection_id, permission)
@@ -172,7 +169,7 @@ services:
               SELECT 1 FROM guacamole_connection_permission p
               WHERE p.entity_id=e.entity_id AND p.connection_id=c.connection_id AND p.permission='READ'
             );
-            
+
             -- admin + guacadmin: ADMINISTER
             INSERT INTO guacamole_connection_permission (entity_id, connection_id, permission)
             SELECT e.entity_id, c.connection_id, 'ADMINISTER'
@@ -200,7 +197,6 @@ services:
       POSTGRES_PASSWORD: guacamole_pass
     tmpfs:
       - /var/lib/postgresql/data
-    # IMPORTANT: run schema+seed automatically on every fresh init
     volumes:
       - guacdemo_dbinit:/docker-entrypoint-initdb.d:ro
     networks:
@@ -234,7 +230,6 @@ services:
       POSTGRESQL_USERNAME: guacamole_user
       POSTGRESQL_PASSWORD: guacamole_pass
 
-
     networks:
       - guacdemo-internal
       - traefik-test
@@ -244,20 +239,20 @@ services:
       - -lc
       - >
           set -eux;
-    
+
           echo "Waiting for postgres TCP...";
           for i in $(seq 1 60); do
             (echo > /dev/tcp/postgres/5432) >/dev/null 2>&1 && break;
             sleep 1;
           done;
-    
+
           echo "Waiting for schema (guacamole_entity)...";
           for i in $(seq 1 60); do
             PGPASSWORD="guacamole_pass" \
             psql -h postgres -U guacamole_user -d guacamole_db -c "SELECT 1 FROM guacamole_entity LIMIT 1;" >/dev/null 2>&1 && break;
             sleep 1;
           done;
-    
+
           echo "Starting Guacamole…";
           exec /opt/guacamole/bin/entrypoint.sh
     labels:
@@ -277,8 +272,8 @@ services:
       PGID: 1000
       TZ: Europe/Berlin
       PASSWORD_ACCESS: "true"
-      USER_NAME: demo
-      USER_PASSWORD: guest
+      USER_NAME: sandbox1
+      USER_PASSWORD: sandbox1
       SUDO_ACCESS: "false"
     hostname: sandbox1
     networks:
@@ -295,8 +290,8 @@ services:
       PGID: 1000
       TZ: Europe/Berlin
       PASSWORD_ACCESS: "true"
-      USER_NAME: demo
-      USER_PASSWORD: guest
+      USER_NAME: sandbox2
+      USER_PASSWORD: sandbox2
       SUDO_ACCESS: "false"
     hostname: sandbox2
     networks:
@@ -314,7 +309,6 @@ networks:
 
 volumes:
   guacdemo_dbinit:
-
 ```
 
 ## Compose up
