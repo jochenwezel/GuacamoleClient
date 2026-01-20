@@ -220,6 +220,28 @@ namespace GuacamoleClient.WinForms
             _webview2_core!.NavigationCompleted += NavigationCompleted;
             _webview2_core!.NewWindowRequested += NewWindowRequested;
             _webview2_core!.FaviconChanged += (_, __) => RefreshFaviconAsync();
+            _webview2_core!.ContextMenuRequested += async (s, e) =>
+            {
+                // solves issue https://github.com/jochenwezel/GuacamoleClient/issues/21
+                // set focus to webview and wait a tick for allowing clipboard sync before right-click event is fully handled
+                // this prevents pasting of stale clipboard data in remote sessions when right-click immediately pastes clipboard content (e.g. linux terminal)
+                // => default menu stays untouched, e.Handled WON'T be set to true!
+                var deferral = e.GetDeferral();
+                try
+                {
+                    // 1) activate this window
+                    if (!this.Focused) this.Activate();
+                    // 2) focus WebView 
+                    this.SetFocusToWebview2Control();
+                    // 3) wait a tick
+                    await Task.Yield();
+                }
+                finally
+                {
+                    deferral.Complete();
+                }
+            };
+
             RefreshFaviconAsync();
         }
 

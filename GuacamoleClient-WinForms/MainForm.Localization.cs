@@ -1,6 +1,4 @@
 using GuacamoleClient.Common.Localization;
-using System;
-using System.Windows.Forms;
 
 namespace GuacamoleClient.WinForms
 {

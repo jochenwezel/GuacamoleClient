@@ -1,10 +1,7 @@
-﻿using GuacamoleClient.Common;
+﻿using GuacamoleClient.Common.Localization;
 using Microsoft.Web.WebView2.Core;
 using System;
-using System.ComponentModel;
-using System.Drawing;
 using System.Windows.Forms;
-using GuacamoleClient.Common.Localization;
 
 namespace GuacamoleClient.WinForms
 {
@@ -30,10 +27,10 @@ namespace GuacamoleClient.WinForms
                     throw new NotImplementedException();
             }
         }
-        
+
         /// <summary>
-                 /// Initialize everything to correctly handle all control focus and all (enabled/disabled) keyboard capturing
-                 /// </summary>
+        /// Initialize everything to correctly handle all control focus and all (enabled/disabled) keyboard capturing
+        /// </summary>
         void InitializeControlFocusManagementWithKeyboardCapturingHandler()
         {
             HookMenuItemsRecursive(mainMenuStrip!.Items);

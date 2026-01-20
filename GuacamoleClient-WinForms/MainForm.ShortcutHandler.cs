@@ -1,9 +1,6 @@
-﻿using GuacamoleClient.Common;
-using GuacamoleClient.Common.Localization;
+﻿using GuacamoleClient.Common.Localization;
 using Microsoft.Web.WebView2.Core;
-using System.ComponentModel;
 using System.Diagnostics;
-using System.Drawing;
 using System.Windows.Forms;
 
 namespace GuacamoleClient.WinForms
