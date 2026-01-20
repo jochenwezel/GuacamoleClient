@@ -46,6 +46,8 @@ namespace GuacamoleClient.WinForms
             this.HomeUrl = new Uri(serverProfile.Url);
             this.StartUrl = startUrl;
             _trustedHosts.Add(this.HomeUrl.Host);
+            _guacamoleApiRestClient = new GuacamoleApiClient(ignoreCertificateErrors: this.ServerProfile.IgnoreCertificateErrors, new TimeSpan(0, 0, 15));
+            GuacamoleClient.RestClient.GuacamoleApiClient.LoggingEnabled = TEST_MENU_ENABLED;
 
             InitializeComponent();
             InitializeControlFocusManagementWithKeyboardCapturingHandler();
@@ -228,6 +230,9 @@ namespace GuacamoleClient.WinForms
         /// <param name="e"></param>
         private async void NavigationCompleted(object? sender, CoreWebView2NavigationCompletedEventArgs e)
         {
+            string? authToken = await this.GetGuacamoleAuthTokenAsync();
+            if (string.IsNullOrEmpty(authToken) || this._lastUserLoginContext == null || this._lastUserLoginContext.AuthToken != authToken)
+                this._lastUserLoginContext = await this.GetLoginContextAsync();
             //configure timer to short timeout to refresh form controls ASAP
             this.formTitleRefreshTimer.Enabled = true;
             this.formTitleRefreshTimer.Interval = 100;
@@ -272,9 +277,8 @@ namespace GuacamoleClient.WinForms
             }
             else
             {
-                var ctx = await this.GetLoginContextAsync().ConfigureAwait(true);
                 UITools.SwitchToolStripVisibility(guacamoleUserSettingsToolStripMenuItem, true, false);
-                UITools.SwitchToolStripVisibility(guacamoleConnectionConfigurationsToolStripMenuItem, !string.IsNullOrEmpty(ctx?.ConnectionsConfigUri), false);
+                UITools.SwitchToolStripVisibility(guacamoleConnectionConfigurationsToolStripMenuItem, !string.IsNullOrEmpty(_lastUserLoginContext?.ConnectionsConfigUri), false);
                 UITools.SwitchToolStripVisibility(newWindowToolStripMenuItem, true, false);
             }
             UITools.SwitchSeparatorLinesVisibility(fileToolStripMenuItem.DropDownItems);
@@ -721,7 +725,11 @@ namespace GuacamoleClient.WinForms
 
         public InformationBoxResult ShowMessageBoxNonModal(string text, string caption, InformationBoxButtons buttons, InformationBoxIcon icon)
         {
-            return InformationBox.Show(text, title: caption, buttons: buttons, icon: icon, behavior: InformationBoxBehavior.Modeless, initialization: InformationBoxInitialization.FromScopeAndParameters, titleIcon: new InfoBox.InformationBoxTitleIcon(this.Icon), titleStyle: InformationBoxTitleIconStyle.Custom);
+            return InformationBox.Show(
+                text, title: caption, buttons: buttons, icon: icon,
+                style: InformationBoxStyle.Standard,
+                behavior: InformationBoxBehavior.Modeless, initialization: InformationBoxInitialization.FromScopeAndParameters, 
+                titleIcon: new InfoBox.InformationBoxTitleIcon(this.Icon), titleStyle: InformationBoxTitleIconStyle.Custom);
         }
 
         /// <summary>
@@ -751,25 +759,36 @@ namespace GuacamoleClient.WinForms
                 return c.Name;
         }
 
+        private async void testToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+        }
+
         /// <summary>
         /// Show cached login session details or other valuable keys to analyse how to check of is-logged-on-state
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private async void testToolStripMenuItem_Click(object sender, EventArgs e)
+        private async void authorizationUserContextToolStripMenuItem_Click(object sender, EventArgs e)
         {
             var loginContext = await GetLoginContextAsync();
             if (loginContext == null)
             {
-                ShowMessageBoxNonModal($"No Guacamole Auth Token/Login context", "Test", InformationBoxButtons.OK, InformationBoxIcon.Information);
+                ShowMessageBoxNonModal($"No Guacamole Auth Token/Login context", "Authorization @ " + this.ServerProfile.DisplayName, InformationBoxButtons.OK, InformationBoxIcon.Information);
             }
             else
             {
-                ShowMessageBoxNonModal($"Guacamole Auth Token/Login context:\n\n{loginContext.ToString()}", "Test", InformationBoxButtons.OK, InformationBoxIcon.Information);
+                ShowMessageBoxNonModal($"Guacamole Auth Token/Login context:\n\n{loginContext.ToString()}", "Authorization @ " + this.ServerProfile.DisplayName, InformationBoxButtons.OK, InformationBoxIcon.Information);
             }
         }
 
+        private async void restApiClientRequestsLogToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            ShowMessageBoxNonModal("Last requests via REST API Client:\n\n" + GuacamoleApiClient.GetLastRequestsList(), "All connections", InformationBoxButtons.OK, InformationBoxIcon.Information);
+        }
+
         #endregion
+
+        GuacamoleApiClient _guacamoleApiRestClient;
 
         public async Task<GuacamoleClient.RestClient.UserLoginContextWithPrimaryConnectionDataSource?> GetLoginContextAsync()
         {
@@ -779,15 +798,14 @@ namespace GuacamoleClient.WinForms
             var lastLoginContext = _lastUserLoginContext;
             if (lastLoginContext == null || lastLoginContext.AuthToken != token)
             {
-                var client = new GuacamoleApiClient(ignoreCertificateErrors: this.ServerProfile.IgnoreCertificateErrors, new TimeSpan(0, 0, 15));
                 Uri baseUri = GuacamoleApiClient.NormalizeBaseUri(this.ServerProfile.Url);
                 try
                 {
-                    lastLoginContext = await client.AuthenticateAndLookupExtendedDataAsync(baseUri, token);
+                    lastLoginContext = await _guacamoleApiRestClient.AuthenticateAndLookupExtendedDataAsync(baseUri, token);
                 }
-                catch
+                catch (Exception ex)
                 {
-                    lastLoginContext = null;
+                    lastLoginContext = new UserLoginContextWithPrimaryConnectionDataSource() { AuthToken = token };
                 }
                 _lastUserLoginContext = lastLoginContext;
             }

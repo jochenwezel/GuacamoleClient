@@ -18,6 +18,9 @@ namespace GuacamoleClient.RestClient;
 /// </code></remarks>
 public sealed class GuacamoleApiClient
 {
+    private const bool TEST_LOG_WITH_STACKTRACE = false;
+    public static bool LoggingEnabled = false;
+
     private readonly HttpClient _http;
 
     public GuacamoleApiClient(HttpClient http)
@@ -49,6 +52,84 @@ public sealed class GuacamoleApiClient
         }
 
         return client;
+    }
+
+    public static Dictionary<DateTime, string> LastRequests = new();
+
+    public static string GetLastRequestsList()
+    {
+        if (LastRequests.Count == 0)
+            return "No requests made yet.";
+        System.Text.StringBuilder sb = new();
+        foreach (var req in LastRequests)
+        {
+            sb.AppendLine($"{req.Key:o}: {req.Value}");
+        }
+        return sb.ToString();
+    }
+
+    private void LogRequest(HttpResponseMessage resp) => LogRequest(resp, null);
+
+    private void LogRequest(HttpResponseMessage resp, int? hopIndex)
+    {
+        if (!LoggingEnabled) return;
+        var req = resp.RequestMessage!;
+        string httpMethod = req.Method.Method;
+        string url = req.RequestUri!.ToString();
+
+        string authTokenInfo;
+        if (req.Headers.TryGetValues("Guacamole-Token", out var values))
+        {
+            var token = values?.FirstOrDefault(); // ggf. erstes Vorkommen
+            authTokenInfo = string.IsNullOrWhiteSpace(token)
+                ? "Guacamole-Token existing, but empty"
+                : "Guacamole-Token: " + token;
+        }
+        else
+        {
+            authTokenInfo = "No Guacamole-Token in request";
+        }
+
+        LastRequests.Add(DateTime.Now,
+                (hopIndex.HasValue ? $"[Hop {hopIndex.ToString()}] " : "") +
+                httpMethod + " " + url.ToString() + $" >> {(int)resp.StatusCode} {resp.StatusCode.ToString()}" +
+                (resp.StatusCode.ToString() != resp.ReasonPhrase ? $": { resp.ReasonPhrase}" : "") + System.Environment.NewLine +
+                GuacamoleClient.Common.StringTools.IndentString(authTokenInfo, 4, System.Environment.NewLine) + System.Environment.NewLine +
+                (TEST_LOG_WITH_STACKTRACE ? GuacamoleClient.Common.StringTools.IndentStringStartingWith2ndLine("    StackTrace: " + System.Environment.NewLine + System.Environment.StackTrace + System.Environment.NewLine, 8, System.Environment.NewLine): ""));
+    }
+
+
+    private static void LogHttpStep(int hop, Uri uri, HttpResponseMessage resp)
+    {
+        // Minimal sinnvolle Daten:
+        // - Statuscode
+        // - Location (bei Redirect)
+        // - Retry-After (bei 429)
+        // - RateLimit-Header (falls vorhanden)
+        // - Server/Date, Request-Id/Correlation-Id falls vorhanden
+
+        var location = resp.Headers.Location?.ToString();
+        var retryAfter = resp.Headers.RetryAfter?.ToString();
+
+        string? GetHeader(string name)
+            => resp.Headers.TryGetValues(name, out var v) ? string.Join(",", v)
+             : resp.Content.Headers.TryGetValues(name, out var vc) ? string.Join(",", vc)
+             : null;
+
+        var msg =
+            $"HTTP hop={hop} url={uri} status={(int)resp.StatusCode} {resp.ReasonPhrase}"
+            + (location is not null ? $" location={location}" : "")
+            + (retryAfter is not null ? $" retry-after={retryAfter}" : "")
+            + (GetHeader("X-Request-Id") is string rid ? $" x-request-id={rid}" : "")
+            + (GetHeader("Traceparent") is string tp ? $" traceparent={tp}" : "")
+            + (GetHeader("RateLimit-Remaining") is string rlr ? $" ratelimit-remaining={rlr}" : "")
+            + (GetHeader("RateLimit-Reset") is string rls ? $" ratelimit-reset={rls}" : "")
+            + (GetHeader("X-RateLimit-Remaining") is string xrlr ? $" x-ratelimit-remaining={xrlr}" : "");
+
+        msg += System.Environment.NewLine + resp.Content.ReadAsStringAsync().ConfigureAwait(false).GetAwaiter().GetResult();
+
+        //System.Diagnostics.Trace.WriteLine(msg);
+        System.Console.WriteLine(msg);
     }
 
     /// <summary>
@@ -98,6 +179,7 @@ public sealed class GuacamoleApiClient
             req.Headers.TryAddWithoutValidation("Guacamole-Token", result.AuthToken);
 
             using var resp = await _http.SendAsync(req, ct).ConfigureAwait(false);
+            LogRequest(resp);
 
             if (resp.StatusCode == HttpStatusCode.OK)
                 connSettingsUrl = uri.ToString();
@@ -177,7 +259,7 @@ public sealed class GuacamoleApiClient
         for (int hop = 0; hop < maxHops; hop++)
         {
             using var resp = await _http.PostAsync(tokenUri, content, ct).ConfigureAwait(false);
-
+            LogRequest(resp, hop);
             LogHttpStep(hop, current, resp);
 
             // Klassisch: Credentials abgelehnt
@@ -290,39 +372,6 @@ public sealed class GuacamoleApiClient
         return null;
     }
 
-    private static void LogHttpStep(int hop, Uri uri, HttpResponseMessage resp)
-    {
-        // Minimal sinnvolle Daten:
-        // - Statuscode
-        // - Location (bei Redirect)
-        // - Retry-After (bei 429)
-        // - RateLimit-Header (falls vorhanden)
-        // - Server/Date, Request-Id/Correlation-Id falls vorhanden
-
-        var location = resp.Headers.Location?.ToString();
-        var retryAfter = resp.Headers.RetryAfter?.ToString();
-
-        string? GetHeader(string name)
-            => resp.Headers.TryGetValues(name, out var v) ? string.Join(",", v)
-             : resp.Content.Headers.TryGetValues(name, out var vc) ? string.Join(",", vc)
-             : null;
-
-        var msg =
-            $"HTTP hop={hop} url={uri} status={(int)resp.StatusCode} {resp.ReasonPhrase}"
-            + (location is not null ? $" location={location}" : "")
-            + (retryAfter is not null ? $" retry-after={retryAfter}" : "")
-            + (GetHeader("X-Request-Id") is string rid ? $" x-request-id={rid}" : "")
-            + (GetHeader("Traceparent") is string tp ? $" traceparent={tp}" : "")
-            + (GetHeader("RateLimit-Remaining") is string rlr ? $" ratelimit-remaining={rlr}" : "")
-            + (GetHeader("RateLimit-Reset") is string rls ? $" ratelimit-reset={rls}" : "")
-            + (GetHeader("X-RateLimit-Remaining") is string xrlr ? $" x-ratelimit-remaining={xrlr}" : "");
-
-        msg += System.Environment.NewLine + resp.Content.ReadAsStringAsync().ConfigureAwait(false).GetAwaiter().GetResult();
-
-        //System.Diagnostics.Trace.WriteLine(msg);
-        System.Console.WriteLine(msg);
-    }
-
     /// <summary>
     /// Determine the UI URL for the Connections admin view.
     /// Returns null if login fails or the user cannot access connections for any datasource.
@@ -424,8 +473,9 @@ public sealed class GuacamoleApiClient
 
         // Some setups accept token as header; sending both is the most compatible.
         req.Headers.TryAddWithoutValidation("Guacamole-Token", token);
-
+        
         using var resp = await _http.SendAsync(req, ct).ConfigureAwait(false);
+        LogRequest(resp);
 
         if (resp.StatusCode == HttpStatusCode.OK) return true;
         if (resp.StatusCode is HttpStatusCode.Forbidden or HttpStatusCode.Unauthorized or HttpStatusCode.NotFound) return false;
@@ -533,6 +583,7 @@ public sealed class GuacamoleApiClient
         req.Headers.TryAddWithoutValidation("Guacamole-Token", token);
 
         using var resp = await _http.SendAsync(req, ct).ConfigureAwait(false);
+        LogRequest(resp);
 
         if (resp.StatusCode is HttpStatusCode.Unauthorized or HttpStatusCode.Forbidden or HttpStatusCode.NotFound)
             return new Dictionary<string, T>();

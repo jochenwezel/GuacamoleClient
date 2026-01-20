@@ -69,6 +69,8 @@ namespace GuacamoleClient.WinForms
             WebBrowserHostPanel = new Panel();
             formTitleRefreshTimer = new Timer(components);
             _focusSink = new TextBox();
+            authorizationUserContextToolStripMenuItem = new ToolStripMenuItem();
+            restApiClientRequestsLogToolStripMenuItem = new ToolStripMenuItem();
             mainMenuStrip.SuspendLayout();
             SuspendLayout();
             // 
@@ -150,6 +152,7 @@ namespace GuacamoleClient.WinForms
             // 
             // testToolStripMenuItem
             // 
+            testToolStripMenuItem.DropDownItems.AddRange(new ToolStripItem[] { authorizationUserContextToolStripMenuItem, restApiClientRequestsLogToolStripMenuItem });
             testToolStripMenuItem.Name = "testToolStripMenuItem";
             testToolStripMenuItem.Size = new Size(40, 20);
             testToolStripMenuItem.Text = "Test";
@@ -189,7 +192,7 @@ namespace GuacamoleClient.WinForms
             // 
             HintStopWebcontrol2FocusShortcut.Alignment = ToolStripItemAlignment.Right;
             HintStopWebcontrol2FocusShortcut.Name = "HintStopWebcontrol2FocusShortcut";
-            HintStopWebcontrol2FocusShortcut.Size = new Size(248, 20);
+            HintStopWebcontrol2FocusShortcut.Size = new Size(274, 20);
             HintStopWebcontrol2FocusShortcut.Text = "Ctrl+Alt+Backspace to capture/release keyboard";
             HintStopWebcontrol2FocusShortcut.Click += HintStopWebcontrol2FocusShortcut_Click;
             // 
@@ -215,6 +218,20 @@ namespace GuacamoleClient.WinForms
             _focusSink.TabStop = false;
             _focusSink.Visible = false;
             // 
+            // authorizationUserContextToolStripMenuItem
+            // 
+            authorizationUserContextToolStripMenuItem.Name = "authorizationUserContextToolStripMenuItem";
+            authorizationUserContextToolStripMenuItem.Size = new Size(228, 22);
+            authorizationUserContextToolStripMenuItem.Text = "Authorization & User Context";
+            authorizationUserContextToolStripMenuItem.Click += authorizationUserContextToolStripMenuItem_Click;
+            // 
+            // rESTAPIClientRequestsLogToolStripMenuItem
+            // 
+            restApiClientRequestsLogToolStripMenuItem.Name = "rESTAPIClientRequestsLogToolStripMenuItem";
+            restApiClientRequestsLogToolStripMenuItem.Size = new Size(228, 22);
+            restApiClientRequestsLogToolStripMenuItem.Text = "REST API Client Requests Log";
+            restApiClientRequestsLogToolStripMenuItem.Click += restApiClientRequestsLogToolStripMenuItem_Click;
+            // 
             // MainForm
             // 
             ClientSize = new Size(1264, 725);
@@ -237,5 +254,7 @@ namespace GuacamoleClient.WinForms
 
         private ToolStripSeparator toolStripSeparator3;
         private ToolStripSeparator toolStripSeparator2;
+        private ToolStripMenuItem authorizationUserContextToolStripMenuItem;
+        private ToolStripMenuItem restApiClientRequestsLogToolStripMenuItem;
     }
 }
