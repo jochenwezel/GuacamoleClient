@@ -11,7 +11,7 @@ public class RestApiClientTests
 {
     private static readonly TimeSpan DefaultTimeout = TimeSpan.FromSeconds(25);
 
-
+    [Obsolete("This test uses the obsolete DetermineConnectionsManagementUrlAsync method.")]
     [TestCase("https://services10.mgmt.compumaster.de/guacamole/#/settings/postgresql/connections", "guacadmin", "guacadmin", true, true)]
     [TestCase("https://services10.mgmt.compumaster.de/guacamole/#/settings/postgresql/connections", "admin", "admin", true, true)]
     [TestCase("https://services10.mgmt.compumaster.de/guacamole/#/settings/postgresql/connections", "demo", "demo", true, true)]
@@ -113,7 +113,7 @@ public class RestApiClientTests
     {
         var client = new GuacamoleApiClient(ignoreCertificateErrors: ignoreCertificateErrors, DefaultTimeout);
         Uri baseUri = GuacamoleApiClient.NormalizeBaseUri(url);
-        var AuthToken = await AuthenticateAsync(client, baseUri, user, pass, System.Threading.CancellationToken.None);
+        var AuthToken = await client.AuthenticateAsync(baseUri, user, pass, System.Threading.CancellationToken.None);
         var result = await client.GetConnectionGroupsAsync(baseUri, AuthToken!.AuthToken!, AuthToken.AvailableDataSources!);
 
         if (result == null)
@@ -158,7 +158,7 @@ public class RestApiClientTests
     {
         var client = new GuacamoleApiClient(ignoreCertificateErrors: ignoreCertificateErrors, DefaultTimeout);
         Uri baseUri = GuacamoleApiClient.NormalizeBaseUri(url);
-        var AuthToken = await AuthenticateAsync(client, baseUri, user, pass, System.Threading.CancellationToken.None);
+        var AuthToken = await client.AuthenticateAsync(baseUri, user, pass, System.Threading.CancellationToken.None);
         var result = await client.GetConnectionsAsync(baseUri, AuthToken!.AuthToken!, AuthToken.AvailableDataSources!);
 
         if (result == null)
@@ -187,7 +187,7 @@ public class RestApiClientTests
     {
         var client = new GuacamoleApiClient(ignoreCertificateErrors: ignoreCertificateErrors, DefaultTimeout);
         Uri baseUri = GuacamoleApiClient.NormalizeBaseUri(url);
-        var AuthToken = await AuthenticateAsync(client, baseUri, user, pass, System.Threading.CancellationToken.None);
+        var AuthToken = await client.AuthenticateAsync(baseUri, user, pass, System.Threading.CancellationToken.None);
         var result = await client.AuthenticateAsync(baseUri, AuthToken!);
 
         if (result == null)
@@ -205,7 +205,7 @@ public class RestApiClientTests
     {
         var client = new GuacamoleApiClient(ignoreCertificateErrors: ignoreCertificateErrors, DefaultTimeout);
         Uri baseUri = GuacamoleApiClient.NormalizeBaseUri(url);
-        var AuthToken = await AuthenticateAndLookupExtendedDataAsync(client, baseUri, user, pass, System.Threading.CancellationToken.None);
+        var AuthToken = await client.AuthenticateAndLookupExtendedDataAsync(baseUri, user, pass, System.Threading.CancellationToken.None);
         var result = await client.AuthenticateAndLookupExtendedDataAsync(baseUri, AuthToken!);
 
         if (result == null)
@@ -217,15 +217,5 @@ public class RestApiClientTests
             System.Console.WriteLine(result.ToString());
             Assert.That(result.PrimaryConnectionsDataSource, Is.EqualTo(primaryConnectionsDataSource));
         }
-    }
-
-    private async Task<UserLoginContext?> AuthenticateAsync(GuacamoleApiClient client, Uri baseUri, string username, string password, System.Threading.CancellationToken ct)
-    {
-        return await client.AuthenticateAsync(baseUri, username, password, ct).ConfigureAwait(false);
-    }
-
-    private async Task<UserLoginContext?> AuthenticateAndLookupExtendedDataAsync(GuacamoleApiClient client, Uri baseUri, string username, string password, System.Threading.CancellationToken ct)
-    {
-        return await client.AuthenticateAndLookupExtendedDataAsync(baseUri, username, password, ct).ConfigureAwait(false);
     }
 }

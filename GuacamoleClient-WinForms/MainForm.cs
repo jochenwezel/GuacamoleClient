@@ -1,5 +1,7 @@
 ﻿using GuacamoleClient.Common;
 using GuacamoleClient.Common.Localization;
+using GuacamoleClient.RestClient;
+using Microsoft.VisualBasic.ApplicationServices;
 using Microsoft.Web.WebView2.Core;
 using System;
 using System.Collections.Generic;
@@ -7,6 +9,8 @@ using System.ComponentModel;
 using System.Diagnostics;
 using System.Drawing;
 using System.IO;
+using System.Security.Policy;
+using System.Text.Json;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
@@ -179,13 +183,14 @@ namespace GuacamoleClient.WinForms
         /// <summary>
         /// The URL for the connections configuation page of guacamole
         /// </summary>
-        /// <remarks>This URL might be available for guacamole admin users only and if guacamole uses mysql provider for connections management.</remarks>
-        public Uri GuacamoleConnectionConfigurationsUrl
+        /// <remarks>This URL might be available for guacamole admin users only.</remarks>
+        public async Task<Uri?> GetGuacamoleConnectionsConfigurationUrlAsync()
         {
-            get
-            {
-                return new Uri(this.HomeUrl, "#/settings/mysql/connections");
-            }
+            var ctx = await this.GetLoginContextAsync().ConfigureAwait(false);
+            var result = ctx?.ConnectionsConfigUri;
+            if (string.IsNullOrEmpty(result))
+                return null;
+            return new Uri(result.ToString());
         }
 
         private void MainForm_ResizeEnd(object? sender, EventArgs e)
@@ -257,7 +262,8 @@ namespace GuacamoleClient.WinForms
             }
 
             //Check for login form and show menu items accordingly
-            if (GuacamoleUrlAndContentChecks.ContentIsGuacamoleLoginForm(currentHtml))
+            if (GuacamoleUrlAndContentChecks.ContentIsGuacamoleLoginForm(currentHtml)) // could also be solved by checking var ctx = await this.GetLoginContextAsync().ConfigureAwait(false);
+
             {
                 UITools.SwitchToolStripVisibility(guacamoleUserSettingsToolStripMenuItem, false, false);
                 UITools.SwitchToolStripVisibility(guacamoleConnectionConfigurationsToolStripMenuItem, false, false);
@@ -265,8 +271,9 @@ namespace GuacamoleClient.WinForms
             }
             else
             {
+                var ctx = await this.GetLoginContextAsync().ConfigureAwait(true);
                 UITools.SwitchToolStripVisibility(guacamoleUserSettingsToolStripMenuItem, true, false);
-                UITools.SwitchToolStripVisibility(guacamoleConnectionConfigurationsToolStripMenuItem, true, false);
+                UITools.SwitchToolStripVisibility(guacamoleConnectionConfigurationsToolStripMenuItem, !string.IsNullOrEmpty(ctx?.ConnectionsConfigUri), false);
                 UITools.SwitchToolStripVisibility(newWindowToolStripMenuItem, true, false);
             }
             UITools.SwitchSeparatorLinesVisibility(fileToolStripMenuItem.DropDownItems);
@@ -403,8 +410,71 @@ namespace GuacamoleClient.WinForms
             _webview2_core.Settings.AreDefaultContextMenusEnabled = true;
             _webview2_core.Settings.AreDevToolsEnabled = false;
 
+            InitializeLoginRequestCapture();
+
             _webview2_core.Navigate(StartUrl.ToString());
             SetFocusToWebview2Control();
+        }
+
+        /// <summary>
+        /// Captured details from the last successful login/token request (if observed)
+        /// </summary>
+        private GuacamoleClient.RestClient.UserLoginContextWithPrimaryConnectionDataSource? _lastUserLoginContext;
+
+        /// <summary>
+        /// Guard to avoid duplicate event handler registration
+        /// </summary>
+        private int _loginCaptureInitialized = 0;
+
+        /// <summary>
+        /// Capture login/token response JSON to extract auth token + additional metadata (e.g. availableDataSources)
+        /// </summary>
+        private void InitializeLoginRequestCapture()
+        {
+            if (_webview2_core == null) return;
+            if (System.Threading.Interlocked.Exchange(ref _loginCaptureInitialized, 1) != 0) return;
+
+            try
+            {
+                // Guacamole token endpoints vary by version / deployment
+                // - /api/tokens
+                // - /api/session/tokens
+                // We capture both.
+                var origin = this.HomeUrl.GetLeftPart(UriPartial.Authority);
+                _webview2_core.AddWebResourceRequestedFilter($"{origin}/api/tokens*", CoreWebView2WebResourceContext.All);
+                _webview2_core.AddWebResourceRequestedFilter($"{origin}/api/session/tokens*", CoreWebView2WebResourceContext.All);
+
+                _webview2_core.WebResourceResponseReceived += WebView2_WebResourceResponseReceived;
+            }
+            catch
+            {
+                // ignore (SDK differences / failing filters should not break app)
+            }
+        }
+
+        private async void WebView2_WebResourceResponseReceived(object? sender, CoreWebView2WebResourceResponseReceivedEventArgs e)
+        {
+            try
+            {
+                // only POST requests to known token endpoints
+                if (!string.Equals(e.Request.Method, "POST", StringComparison.OrdinalIgnoreCase)) return;
+                if (!Uri.TryCreate(e.Request.Uri, UriKind.Absolute, out var uri)) return;
+                if (!string.Equals(uri.Host, this.HomeUrl.Host, StringComparison.OrdinalIgnoreCase)) return;
+
+                var path = uri.AbsolutePath;
+                if (!path.EndsWith("/api/tokens", StringComparison.OrdinalIgnoreCase)
+                    && !path.EndsWith("/api/session/tokens", StringComparison.OrdinalIgnoreCase))
+                    return;
+
+                var resp = e.Response;
+                if (resp == null) return;
+
+                _lastUserLoginContext = null; // reset previous context on new login attempt
+            }
+            catch
+            {
+                // ignore
+            }
         }
 
         /// <summary>
@@ -557,9 +627,13 @@ namespace GuacamoleClient.WinForms
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void guacamoleConnectionConfigurationsToolStripMenuItem_Click(object sender, EventArgs e)
+        private async void guacamoleConnectionConfigurationsToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            var form = new MainForm(_settings, this.ServerProfile, new Uri(this.GuacamoleConnectionConfigurationsUrl.ToString()));
+            var urlTask = GetGuacamoleConnectionsConfigurationUrlAsync();
+            Uri? url = await urlTask;
+            if (url == null)
+                return;
+            var form = new MainForm(_settings, this.ServerProfile, new Uri(url.ToString()));
             form.Show();
         }
 
@@ -678,12 +752,34 @@ namespace GuacamoleClient.WinForms
         /// <param name="e"></param>
         private async void testToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            var token = await GetGuacamoleAuthTokenAsync();
-
-            // Dump aller Keys + GUAC_AUTH anzeigen
-            MessageBox.Show($"Guacamole Auth Token:\n{token}", "Test", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            var loginContext = await GetLoginContextAsync();
+            if (loginContext == null)
+            {
+                MessageBox.Show($"No Guacamole Auth Token/Login context", "Test", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
+            else
+            {
+                MessageBox.Show($"Guacamole Auth Token/Login context:\n\n{loginContext.ToString()}", "Test", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
         }
 
+        #endregion
+
+        public async Task<GuacamoleClient.RestClient.UserLoginContextWithPrimaryConnectionDataSource?> GetLoginContextAsync()
+        {
+            string? token = await GetGuacamoleAuthTokenAsync().ConfigureAwait(false);
+            if (token == null)
+                return null;
+            var lastLoginContext = _lastUserLoginContext;
+            if (lastLoginContext == null || lastLoginContext.AuthToken != token)
+            {
+                var client = new GuacamoleApiClient(ignoreCertificateErrors: this.ServerProfile.IgnoreCertificateErrors, new TimeSpan(0, 0, 15));
+                Uri baseUri = GuacamoleApiClient.NormalizeBaseUri(this.ServerProfile.Url);
+                lastLoginContext = await client.AuthenticateAndLookupExtendedDataAsync(baseUri, token);
+                _lastUserLoginContext = lastLoginContext;
+            }
+            return lastLoginContext;
+        }
         /// <summary>
         /// Capture the auth token of guacamole session to analyse how to check of is-logged-on-state
         /// </summary>
@@ -713,8 +809,39 @@ namespace GuacamoleClient.WinForms
             return token;
         }
 
+        //var localStorage = await GetLocalStorageAsync();
+        //localStorage.TryGetValue("GUAC_AUTH_TOKEN", out var authToken);
+        /// <summary>
+        /// Reads all localStorage key/value pairs from the WebView2 context.
+        /// </summary>
+        public async Task<IReadOnlyDictionary<string, string?>> GetLocalStorageAsync()
+        {
+            if (_webview2_core == null)
+                throw new InvalidOperationException("WebView2 Core not initialized.");
 
-        #endregion
+            var jsResult = await _webview2_core.ExecuteScriptAsync(@"
+                (() => {
+                    const result = {};
+                    for (let i = 0; i < localStorage.length; i++) {
+                        const key = localStorage.key(i);
+                        result[key] = localStorage.getItem(key);
+                    }
+                    return JSON.stringify(result);
+                })()
+            ").ConfigureAwait(false);
 
+            // WebView2 liefert immer einen JSON-string-escaped string zurück
+            var unescapedJson = System.Text.Json.JsonSerializer.Deserialize<string>(jsResult)
+                                ?? "{}";
+
+            var dict = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, string?>>(
+                unescapedJson,
+                new System.Text.Json.JsonSerializerOptions
+                {
+                    PropertyNameCaseInsensitive = false
+                });
+
+            return dict ?? new Dictionary<string, string?>();
+        }
     }
 }

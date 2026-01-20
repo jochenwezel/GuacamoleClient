@@ -191,6 +191,8 @@ public class UserLoginContextWithPrimaryConnectionDataSource : UserLoginContext
     /// The primary data source which contains the registered connections for the user.
     /// </summary>
     public string? PrimaryConnectionsDataSource { get; set; }
+    public string? ConnectionsConfigUri { get; set; }
+
     public override string ToString()
     {
         return base.ToString() + ", PrimaryConnectionDataSource: " + PrimaryConnectionsDataSource;

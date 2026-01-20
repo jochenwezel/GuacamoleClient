@@ -1,5 +1,7 @@
 using System;
+using System.Data.Common;
 using System.Net;
+using System.Reflection.Metadata;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
@@ -74,6 +76,12 @@ public sealed class GuacamoleApiClient
         return AuthenticateAndLookupExtendedDataAsync(baseUri, authResultTask, ct);
     }
 
+    public Task<UserLoginContextWithPrimaryConnectionDataSource?> AuthenticateAndLookupExtendedDataAsync(Uri baseUri, string token, CancellationToken ct = default)
+    {
+        Task<UserLoginContext?> authResultTask = AuthenticateAsync(baseUri, token, ct);
+        return AuthenticateAndLookupExtendedDataAsync(baseUri, authResultTask, ct);
+    }
+
     private async Task<UserLoginContextWithPrimaryConnectionDataSource?> AuthenticateAndLookupExtendedDataAsync(Uri baseUri, Task<UserLoginContext?> authResultTask, CancellationToken ct = default)
     {
         UserLoginContext? result = await authResultTask;
@@ -82,13 +90,28 @@ public sealed class GuacamoleApiClient
         string? primaryDs = null;
         if ((result.AvailableDataSources != null) && (result.AvailableDataSources.Length > 0))
             primaryDs = await LookupPrimaryConnectionsDataSourceAsync(baseUri, result.AuthToken!, result.AvailableDataSources, ct);
+        string? connSettingsUrl = null;
+        if (primaryDs != null)
+        {
+            Uri uri = new Uri(baseUri, $"#/settings/{Uri.EscapeDataString(primaryDs)}/connections");
+            using var req = new HttpRequestMessage(HttpMethod.Get, uri);
+            req.Headers.TryAddWithoutValidation("Guacamole-Token", result.AuthToken);
+
+            using var resp = await _http.SendAsync(req, ct).ConfigureAwait(false);
+
+            if (resp.StatusCode == HttpStatusCode.OK)
+                connSettingsUrl = uri.ToString();
+            if (resp.StatusCode is HttpStatusCode.Forbidden or HttpStatusCode.Unauthorized or HttpStatusCode.NotFound)
+                connSettingsUrl = null;
+        }
         return new UserLoginContextWithPrimaryConnectionDataSource
         {
             AuthToken = result.AuthToken,
             UserName = result.UserName,
             DataSource = result.DataSource,
             AvailableDataSources = result.AvailableDataSources,
-            PrimaryConnectionsDataSource = primaryDs ?? ""
+            PrimaryConnectionsDataSource = primaryDs ?? "",
+            ConnectionsConfigUri = connSettingsUrl
         };
     }
 
@@ -114,13 +137,28 @@ public sealed class GuacamoleApiClient
     /// </summary>
     public Task<UserLoginContext?> AuthenticateAsync(Uri baseUri, UserLoginContext token, CancellationToken ct = default)
     {
-        if(token == null)
+        if (token == null)
             throw new ArgumentNullException(nameof(token));
         var content = new FormUrlEncodedContent(new Dictionary<string, string>
         {
             ["token"] = token.AuthToken!,
         });
-        return AuthenticateAsync(baseUri, content, $"token {token.AuthToken}", ct); 
+        return AuthenticateAsync(baseUri, content, $"token {token.AuthToken}", ct);
+    }
+
+
+    /// <summary>
+    /// Authenticate and return authToken, or null if credentials are rejected.
+    /// </summary>
+    public Task<UserLoginContext?> AuthenticateAsync(Uri baseUri, string token, CancellationToken ct = default)
+    {
+        if (string.IsNullOrWhiteSpace(token))
+            throw new ArgumentNullException(nameof(token));
+        var content = new FormUrlEncodedContent(new Dictionary<string, string>
+        {
+            ["token"] = token,
+        });
+        return AuthenticateAsync(baseUri, content, $"token {token}", ct);
     }
 
     /// <summary>
@@ -380,7 +418,7 @@ public sealed class GuacamoleApiClient
     private async Task<bool> CanListConnectionsAsync(Uri baseUri, string token, string dataSource, CancellationToken ct)
     {
         // The web UI commonly calls this endpoint.
-        var uri = new Uri(baseUri, $"api/session/data/{Uri.EscapeDataString(dataSource)}/connections?token={Uri.EscapeDataString(token)}");
+        var uri = new Uri(baseUri, $"api/session/data/{Uri.EscapeDataString(dataSource)}/connections");
 
         using var req = new HttpRequestMessage(HttpMethod.Get, uri);
 
