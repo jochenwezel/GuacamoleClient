@@ -1,7 +1,7 @@
 using NUnit.Framework;
 using GuacamoleClient.RestClient;
 
-namespace Guacamole.Client.Tests;
+namespace GuacamoleClient.Tests;
 
 /// <summary>
 /// Tests for <see cref="GuacamoleApiClient"/>.
@@ -182,7 +182,7 @@ public class RestApiClientTests
     }
 
 
-    [TestCase("https://services10.mgmt.compumaster.de/guacamole/#/settings/postgresql/connections", "demo", "demo", true, true)]
+    [TestCase("https://services10.mgmt.compumaster.de/guacamole/#/settings/", "demo", "demo", true, true)]
     public async Task AuthRefresh(string url, string user, string pass, bool expectNonEmpty, bool ignoreCertificateErrors)
     {
         var client = new GuacamoleApiClient(ignoreCertificateErrors: ignoreCertificateErrors, DefaultTimeout);
@@ -200,8 +200,32 @@ public class RestApiClientTests
         }
     }
 
+    [TestCase("https://services10.mgmt.compumaster.de/guacamole/#/settings/", "demo", "demo", "postgresql", true, true)]
+    public async Task AuthRefreshAndLookupExtendedDataAsync(string url, string user, string pass, string primaryConnectionsDataSource, bool expectNonEmpty, bool ignoreCertificateErrors)
+    {
+        var client = new GuacamoleApiClient(ignoreCertificateErrors: ignoreCertificateErrors, DefaultTimeout);
+        Uri baseUri = GuacamoleApiClient.NormalizeBaseUri(url);
+        var AuthToken = await AuthenticateAndLookupExtendedDataAsync(client, baseUri, user, pass, System.Threading.CancellationToken.None);
+        var result = await client.AuthenticateAndLookupExtendedDataAsync(baseUri, AuthToken!);
+
+        if (result == null)
+        {
+            Assert.Fail("Failure: null result - login failed?");
+        }
+        else
+        {
+            System.Console.WriteLine(result.ToString());
+            Assert.That(result.PrimaryConnectionsDataSource, Is.EqualTo(primaryConnectionsDataSource));
+        }
+    }
+
     private async Task<UserLoginContext?> AuthenticateAsync(GuacamoleApiClient client, Uri baseUri, string username, string password, System.Threading.CancellationToken ct)
     {
         return await client.AuthenticateAsync(baseUri, username, password, ct).ConfigureAwait(false);
+    }
+
+    private async Task<UserLoginContext?> AuthenticateAndLookupExtendedDataAsync(GuacamoleApiClient client, Uri baseUri, string username, string password, System.Threading.CancellationToken ct)
+    {
+        return await client.AuthenticateAndLookupExtendedDataAsync(baseUri, username, password, ct).ConfigureAwait(false);
     }
 }

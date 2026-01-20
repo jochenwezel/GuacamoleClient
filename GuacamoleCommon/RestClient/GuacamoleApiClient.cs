@@ -62,6 +62,36 @@ public sealed class GuacamoleApiClient
         return builder.Uri;
     }
 
+    public Task<UserLoginContextWithPrimaryConnectionDataSource?> AuthenticateAndLookupExtendedDataAsync(Uri baseUri, string username, string password, CancellationToken ct = default)
+    {
+        Task<UserLoginContext?> authResultTask = AuthenticateAsync(baseUri, username, password, ct);
+        return AuthenticateAndLookupExtendedDataAsync(baseUri, authResultTask, ct);
+    }
+
+    public Task<UserLoginContextWithPrimaryConnectionDataSource?> AuthenticateAndLookupExtendedDataAsync(Uri baseUri, UserLoginContext token, CancellationToken ct = default)
+    {
+        Task<UserLoginContext?> authResultTask = AuthenticateAsync(baseUri, token, ct);
+        return AuthenticateAndLookupExtendedDataAsync(baseUri, authResultTask, ct);
+    }
+
+    private async Task<UserLoginContextWithPrimaryConnectionDataSource?> AuthenticateAndLookupExtendedDataAsync(Uri baseUri, Task<UserLoginContext?> authResultTask, CancellationToken ct = default)
+    {
+        UserLoginContext? result = await authResultTask;
+        if (result == null)
+            return null;
+        string? primaryDs = null;
+        if ((result.AvailableDataSources != null) && (result.AvailableDataSources.Length > 0))
+            primaryDs = await LookupPrimaryConnectionsDataSourceAsync(baseUri, result.AuthToken!, result.AvailableDataSources, ct);
+        return new UserLoginContextWithPrimaryConnectionDataSource
+        {
+            AuthToken = result.AuthToken,
+            UserName = result.UserName,
+            DataSource = result.DataSource,
+            AvailableDataSources = result.AvailableDataSources,
+            PrimaryConnectionsDataSource = primaryDs ?? ""
+        };
+    }
+
     /// <summary>
     /// Authenticate and return authToken, or null if credentials are rejected.
     /// </summary>
@@ -310,7 +340,7 @@ public sealed class GuacamoleApiClient
         IEnumerable<string>? dataSourceCandidates = null,
         CancellationToken ct = default)
     {
-        if (NormalizeBaseUri==null)
+        if (baseUri==null)
             throw new ArgumentNullException(nameof(baseUri));
         if (string.IsNullOrWhiteSpace(authToken))
             throw new ArgumentNullException(nameof(authToken));
