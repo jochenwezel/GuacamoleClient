@@ -41,3 +41,9 @@ However, please note that this version is still experimental, feature-incomplete
 
 If you need a Guacamole Server for testing purposes, you can easily set up a test environment using Docker Compose.
 For a quick guide, please refer to the documentation: [SetupTestGuacamoleServer.md](./docs/SetupTestGuacamoleServer.md)
+
+## FAQ, known issues, typical trouble shooting
+
+* issue: on window resize, remote screen resolution doesn't refresh dynamically at some RDP host connections
+  * please note: this issue belongs to guacamole server and it's defaults when connecting to a RDP target machine
+  * solution: edit connection settings in guacamole (as guacadmin or authorized user), go to section "Screen" and update property "Resize method" to "display-update". Then re-connect to the host.
