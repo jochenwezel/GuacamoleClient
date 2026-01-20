@@ -1,5 +1,6 @@
-using NUnit.Framework;
 using GuacamoleClient.RestClient;
+using NUnit.Framework;
+using static System.Net.WebRequestMethods;
 
 namespace GuacamoleClient.Tests;
 
@@ -7,14 +8,17 @@ namespace GuacamoleClient.Tests;
 /// Tests for <see cref="GuacamoleApiClient"/>.
 /// </summary>
 [TestFixture]
+[Explicit("These tests require access to the names Guacamole server instance at " + GUACAMOLE_TEST_ENVIRONMENT_BASE_URL + ", see SetupTestGuacamoleServer.md for instruction for docker stack")]
 public class RestApiClientTests
 {
+    public const string GUACAMOLE_TEST_ENVIRONMENT_BASE_URL = "https://services10.mgmt.compumaster.de/guacamole/";
+
     private static readonly TimeSpan DefaultTimeout = TimeSpan.FromSeconds(25);
 
     [Obsolete("This test uses the obsolete DetermineConnectionsManagementUrlAsync method.")]
-    [TestCase("https://services10.mgmt.compumaster.de/guacamole/#/settings/postgresql/connections", "guacadmin", "guacadmin", true, true)]
-    [TestCase("https://services10.mgmt.compumaster.de/guacamole/#/settings/postgresql/connections", "admin", "admin", true, true)]
-    [TestCase("https://services10.mgmt.compumaster.de/guacamole/#/settings/postgresql/connections", "demo", "demo", true, true)]
+    [TestCase(GUACAMOLE_TEST_ENVIRONMENT_BASE_URL + "#/settings/postgresql/connections", "guacadmin", "guacadmin", true, true)]
+    [TestCase(GUACAMOLE_TEST_ENVIRONMENT_BASE_URL + "#/settings/postgresql/connections", "admin", "admin", true, true)]
+    [TestCase(GUACAMOLE_TEST_ENVIRONMENT_BASE_URL + "#/settings/postgresql/connections", "demo", "demo", true, true)]
     public async Task DetermineConnectionsUrl(string url, string user, string pass, bool expectNonEmpty, bool ignoreCertificateErrors)
     {
         var client = new GuacamoleApiClient(ignoreCertificateErrors: ignoreCertificateErrors, DefaultTimeout);
@@ -46,9 +50,9 @@ public class RestApiClientTests
         }
     }
 
-    [TestCase("https://services10.mgmt.compumaster.de/guacamole/#/settings/postgresql/connections", "guacadmin", "guacadmin", null, true, true)]
-    [TestCase("https://services10.mgmt.compumaster.de/guacamole/#/settings/postgresql/connections", "demo", "demo", null, true, true, 1)]
-    [TestCase("https://services10.mgmt.compumaster.de/guacamole/#/settings/postgresql/connections", "invalid", "invalid", typeof(System.Security.Authentication.InvalidCredentialException), false, true, 1)]
+    [TestCase(GUACAMOLE_TEST_ENVIRONMENT_BASE_URL + "#/settings/postgresql/connections", "guacadmin", "guacadmin", null, true, true)]
+    [TestCase(GUACAMOLE_TEST_ENVIRONMENT_BASE_URL + "#/settings/postgresql/connections", "demo", "demo", null, true, true, 1)]
+    [TestCase(GUACAMOLE_TEST_ENVIRONMENT_BASE_URL + "#/settings/postgresql/connections", "invalid", "invalid", typeof(System.Security.Authentication.InvalidCredentialException), false, true, 1)]
     public async Task GuacamoleLoginToken(string url, string user, string pass, Type expectedExceptionType, bool expectNonEmpty, bool ignoreCertificateErrors, int loopCount = 1)
     {
         var client = new GuacamoleApiClient(ignoreCertificateErrors: ignoreCertificateErrors, DefaultTimeout);
@@ -106,9 +110,9 @@ public class RestApiClientTests
         }
     }
 
-    [TestCase("https://services10.mgmt.compumaster.de/guacamole/#/settings/postgresql/connections", "guacadmin", "guacadmin", null, true)]
-    [TestCase("https://services10.mgmt.compumaster.de/guacamole/#/settings/postgresql/connections", "admin", "admin", null, true)]
-    [TestCase("https://services10.mgmt.compumaster.de/guacamole/#/settings/postgresql/connections", "demo", "demo", null, true)]
+    [TestCase(GUACAMOLE_TEST_ENVIRONMENT_BASE_URL + "#/settings/postgresql/connections", "guacadmin", "guacadmin", null, true)]
+    [TestCase(GUACAMOLE_TEST_ENVIRONMENT_BASE_URL + "#/settings/postgresql/connections", "admin", "admin", null, true)]
+    [TestCase(GUACAMOLE_TEST_ENVIRONMENT_BASE_URL + "#/settings/postgresql/connections", "demo", "demo", null, true)]
     public async Task ConnectionGroups(string url, string user, string pass, bool? expectNonEmpty, bool ignoreCertificateErrors)
     {
         var client = new GuacamoleApiClient(ignoreCertificateErrors: ignoreCertificateErrors, DefaultTimeout);
@@ -151,9 +155,9 @@ public class RestApiClientTests
     }
 
 
-    [TestCase("https://services10.mgmt.compumaster.de/guacamole/#/settings/postgresql/connections", "guacadmin", "guacadmin", true, true)]
-    [TestCase("https://services10.mgmt.compumaster.de/guacamole/#/settings/postgresql/connections", "admin", "admin", true, true)]
-    [TestCase("https://services10.mgmt.compumaster.de/guacamole/#/settings/postgresql/connections", "demo", "demo", true, true)]
+    [TestCase(GUACAMOLE_TEST_ENVIRONMENT_BASE_URL + "#/settings/postgresql/connections", "guacadmin", "guacadmin", true, true)]
+    [TestCase(GUACAMOLE_TEST_ENVIRONMENT_BASE_URL + "#/settings/postgresql/connections", "admin", "admin", true, true)]
+    [TestCase(GUACAMOLE_TEST_ENVIRONMENT_BASE_URL + "#/settings/postgresql/connections", "demo", "demo", true, true)]
     public async Task Connections(string url, string user, string pass, bool expectNonEmpty, bool ignoreCertificateErrors)
     {
         var client = new GuacamoleApiClient(ignoreCertificateErrors: ignoreCertificateErrors, DefaultTimeout);
@@ -182,7 +186,7 @@ public class RestApiClientTests
     }
 
 
-    [TestCase("https://services10.mgmt.compumaster.de/guacamole/#/settings/", "demo", "demo", true, true)]
+    [TestCase(GUACAMOLE_TEST_ENVIRONMENT_BASE_URL + "#/settings/", "demo", "demo", true, true)]
     public async Task AuthRefresh(string url, string user, string pass, bool expectNonEmpty, bool ignoreCertificateErrors)
     {
         var client = new GuacamoleApiClient(ignoreCertificateErrors: ignoreCertificateErrors, DefaultTimeout);
@@ -200,7 +204,7 @@ public class RestApiClientTests
         }
     }
 
-    [TestCase("https://services10.mgmt.compumaster.de/guacamole/#/settings/", "demo", "demo", "postgresql", true, true)]
+    [TestCase(GUACAMOLE_TEST_ENVIRONMENT_BASE_URL + "#/settings/", "demo", "demo", "postgresql", true, true)]
     public async Task AuthRefreshAndLookupExtendedDataAsync(string url, string user, string pass, string primaryConnectionsDataSource, bool expectNonEmpty, bool ignoreCertificateErrors)
     {
         var client = new GuacamoleApiClient(ignoreCertificateErrors: ignoreCertificateErrors, DefaultTimeout);
