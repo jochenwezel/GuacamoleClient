@@ -19,7 +19,7 @@ namespace GuacamoleClient.WinForms
 {
     public partial class MainForm : Form
     {
-        private const bool TEST_MENU_ENABLED = true;
+        private const bool TEST_MENU_ENABLED = false;
         private const bool TEST_CONTROL_FOCUS_INFO_IN_FORM_TITLE = false; // effective only when enabled and with Debugger attached
 
 
