@@ -1,6 +1,7 @@
 ﻿using GuacamoleClient.Common;
 using GuacamoleClient.Common.Localization;
 using GuacamoleClient.RestClient;
+using InfoBox;
 using Microsoft.VisualBasic.ApplicationServices;
 using Microsoft.Web.WebView2.Core;
 using System;
@@ -18,7 +19,7 @@ namespace GuacamoleClient.WinForms
 {
     public partial class MainForm : Form
     {
-        private const bool TEST_MENU_ENABLED = false;
+        private const bool TEST_MENU_ENABLED = true;
         private const bool TEST_CONTROL_FOCUS_INFO_IN_FORM_TITLE = false; // effective only when enabled and with Debugger attached
 
 
@@ -252,7 +253,7 @@ namespace GuacamoleClient.WinForms
                 else if (SwitchMenuItemsBasedOnShownContent_Ex == null)
                 {
                     SwitchMenuItemsBasedOnShownContent_Ex = ex;
-                    MessageBox.Show(this, $"Unexpected exception:\n{ex.ToString()}", "Unexpected error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    ShowMessageBoxNonModal($"Unexpected exception:\n{ex.ToString()}", "Unexpected error", InformationBoxButtons.OK, InformationBoxIcon.Error);
                 }
                 else
                 {
@@ -687,6 +688,8 @@ namespace GuacamoleClient.WinForms
         /// <param name="e"></param>
         private void formTitleRefreshTimer_Tick(object sender, EventArgs e)
         {
+            if (_disableAllTimers)
+                return;
             const int postNavMinInterval = 250;
             const int maxInterval = 500;
             if (this.formTitleRefreshTimer.Interval < postNavMinInterval)
@@ -709,13 +712,18 @@ namespace GuacamoleClient.WinForms
                 if (formTitleRefreshTimer_Tick_Ex == null)
                 {
                     formTitleRefreshTimer_Tick_Ex = ex;
-                    MessageBox.Show(this, $"Unexpected exception:\n{ex.ToString()}", "Unexpected error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    ShowMessageBoxNonModal($"Unexpected exception:\n{ex.ToString()}", "Unexpected error", InformationBoxButtons.OK, InformationBoxIcon.Error);
                 }
                 else // => formTitleRefreshTimer_Tick_Ex != null
                 {
                     //ignore repeated exceptions
                 }
             }
+        }
+
+        public InformationBoxResult ShowMessageBoxNonModal(string text, string caption, InformationBoxButtons buttons, InformationBoxIcon icon)
+        {
+            return InformationBox.Show(text, title: caption, buttons: buttons, icon: icon, behavior: InformationBoxBehavior.Modeless, initialization: InformationBoxInitialization.FromScopeAndParameters, titleIcon: new InfoBox.InformationBoxTitleIcon(this.Icon), titleStyle: InformationBoxTitleIconStyle.Custom);
         }
 
         /// <summary>
@@ -755,11 +763,11 @@ namespace GuacamoleClient.WinForms
             var loginContext = await GetLoginContextAsync();
             if (loginContext == null)
             {
-                MessageBox.Show($"No Guacamole Auth Token/Login context", "Test", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                ShowMessageBoxNonModal($"No Guacamole Auth Token/Login context", "Test", InformationBoxButtons.OK, InformationBoxIcon.Information);
             }
             else
             {
-                MessageBox.Show($"Guacamole Auth Token/Login context:\n\n{loginContext.ToString()}", "Test", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                ShowMessageBoxNonModal($"Guacamole Auth Token/Login context:\n\n{loginContext.ToString()}", "Test", InformationBoxButtons.OK, InformationBoxIcon.Information);
             }
         }
 
@@ -775,7 +783,14 @@ namespace GuacamoleClient.WinForms
             {
                 var client = new GuacamoleApiClient(ignoreCertificateErrors: this.ServerProfile.IgnoreCertificateErrors, new TimeSpan(0, 0, 15));
                 Uri baseUri = GuacamoleApiClient.NormalizeBaseUri(this.ServerProfile.Url);
-                lastLoginContext = await client.AuthenticateAndLookupExtendedDataAsync(baseUri, token);
+                try
+                {
+                    lastLoginContext = await client.AuthenticateAndLookupExtendedDataAsync(baseUri, token);
+                }
+                catch
+                {
+                    lastLoginContext = null;
+                }
                 _lastUserLoginContext = lastLoginContext;
             }
             return lastLoginContext;
