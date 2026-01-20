@@ -39,7 +39,14 @@ namespace GuacamoleClient.WinForms
             Uri homeUri = new Uri(defaultProfile.Url);
 
             var app = new MyApplication(() => new MainForm(settings, defaultProfile, homeUri));
-            app.Run(Environment.GetCommandLineArgs());
+            try
+            {
+                app.Run(Environment.GetCommandLineArgs());
+            }
+            catch (Exception ex)
+            { 
+                MessageBox.Show("An unexpected error occurred and the application must close:" + System.Environment.NewLine + ex.ToString(), "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
         }
     }
 
