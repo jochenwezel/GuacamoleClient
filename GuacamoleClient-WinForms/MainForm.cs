@@ -688,8 +688,6 @@ namespace GuacamoleClient.WinForms
         /// <param name="e"></param>
         private void formTitleRefreshTimer_Tick(object sender, EventArgs e)
         {
-            if (_disableAllTimers)
-                return;
             const int postNavMinInterval = 250;
             const int maxInterval = 500;
             if (this.formTitleRefreshTimer.Interval < postNavMinInterval)
