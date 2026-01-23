@@ -22,7 +22,7 @@ services:
 
   # --- Generate DB schema + seed into a shared volume ---
   dbfiles:
-    image: guacamole/guacamole:1.6.0
+    image: guacamole/guacamole:latest
     user: "0:0"
     networks:
       - guacdemo-internal
@@ -207,7 +207,7 @@ services:
 
   # --- guacd ---
   guacd:
-    image: guacamole/guacd:1.6.0
+    image: guacamole/guacd:latest
     networks:
       - guacdemo-internal
     restart: "no"
@@ -216,7 +216,7 @@ services:
 
   # --- Guacamole Webapp ---
   guacamole:
-    image: guacamole/guacamole:1.6.0
+    image: guacamole/guacamole:latest
     depends_on:
       - postgres
       - guacd
