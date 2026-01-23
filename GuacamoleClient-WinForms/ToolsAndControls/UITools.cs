@@ -1,6 +1,8 @@
 using GuacamoleClient.Common.Settings;
 using System;
+using System.Diagnostics;
 using System.Drawing;
+using System.Security.Policy;
 using System.Windows.Forms;
 
 namespace GuacamoleClient.WinForms
@@ -208,5 +210,18 @@ namespace GuacamoleClient.WinForms
             }
         }
 
+        /// <summary>
+        /// Open a URL in the default system browser
+        /// </summary>
+        /// <param name="url"></param>
+        public static void OpenUrlInDefaultBrowser(string url)
+        {
+            ProcessStartInfo psi = new ProcessStartInfo()
+            {
+                FileName = url,
+                UseShellExecute = true
+            };
+            Process.Start(psi);
+        }
     }
 }

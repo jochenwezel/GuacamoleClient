@@ -5,6 +5,9 @@
 Make sure you have Docker and Docker Compose installed on your system.
 You also need a Traefik instance with a network named `traefik-test` for reverse proxying. Adjust the Traefik labels in the `docker-compose.yml` file if your setup differs.
 
+## Access Guacamole
+After setup of Guacamole and Traefik, you can access the Guacamole web interface by navigating to: `https://my.docker.host/guacamole/`
+
 ## Please note
 This setup is intended for testing and demonstration purposes only.
 It is not recommended for production use due to security and performance considerations.
@@ -317,7 +320,3 @@ Run the following command to start the Guacamole test environment:
 docker-compose up -d
 ```
 This will start the PostgreSQL database, guacd, Guacamole web application, and two SSH sandbox servers.
-
-## Access Guacamole
-You can access the Guacamole web interface by navigating to:
-```

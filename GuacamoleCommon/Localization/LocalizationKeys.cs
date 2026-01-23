@@ -84,6 +84,7 @@ namespace GuacamoleClient.Common.Localization
         AddEdit_Warn_ColorAlreadyInUse_Text,
         AddEdit_TestFailed_Title,
         AddEdit_TestFailed_Text,
+        AddEdit_Link_SetupGuideGuacamoleTestServer,
 
         // Common buttons and labels
         /// <summary>

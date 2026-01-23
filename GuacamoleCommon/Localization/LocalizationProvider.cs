@@ -42,7 +42,7 @@ namespace GuacamoleClient.Common.Localization
         private static string LocalizedString(LocalizationKeys key, CultureInfo culture)
         {
             if (System.Diagnostics.Debugger.IsAttached)
-                LocalizedFallbackString(key); //just call it once to ensure all fallback values are implemented
+                LocalizedFallbackString(key); //just call it once to ensure all fallback values are implemented or that NotImplementedException is thrown
 
             // German localization
             if (string.Equals(culture.TwoLetterISOLanguageName, "de", StringComparison.OrdinalIgnoreCase))
@@ -170,6 +170,8 @@ namespace GuacamoleClient.Common.Localization
                         return "Server-Test fehlgeschlagen";
                     case LocalizationKeys.AddEdit_TestFailed_Text:
                         return "Die URL antwortet nicht mit einer Apache-Guacamole-Startseite (oder ist nicht erreichbar).\n\nBeispiel: {0}";
+                    case LocalizationKeys.AddEdit_Link_SetupGuideGuacamoleTestServer:
+                        return "Setup Leitfaden für Guacamole Test Server mit Docker";
 
                     // Suffixes
                     case LocalizationKeys.Common_Suffix_Default:
@@ -311,13 +313,18 @@ namespace GuacamoleClient.Common.Localization
                     return "Server test failed";
                 case LocalizationKeys.AddEdit_TestFailed_Text:
                     return "The URL does not respond with an Apache Guacamole start page (or is not reachable).\n\nExample: {0}";
+                case LocalizationKeys.AddEdit_Link_SetupGuideGuacamoleTestServer:
+                    return "Setup guide for Guacamole Test Server with Docker";
 
                 // Suffixes
                 case LocalizationKeys.Common_Suffix_Default:
                     return "(Default)";
                 default:
                     // Intentionally not throwing - keep UI resilient.
-                    return key.ToString();
+                    if (System.Diagnostics.Debugger.IsAttached)
+                        throw new NotImplementedException("Localization key not implemented: " + key.ToString());
+                    else
+                        return "{" + key.ToString() + "}";
             }
         }
     }

@@ -1,10 +1,12 @@
+using GuacamoleClient.Common;
+using GuacamoleClient.Common.Localization;
+using GuacamoleClient.Common.Settings;
 using System;
+using System.Diagnostics;
 using System.Drawing;
 using System.Linq;
+using System.Security.Policy;
 using System.Windows.Forms;
-using GuacamoleClient.Common;
-using GuacamoleClient.Common.Settings;
-using GuacamoleClient.Common.Localization;
 
 namespace GuacamoleClient.WinForms
 {
@@ -50,6 +52,7 @@ namespace GuacamoleClient.WinForms
             _lblName.Text = LocalizationProvider.Get(LocalizationKeys.AddEdit_Label_DisplayNameOptional);
             _lblColor.Text = LocalizationProvider.Get(LocalizationKeys.AddEdit_Label_ColorScheme);
             _lblCustomHex.Text = LocalizationProvider.Get(LocalizationKeys.AddEdit_Label_CustomColorHex);
+            linkLabelHelpGuacamoleTestServer.Text = LocalizationProvider.Get(LocalizationKeys.AddEdit_Link_SetupGuideGuacamoleTestServer);
 
             _chkIgnoreCert.Text = LocalizationProvider.Get(LocalizationKeys.AddEdit_Check_IgnoreCertificateErrorsUnsafe);
             _btnSave.Text = LocalizationProvider.Get(LocalizationKeys.AddEdit_Button_Save);
@@ -211,6 +214,11 @@ namespace GuacamoleClient.WinForms
             {
                 _btnSave.Enabled = true;
             }
+        }
+
+        private void linkLabelHelpGuacamoleTestServer_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
+        {
+            UITools.OpenUrlInDefaultBrowser("https://github.com/jochenwezel/GuacamoleClient/blob/main/docs/SetupTestGuacamoleServer.md");
         }
     }
 }
