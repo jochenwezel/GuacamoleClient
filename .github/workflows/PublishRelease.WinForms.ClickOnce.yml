@@ -1,10 +1,12 @@
-﻿name: PublishRelease - WinForms ClickOnce (staging)
+
+name: PublishRelease - WinForms ClickOnce
 
 # PLEASE NOTE: PUBLISHING/DEPLOYMENT
 #   * Release is to be created manually at GitHub releases management page
-#     * release name usually contains "1.2.3.4" (also supported: "v1.2.3.4")
+#     * release tag usually contains "1.2.3.4" (also supported: "v1.2.3.4")
 #   * After creating a GitHub release, following actions will automatically run:
-#     * Attaching of compiled binaries to GitHub release
+#     * Creating ClickOnce manifests
+#     * Publishing ClickOnce files to GitHub Pages (Auto-Update URL)
 
 on:
   release:
@@ -12,15 +14,28 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write # nötig fürs Anhängen von Assets an ein Release
+  #contents: write # needed for attaching assets to a release
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages-${{ github.ref }}
+  cancel-in-progress: true
 
 env:
   BUILD_CONFIGURATION: Release
-  CLICKONCE_OUTDIR: artifacts/clickonce/win-x64
+  CLICKONCE_OUTDIR: artifacts/clickonce/anycpu
+  CLICKONCE_APP_NAME: GuacamoleClient
 
 jobs:
   winforms-clickonce:
     runs-on: windows-latest
+
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      pages_subdir: ${{ steps.pages.outputs.pages_subdir }}
+      provider_url: ${{ steps.pages.outputs.provider_url }}
 
     steps:
       - name: Checkout
@@ -29,35 +44,72 @@ jobs:
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: 8.0.x
+          dotnet-version: 10.0.101
 
       - name: Resolve version
+        id: version
         shell: bash
         run: |
-          RAW_TAG="${{ github.event.release.tag_name || github.ref_name }}"
+          RAW_TAG="${{ github.event.release.tag_name }}"
           if [[ -z "$RAW_TAG" ]]; then
-            VER="0.0.0.1"
+            VER="0.0.0.${{ github.run_number }}"
           else
             VER="${RAW_TAG#v}"
           fi
           echo "VERSION=$VER" >> "$GITHUB_ENV"
+          echo "version=$VER" >> "$GITHUB_OUTPUT"
           echo "Resolved VERSION=$VER"
+
+      - name: Resolve GitHub Pages ProviderURL
+        id: pages
+        shell: bash
+        run: |
+          # Project Pages base URL for this repo:
+          # https://jochenwezel.github.io/GuacamoleClient/
+          if [[ "${{ github.event_name }}" == "release" ]]; then
+            PROVIDER_URL="https://jochenwezel.github.io/GuacamoleClient/clickonce/stable/${{ env.CLICKONCE_APP_NAME }}.application"
+            SUBDIR="clickonce/stable"
+          else
+            PROVIDER_URL="https://jochenwezel.github.io/GuacamoleClient/clickonce/dev/${{ env.CLICKONCE_APP_NAME }}.application"
+            SUBDIR="clickonce/dev"
+          fi
+
+          echo "CLICKONCE_PROVIDER_URL=$PROVIDER_URL" >> "$GITHUB_ENV"
+          echo "PAGES_SUBDIR=$SUBDIR" >> "$GITHUB_ENV"
+
+          echo "provider_url=$PROVIDER_URL" >> "$GITHUB_OUTPUT"
+          echo "pages_subdir=$SUBDIR" >> "$GITHUB_OUTPUT"
+
+          echo "Resolved CLICKONCE_PROVIDER_URL=$PROVIDER_URL"
+          echo "Resolved PAGES_SUBDIR=$SUBDIR"
 
       - name: Restore Tools
         run: dotnet tool restore
 
+      - name: Info Tools
+        run: |
+          dotnet tool list
+          dotnet tool list -g
+          dotnet --list-sdks
+          dotnet --list-runtimes
+
       - name: Restore
         run: dotnet restore GuacamoleClient-WinForms/GuacamoleClient-WinForms.csproj
 
-      - name: Publish app payload (input for ClickOnce packaging)
+      - name: Clean ClickOnce output directory
         shell: pwsh
         run: |
           $out = Join-Path $env:GITHUB_WORKSPACE "${{ env.CLICKONCE_OUTDIR }}"
+          if (Test-Path $out) { Remove-Item -Recurse -Force $out }
           New-Item -ItemType Directory -Force -Path $out | Out-Null
 
+      - name: Publish app payload (RID-less, framework-dependent)
+        shell: pwsh
+        run: |
+          $out = Join-Path $env:GITHUB_WORKSPACE "${{ env.CLICKONCE_OUTDIR }}"
+
           dotnet publish .\GuacamoleClient-WinForms\GuacamoleClient-WinForms.csproj `
-            -c ${{ env.BUILD_CONFIGURATION }} `
-            -r win-x64 `
+            -c $env:BUILD_CONFIGURATION `
             --self-contained false `
             -o $out `
             -p:Version=${{ env.VERSION }} `
@@ -65,29 +117,212 @@ jobs:
             -p:AssemblyVersion=${{ env.VERSION }} `
             -p:InformationalVersion=${{ env.VERSION }}
 
-      # NOTE: ClickOnce packaging via dotnet.mage comes in the next milestone (MS3).
-      # Here we only stage the published payload and upload it as artifact/release asset.
+      - name: Detect main EXE
+        shell: pwsh
+        run: |
+          $out = Join-Path $env:GITHUB_WORKSPACE "${{ env.CLICKONCE_OUTDIR }}"
 
-      - name: Upload artifact (ClickOnce staging payload)
-        uses: actions/upload-artifact@v4
-        with:
-          name: GuacamoleClient-WinForms_clickonce-staging_win-x64_${{ env.VERSION }}
-          path: ${{ env.CLICKONCE_OUTDIR }}/**
-          if-no-files-found: error
-          retention-days: 14
+          $exe = Get-ChildItem -Path $out -File -Filter *.exe |
+            Where-Object { $_.Name -notmatch '(?i)vshost|apphost|createdump|dotnet|host|test' } |
+            Sort-Object Length -Descending |
+            Select-Object -First 1
 
-      - name: Pack ClickOnce staging payload
+          if (-not $exe) { throw "No suitable .exe found in $out" }
+
+          "CLICKONCE_EXE_NAME=$($exe.Name)" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          Write-Host "Detected EXE: $($exe.Name)"
+
+      - name: Create ClickOnce application manifest (dotnet mage)
+        shell: pwsh
+        run: |
+          $out = Join-Path $env:GITHUB_WORKSPACE "${{ env.CLICKONCE_OUTDIR }}"
+          $exe = $env:CLICKONCE_EXE_NAME
+          $appManifest = Join-Path $out "$exe.manifest"
+
+          #dnx --y dotnetsay "Hello, World!" # example for tool usage without prior installation
+          dotnet mage -New Application `
+            -Name "${{ env.CLICKONCE_APP_NAME }}" `
+            -Version "${{ env.VERSION }}" `
+            -FromDirectory "$out" `
+            -ToFile "$appManifest" `
+            -Processor msil
+
+          if ($LASTEXITCODE -eq 0) 
+          { 
+            Write-Host "Application manifest creation process ran successfully: $appManifest" 
+          }
+          else {
+            Write-Host "Directory listing:"
+            Get-ChildItem -Path $out -Force | Sort-Object Name | Format-Table Name,Length | Out-String | Write-Host
+            throw "Application manifest creation process failed: $appManifest not created successfully"
+          }
+          if (-not (Test-Path $appManifest)) { throw "Application manifest not created: $appManifest" }          
+
+          "CLICKONCE_APP_MANIFEST=$exe.manifest" | Out-File -Append $env:GITHUB_ENV -Encoding utf8
+
+      - name: Create ClickOnce deployment manifest (dotnet mage)
+        shell: pwsh
+        run: |
+          $out = Join-Path $env:GITHUB_WORKSPACE "${{ env.CLICKONCE_OUTDIR }}"
+          $appManifest = Join-Path $out $env:CLICKONCE_APP_MANIFEST
+          $deployManifest = Join-Path $out "${{ env.CLICKONCE_APP_NAME }}.application"
+
+          if (-not (Test-Path $appManifest)) { throw "App manifest not found: $appManifest" }
+
+          dotnet mage -New Deployment `
+            -Name "${{ env.CLICKONCE_APP_NAME }}" `
+            -Version "${{ env.VERSION }}" `
+            -AppManifest "$appManifest" `
+            -ToFile "$deployManifest" `
+            -ProviderURL "${{ env.CLICKONCE_PROVIDER_URL }}" `
+            -Install true
+
+          if (-not (Test-Path $deployManifest)) { throw "Deployment manifest not created: $deployManifest" }
+
+      - name: Sign ClickOnce manifests (dotnet mage)
+        shell: pwsh
+        env:
+          CLICKONCE_SIGNING_PFX_BASE64: ${{ secrets.CLICKONCE_SIGNING_PFX_BASE64 }}
+          CLICKONCE_SIGNING_PFX_PASSWORD: ${{ secrets.CLICKONCE_SIGNING_PFX_PASSWORD }}
+        run: |
+          if ([string]::IsNullOrWhiteSpace($env:CLICKONCE_SIGNING_PFX_BASE64)) { throw "Missing secret: CLICKONCE_SIGNING_PFX_BASE64" }
+          if ([string]::IsNullOrWhiteSpace($env:CLICKONCE_SIGNING_PFX_PASSWORD)) { throw "Missing secret: CLICKONCE_SIGNING_PFX_PASSWORD" }
+
+          $out = Join-Path $env:GITHUB_WORKSPACE "${{ env.CLICKONCE_OUTDIR }}"
+          $appManifest = Join-Path $out $env:CLICKONCE_APP_MANIFEST
+          $deployManifest = Join-Path $out "${{ env.CLICKONCE_APP_NAME }}.application"
+
+          if (-not (Test-Path $appManifest)) { throw "App manifest not found: $appManifest" }
+          if (-not (Test-Path $deployManifest)) { throw "Deployment manifest not found: $deployManifest" }
+
+          $pfxPath = Join-Path $env:RUNNER_TEMP "clickonce-signing.pfx"
+          [IO.File]::WriteAllBytes($pfxPath, [Convert]::FromBase64String($env:CLICKONCE_SIGNING_PFX_BASE64))
+
+          # Update + sign application manifest
+          dotnet mage -Update "$appManifest" -CertFile "$pfxPath" -Password "$env:CLICKONCE_SIGNING_PFX_PASSWORD"
+          if ($LASTEXITCODE -ne 0) { throw "Failed to sign application manifest: $appManifest" }
+
+          # Update deployment manifest with appmanifest + sign deployment manifest
+          dotnet mage -Update "$deployManifest" -AppManifest "$appManifest" -CertFile "$pfxPath" -Password "$env:CLICKONCE_SIGNING_PFX_PASSWORD"
+          if ($LASTEXITCODE -ne 0) { throw "Failed to sign deployment manifest: $deployManifest" }
+
+      - name: Pack ClickOnce output (ZIP)
         shell: pwsh
         run: |
           $src = Join-Path $env:GITHUB_WORKSPACE "${{ env.CLICKONCE_OUTDIR }}\*"
-          $dst = Join-Path $env:GITHUB_WORKSPACE "bin-winforms-clickonce-staging-${{ env.VERSION }}.zip"
+          $dst = Join-Path $env:GITHUB_WORKSPACE "bin-winforms-clickonce-${{ env.VERSION }}.zip"
           Compress-Archive -Path $src -DestinationPath $dst -Force
 
-      - name: Publish staging payload to the release
-        uses: softprops/action-gh-release@v2
+      - name: Upload artifact (ClickOnce ZIP)
+        uses: actions/upload-artifact@v4
         with:
-          files: |
-            bin-winforms-clickonce-staging-${{ env.VERSION }}.zip
-          tag_name: ${{ github.event.release.tag_name || github.ref_name }}
+          name: GuacamoleClient-WinForms_clickonce_${{ env.VERSION }}_anycpu
+          path: bin-winforms-clickonce-${{ env.VERSION }}.zip
+          if-no-files-found: error
+          retention-days: 14
+
+      ## 6) Attach ClickOnce ZIP to GitHub release
+      #- name: Publish ClickOnce ZIP to the release
+      #  uses: softprops/action-gh-release@v2
+      #  with:
+      #    files: bin-winforms-clickonce-${{ env.VERSION }}.zip
+      #    tag_name: ${{ github.event.release.tag_name || github.ref_name }}
+      #  env:
+      #    GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload artifact (ClickOnce folder for Pages)
+        uses: actions/upload-artifact@v4
+        with:
+          name: clickonce-folder
+          path: ${{ env.CLICKONCE_OUTDIR }}/**
+          if-no-files-found: error
+          retention-days: 1
+
+  deploy-pages:
+    needs: winforms-clickonce
+    runs-on: ubuntu-latest
+
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Configure GitHub Pages
+        uses: actions/configure-pages@v5
+
+      - name: Download ClickOnce folder artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: clickonce-folder
+          path: site
+
+      - name: Prepare Pages site (place into subdir)
+        shell: bash
+        run: |
+          mkdir -p "public/${{ needs.winforms-clickonce.outputs.pages_subdir }}"
+          cp -R "site/." "public/${{ needs.winforms-clickonce.outputs.pages_subdir }}/"
+
+      - name: Add .nojekyll + .gitattributes
+        shell: bash
+        run: |
+          # Ensure GitHub Pages serves files as-is (no Jekyll processing)
+          : > "public/.nojekyll"
+
+          # Ensure Git does NOT normalize/modify ClickOnce files (critical for hashes/signatures)
+          # (Also hide these generated artifacts from GitHub language stats)
+          if [[ -f ".gitattributes" ]]; then
+            cp -f ".gitattributes" "public/.gitattributes"
+          fi
+
+      - name: Add INSTALL.md + RELEASE.md + Landing Page
+        shell: bash
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RELEASE_TAG: ${{ github.event.release.tag_name }}
+          RELEASE_NAME: ${{ github.event.release.name }}
+          RELEASE_BODY: ${{ github.event.release.body }}
+        run: |
+          # Static docs from repo
+          cp -f "docs/clickonce/INSTALL.md" "public/INSTALL.md"
+          cp -f "docs/clickonce/index.html" "public/index.html"
+
+          # RELEASE.md is generated from GitHub Release text (no per-release repo edits needed)
+          if [[ "${{ github.event_name }}" == "release" ]]; then
+            {
+              echo "# Release ${RELEASE_TAG#v}"
+              echo
+              if [[ -n "$RELEASE_NAME" ]]; then
+                echo "## ${RELEASE_NAME}"
+                echo
+              fi
+              echo "## Installation (Stable)"
+              echo "- https://jochenwezel.github.io/GuacamoleClient/clickonce/stable/GuacamoleClient.application"
+              echo
+              echo "## Release Notes"
+              echo
+              echo "$RELEASE_BODY"
+            } > "public/RELEASE.md"
+          else
+            {
+              echo "# Dev Build"
+              echo
+              echo "Diese Seite wurde über workflow_dispatch (Dev) deployed."
+              echo
+              echo "## Installation (Dev)"
+              echo "- https://jochenwezel.github.io/GuacamoleClient/clickonce/dev/GuacamoleClient.application"
+              echo
+              echo "## Release Notes"
+              echo "- Für Stable-Versionen siehe GitHub Releases."
+            } > "public/RELEASE.md"
+          fi
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: public
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

@@ -2,6 +2,10 @@
 
 ![GuacamoleClient Logo](./logos/guac-client-app_banner_1280x640.png)
 
+[![ClickOnce Installer](https://img.shields.io/badge/ClickOnce-Web%20Installer-blue)](https://jochenwezel.github.io/GuacamoleClient/)
+
+➡️ **Web-Installer for Windows:** https://jochenwezel.github.io/GuacamoleClient/
+
 ## What is GuacamoleClient? Why we need it?
 
 Apache Guacamole is a free, clientless remote desktop gateway. It supports standard protocols like VNC, RDP, and SSH. see https://guacamole.apache.org/
