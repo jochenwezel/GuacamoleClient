@@ -1,0 +1,14 @@
+# ClickOnce artifacts must remain byte-identical
+*.application binary
+*.manifest    binary
+*.deploy      binary
+*.exe         binary
+*.dll         binary
+*.config      binary
+*.json        binary
+*.dat         binary
+
+# Optional: don't pollute GitHub language statistics
+*.application linguist-generated
+*.manifest    linguist-generated
+*.deploy      linguist-generated
