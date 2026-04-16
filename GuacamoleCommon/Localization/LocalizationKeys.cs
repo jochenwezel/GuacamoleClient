@@ -16,6 +16,15 @@ namespace GuacamoleClient.Common.Localization
         Hint_CtrlAltIns_FullscreenModeOff,
         Hint_CtrlAltIns_FullscreenModeOn,
         Hint_CtrlShiftEsc_Catched_NotForwardableToRemoteServer,
+        Hint_RemoteWindowsKey_Sent,
+        Hint_RemoteWindowsCombination_Sent,
+        Hint_RemoteWindowsCombination_NotMapped,
+        Hint_RemoteWindowsPause_NotReliable,
+        Hint_RemoteCtrlAltDel_Sent,
+        Hint_RemoteCtrlShiftEsc_Sent,
+        Hint_RemoteCtrlAltEnd_Sent,
+        Hint_RemoteAltF4_Sent,
+        Hint_RemoteAltTab_Sent,
         /// <summary>
         /// Gets the hint message indicating that pressing Ctrl+Alt+End has no effect in Remote Desktop sessions
         /// (well-known keyboard shortcut from mstsc).
