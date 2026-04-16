@@ -73,12 +73,6 @@ namespace GuacamoleClient.WinForms
             _focusSink = new TextBox();
             authorizationUserContextToolStripMenuItem = new ToolStripMenuItem();
             restApiClientRequestsLogToolStripMenuItem = new ToolStripMenuItem();
-            keyboardSpikeLogToolStripMenuItem = new ToolStripMenuItem();
-            sendSyntheticWindowsKeyToolStripMenuItem = new ToolStripMenuItem();
-            sendSyntheticCtrlAltDelToolStripMenuItem = new ToolStripMenuItem();
-            sendSyntheticCtrlAltEndToolStripMenuItem = new ToolStripMenuItem();
-            sendSyntheticAltF4ToolStripMenuItem = new ToolStripMenuItem();
-            sendSyntheticWinRToolStripMenuItem = new ToolStripMenuItem();
             sendRemoteWindowsKeyToolStripMenuItem = new ToolStripMenuItem();
             sendRemoteCtrlAltDelToolStripMenuItem = new ToolStripMenuItem();
             sendRemoteCtrlAltEndToolStripMenuItem = new ToolStripMenuItem();
@@ -253,48 +247,6 @@ namespace GuacamoleClient.WinForms
             restApiClientRequestsLogToolStripMenuItem.Text = "REST API Client Requests Log";
             restApiClientRequestsLogToolStripMenuItem.Click += restApiClientRequestsLogToolStripMenuItem_Click;
             // 
-            // keyboardSpikeLogToolStripMenuItem
-            // 
-            keyboardSpikeLogToolStripMenuItem.Name = "keyboardSpikeLogToolStripMenuItem";
-            keyboardSpikeLogToolStripMenuItem.Size = new Size(228, 22);
-            keyboardSpikeLogToolStripMenuItem.Text = "Keyboard Spike Log";
-            keyboardSpikeLogToolStripMenuItem.Click += keyboardSpikeLogToolStripMenuItem_Click;
-            // 
-            // sendSyntheticWindowsKeyToolStripMenuItem
-            // 
-            sendSyntheticWindowsKeyToolStripMenuItem.Name = "sendSyntheticWindowsKeyToolStripMenuItem";
-            sendSyntheticWindowsKeyToolStripMenuItem.Size = new Size(228, 22);
-            sendSyntheticWindowsKeyToolStripMenuItem.Text = "Send Synthetic Windows Key";
-            sendSyntheticWindowsKeyToolStripMenuItem.Click += sendSyntheticWindowsKeyToolStripMenuItem_Click;
-            // 
-            // sendSyntheticCtrlAltDelToolStripMenuItem
-            // 
-            sendSyntheticCtrlAltDelToolStripMenuItem.Name = "sendSyntheticCtrlAltDelToolStripMenuItem";
-            sendSyntheticCtrlAltDelToolStripMenuItem.Size = new Size(228, 22);
-            sendSyntheticCtrlAltDelToolStripMenuItem.Text = "Send Synthetic Ctrl+Alt+Del";
-            sendSyntheticCtrlAltDelToolStripMenuItem.Click += sendSyntheticCtrlAltDelToolStripMenuItem_Click;
-            // 
-            // sendSyntheticCtrlAltEndToolStripMenuItem
-            // 
-            sendSyntheticCtrlAltEndToolStripMenuItem.Name = "sendSyntheticCtrlAltEndToolStripMenuItem";
-            sendSyntheticCtrlAltEndToolStripMenuItem.Size = new Size(228, 22);
-            sendSyntheticCtrlAltEndToolStripMenuItem.Text = "Send Synthetic Ctrl+Alt+End";
-            sendSyntheticCtrlAltEndToolStripMenuItem.Click += sendSyntheticCtrlAltEndToolStripMenuItem_Click;
-            // 
-            // sendSyntheticAltF4ToolStripMenuItem
-            // 
-            sendSyntheticAltF4ToolStripMenuItem.Name = "sendSyntheticAltF4ToolStripMenuItem";
-            sendSyntheticAltF4ToolStripMenuItem.Size = new Size(228, 22);
-            sendSyntheticAltF4ToolStripMenuItem.Text = "Send Synthetic Alt+F4";
-            sendSyntheticAltF4ToolStripMenuItem.Click += sendSyntheticAltF4ToolStripMenuItem_Click;
-            // 
-            // sendSyntheticWinRToolStripMenuItem
-            // 
-            sendSyntheticWinRToolStripMenuItem.Name = "sendSyntheticWinRToolStripMenuItem";
-            sendSyntheticWinRToolStripMenuItem.Size = new Size(228, 22);
-            sendSyntheticWinRToolStripMenuItem.Text = "Send Synthetic Win+R";
-            sendSyntheticWinRToolStripMenuItem.Click += sendSyntheticWinRToolStripMenuItem_Click;
-            // 
             // sendRemoteWindowsKeyToolStripMenuItem
             // 
             sendRemoteWindowsKeyToolStripMenuItem.Name = "sendRemoteWindowsKeyToolStripMenuItem";
@@ -361,12 +313,6 @@ namespace GuacamoleClient.WinForms
         private ToolStripSeparator toolStripSeparator2;
         private ToolStripMenuItem authorizationUserContextToolStripMenuItem;
         private ToolStripMenuItem restApiClientRequestsLogToolStripMenuItem;
-        private ToolStripMenuItem keyboardSpikeLogToolStripMenuItem;
-        private ToolStripMenuItem sendSyntheticWindowsKeyToolStripMenuItem;
-        private ToolStripMenuItem sendSyntheticCtrlAltDelToolStripMenuItem;
-        private ToolStripMenuItem sendSyntheticCtrlAltEndToolStripMenuItem;
-        private ToolStripMenuItem sendSyntheticAltF4ToolStripMenuItem;
-        private ToolStripMenuItem sendSyntheticWinRToolStripMenuItem;
         private ToolStripMenuItem sendRemoteWindowsKeyToolStripMenuItem;
         private ToolStripMenuItem sendRemoteCtrlAltDelToolStripMenuItem;
         private ToolStripMenuItem sendRemoteCtrlAltEndToolStripMenuItem;

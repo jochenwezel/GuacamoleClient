@@ -20,8 +20,6 @@ namespace GuacamoleClient.WinForms
         private void Controller_AcceleratorKeyPressed(object? sender, CoreWebView2AcceleratorKeyPressedEventArgs e)
         {
             if (this.IsMenuOpen) return;
-            AppendKeyboardSpikeLog($"WebView2 accel kind={e.KeyEventKind} vk=0x{e.VirtualKey:X} mods={Control.ModifierKeys}");
-
             // Nur KeyDown / SystemKeyDown interessieren
             if (e.KeyEventKind != CoreWebView2KeyEventKind.KeyDown &&
                 e.KeyEventKind != CoreWebView2KeyEventKind.SystemKeyDown)
@@ -169,8 +167,6 @@ namespace GuacamoleClient.WinForms
         /// <param name="e"></param>
         private void MainForm_KeyDown(object? sender, KeyEventArgs e)
         {
-            AppendKeyboardSpikeLog($"Form keydown key={e.KeyCode} mods={Control.ModifierKeys} handled={e.Handled}");
-
             // Nur KeyDown / SystemKeyDown interessieren
             if (e.Handled)
                 return;
