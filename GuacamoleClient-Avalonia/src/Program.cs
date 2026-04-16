@@ -1,6 +1,7 @@
 using Avalonia;
 using System;
 using System.Threading.Tasks;
+using GuacamoleClient.Common.Localization;
 
 namespace GuacClient;
 internal static class Program
@@ -16,7 +17,7 @@ internal static class Program
         }
         catch (Exception ex)
         {
-            StartupErrorDialog.Show("Startup Error", BuildErrorMessage(ex));
+            StartupErrorDialog.Show(LocalizationProvider.Get(LocalizationKeys.AppStart_StartupError_Title), BuildErrorMessage(ex));
             throw;
         }
     }
@@ -32,13 +33,13 @@ internal static class Program
         {
             if (e.ExceptionObject is Exception ex)
             {
-                StartupErrorDialog.Show("Unexpected Error", BuildErrorMessage(ex));
+                StartupErrorDialog.Show(LocalizationProvider.Get(LocalizationKeys.AppStart_UnexpectedError_Title), BuildErrorMessage(ex));
             }
         };
 
         TaskScheduler.UnobservedTaskException += (_, e) =>
         {
-            StartupErrorDialog.Show("Background Error", BuildErrorMessage(e.Exception));
+            StartupErrorDialog.Show(LocalizationProvider.Get(LocalizationKeys.AppStart_BackgroundError_Title), BuildErrorMessage(e.Exception));
             e.SetObserved();
         };
     }
@@ -46,9 +47,12 @@ internal static class Program
     private static string BuildErrorMessage(Exception ex)
     {
         return
-            "The application could not be started correctly.\r\n\r\n"
+            LocalizationProvider.Get(LocalizationKeys.AppStart_ErrorMessage_Text)
+            + "\r\n\r\n"
             + ex.Message
-            + "\r\n\r\nDetails:\r\n"
+            + "\r\n\r\n"
+            + LocalizationProvider.Get(LocalizationKeys.AppStart_ErrorDetails_Label)
+            + "\r\n"
             + ex;
     }
 }

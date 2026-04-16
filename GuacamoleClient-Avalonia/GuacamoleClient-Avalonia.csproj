@@ -95,6 +95,10 @@
     <PackageReference Include="cef.redist.osx64" Version="120.1.8" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\GuacamoleCommon\GuacamoleCommon.csproj" />
+  </ItemGroup>
+
   <!-- Start-Datei -->
   <ItemGroup>
     <Compile Update="Program.cs">

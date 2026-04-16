@@ -4,6 +4,7 @@ using Avalonia.Markup.Xaml;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using GuacamoleClient.Common.Localization;
 using WebViewControl;
 
 namespace GuacClient
@@ -71,8 +72,10 @@ namespace GuacClient
                 url = await dlg.ShowDialog<string?>(this);
                 if (!UrlInputDialog.IsValidUrl(url))
                 {
-                    await MessageBoxSimple.Show(this, "Start-URL erforderlich",
-                        "Ohne gültige Start-URL kann die Anwendung nicht fortfahren.");
+                    await MessageBoxSimple.Show(
+                        this,
+                        LocalizationProvider.Get(LocalizationKeys.AppStart_StartUrlRequired_Title),
+                        LocalizationProvider.Get(LocalizationKeys.AppStart_StartUrlRequired_Text));
                     Close();
                     return;
                 }
@@ -91,7 +94,10 @@ namespace GuacClient
             }
             catch (Exception ex)
             {
-                await MessageBoxSimple.Show(this, "WebView-Fehler", ex.Message);
+                await MessageBoxSimple.Show(
+                    this,
+                    LocalizationProvider.Get(LocalizationKeys.AppStart_WebViewError_Title),
+                    ex.Message);
                 Close();
             }
         }

@@ -1,6 +1,7 @@
-﻿using Microsoft.VisualBasic.ApplicationServices;
+using Microsoft.VisualBasic.ApplicationServices;
 using System;
 using System.Windows.Forms;
+using GuacamoleClient.Common.Localization;
 using GuacamoleClient.Common.Settings;
 
 namespace GuacamoleClient.WinForms
@@ -11,6 +12,7 @@ namespace GuacamoleClient.WinForms
         static void Main()
         {
             ApplicationConfiguration.Initialize();
+            RegisterGlobalExceptionHandlers();
 
             // Load settings (JSON). If not present, migrate from legacy Registry configuration.
             var store = new JsonFileGuacamoleSettingsStore(GuacamoleSettingsPaths.GetSettingsFilePath());
@@ -44,9 +46,35 @@ namespace GuacamoleClient.WinForms
                 app.Run(Environment.GetCommandLineArgs());
             }
             catch (Exception ex)
-            { 
-                MessageBox.Show("An unexpected error occurred and the application must close:" + System.Environment.NewLine + ex.ToString(), "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            {
+                ShowFatalError(LocalizationKeys.AppStart_StartupError_Title, ex);
             }
+        }
+
+        private static void RegisterGlobalExceptionHandlers()
+        {
+            Application.SetUnhandledExceptionMode(UnhandledExceptionMode.CatchException);
+            Application.ThreadException += (_, e) => ShowFatalError(LocalizationKeys.AppStart_UnexpectedError_Title, e.Exception);
+            AppDomain.CurrentDomain.UnhandledException += (_, e) =>
+            {
+                if (e.ExceptionObject is Exception ex)
+                {
+                    ShowFatalError(LocalizationKeys.AppStart_UnexpectedError_Title, ex);
+                }
+            };
+        }
+
+        private static void ShowFatalError(LocalizationKeys titleKey, Exception ex)
+        {
+            MessageBox.Show(
+                LocalizationProvider.Get(LocalizationKeys.AppStart_UnexpectedErrorWillClose_Text)
+                + Environment.NewLine + Environment.NewLine
+                + LocalizationProvider.Get(LocalizationKeys.AppStart_ErrorDetails_Label)
+                + Environment.NewLine
+                + ex,
+                LocalizationProvider.Get(titleKey),
+                MessageBoxButtons.OK,
+                MessageBoxIcon.Error);
         }
     }
 

@@ -173,6 +173,26 @@ namespace GuacamoleClient.Common.Localization
                     case LocalizationKeys.AddEdit_Link_SetupGuideGuacamoleTestServer:
                         return "Setup Leitfaden für Guacamole Test Server mit Docker";
 
+                    // App start / startup error handling
+                    case LocalizationKeys.AppStart_StartupError_Title:
+                        return "Startfehler";
+                    case LocalizationKeys.AppStart_UnexpectedError_Title:
+                        return "Unerwarteter Fehler";
+                    case LocalizationKeys.AppStart_BackgroundError_Title:
+                        return "Hintergrundfehler";
+                    case LocalizationKeys.AppStart_StartUrlRequired_Title:
+                        return "Start-URL erforderlich";
+                    case LocalizationKeys.AppStart_WebViewError_Title:
+                        return "WebView-Fehler";
+                    case LocalizationKeys.AppStart_ErrorMessage_Text:
+                        return "Die Anwendung konnte nicht korrekt gestartet werden.";
+                    case LocalizationKeys.AppStart_ErrorDetails_Label:
+                        return "Details:";
+                    case LocalizationKeys.AppStart_StartUrlRequired_Text:
+                        return "Ohne gültige Start-URL kann die Anwendung nicht fortfahren.";
+                    case LocalizationKeys.AppStart_UnexpectedErrorWillClose_Text:
+                        return "Ein unerwarteter Fehler ist aufgetreten und die Anwendung muss geschlossen werden.";
+
                     // Suffixes
                     case LocalizationKeys.Common_Suffix_Default:
                         return "(Standard)";
@@ -315,6 +335,26 @@ namespace GuacamoleClient.Common.Localization
                     return "The URL does not respond with an Apache Guacamole start page (or is not reachable).\n\nExample: {0}";
                 case LocalizationKeys.AddEdit_Link_SetupGuideGuacamoleTestServer:
                     return "Setup guide for Guacamole Test Server with Docker";
+
+                // App start / startup error handling
+                case LocalizationKeys.AppStart_StartupError_Title:
+                    return "Startup Error";
+                case LocalizationKeys.AppStart_UnexpectedError_Title:
+                    return "Unexpected Error";
+                case LocalizationKeys.AppStart_BackgroundError_Title:
+                    return "Background Error";
+                case LocalizationKeys.AppStart_StartUrlRequired_Title:
+                    return "Start URL Required";
+                case LocalizationKeys.AppStart_WebViewError_Title:
+                    return "WebView Error";
+                case LocalizationKeys.AppStart_ErrorMessage_Text:
+                    return "The application could not be started correctly.";
+                case LocalizationKeys.AppStart_ErrorDetails_Label:
+                    return "Details:";
+                case LocalizationKeys.AppStart_StartUrlRequired_Text:
+                    return "The application cannot continue without a valid start URL.";
+                case LocalizationKeys.AppStart_UnexpectedErrorWillClose_Text:
+                    return "An unexpected error occurred and the application must close.";
 
                 // Suffixes
                 case LocalizationKeys.Common_Suffix_Default:

@@ -86,6 +86,17 @@ namespace GuacamoleClient.Common.Localization
         AddEdit_TestFailed_Text,
         AddEdit_Link_SetupGuideGuacamoleTestServer,
 
+        // App start / startup error handling
+        AppStart_StartupError_Title,
+        AppStart_UnexpectedError_Title,
+        AppStart_BackgroundError_Title,
+        AppStart_StartUrlRequired_Title,
+        AppStart_WebViewError_Title,
+        AppStart_ErrorMessage_Text,
+        AppStart_ErrorDetails_Label,
+        AppStart_StartUrlRequired_Text,
+        AppStart_UnexpectedErrorWillClose_Text,
+
         // Common buttons and labels
         /// <summary>
         /// Cancel button text used in various dialogs.
