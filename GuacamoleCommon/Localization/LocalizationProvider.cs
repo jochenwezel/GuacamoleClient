@@ -56,6 +56,24 @@ namespace GuacamoleClient.Common.Localization
                         return "Alt+F4 wurde abgefangen (App bleibt offen).";
                     case LocalizationKeys.Hint_CtrlShiftEsc_Catched_NotForwardableToRemoteServer:
                         return "Strg+Umschalt+Esc wurde abgefangen (lokaler Task-Manager). Nicht an Remote weiterleitbar. Tipp: In Guacamole-Menü \"Strg+Alt+Entf\" nutzen.";
+                    case LocalizationKeys.Hint_RemoteWindowsKey_Sent:
+                        return "{0} wurde abgefangen und an die Remote-Sitzung gesendet.";
+                    case LocalizationKeys.Hint_RemoteWindowsCombination_Sent:
+                        return "{0}+{1} wurde abgefangen und an die Remote-Sitzung gesendet.";
+                    case LocalizationKeys.Hint_RemoteWindowsCombination_NotMapped:
+                        return "{0}+{1} wurde abgefangen, ist aber derzeit nicht für DOM-Weiterleitung gemappt.";
+                    case LocalizationKeys.Hint_RemoteWindowsPause_NotReliable:
+                        return "{0}+Pause wurde abgefangen. Das Remote-Pause/Break-Mapping ist derzeit nicht zuverlässig und kann ohne Wirkung bleiben.";
+                    case LocalizationKeys.Hint_RemoteCtrlAltDel_Sent:
+                        return "{0}+{1}+Entf wurde abgefangen und an die Remote-Sitzung gesendet.";
+                    case LocalizationKeys.Hint_RemoteCtrlShiftEsc_Sent:
+                        return "{0}+{1}+Esc wurde abgefangen und an die Remote-Sitzung gesendet.";
+                    case LocalizationKeys.Hint_RemoteCtrlAltEnd_Sent:
+                        return "{0}+{1}+Ende wurde abgefangen und an die Remote-Sitzung gesendet.";
+                    case LocalizationKeys.Hint_RemoteAltF4_Sent:
+                        return "{0}+F4 wurde abgefangen und an die Remote-Sitzung gesendet.";
+                    case LocalizationKeys.Hint_RemoteAltTab_Sent:
+                        return "{0}+Tab wurde abgefangen und an die Remote-Sitzung gesendet.";
                     case LocalizationKeys.Hint_CtrlAltEnd_WithoutEffect_mstsc:
                         return "Hinweis: Strg+Alt+Ende hat in diesem Setup üblicherweise keine Wirkung (mstsc-Sonderfall).";
                     case LocalizationKeys.Hint_WinR_Catched_NotForwardableToRemoteServer:
@@ -233,6 +251,24 @@ namespace GuacamoleClient.Common.Localization
                     return "Alt+F4 catched (app stays open).";
                 case LocalizationKeys.Hint_CtrlShiftEsc_Catched_NotForwardableToRemoteServer:
                     return "Ctrl+SHIFT+Esc catched (local Task-Manager). Not forwardable to remote. Hint: use \"Ctrl+Alt+Del\" in Guacamole menu.";
+                case LocalizationKeys.Hint_RemoteWindowsKey_Sent:
+                    return "{0} was caught and sent to the remote session.";
+                case LocalizationKeys.Hint_RemoteWindowsCombination_Sent:
+                    return "{0}+{1} was caught and sent to the remote session.";
+                case LocalizationKeys.Hint_RemoteWindowsCombination_NotMapped:
+                    return "{0}+{1} was caught, but this key is currently not mapped for DOM forwarding.";
+                case LocalizationKeys.Hint_RemoteWindowsPause_NotReliable:
+                    return "{0}+Pause was caught. The remote Pause/Break mapping is currently not reliable and may have no effect.";
+                case LocalizationKeys.Hint_RemoteCtrlAltDel_Sent:
+                    return "{0}+{1}+Del was caught and sent to the remote session.";
+                case LocalizationKeys.Hint_RemoteCtrlShiftEsc_Sent:
+                    return "{0}+{1}+Esc was caught and sent to the remote session.";
+                case LocalizationKeys.Hint_RemoteCtrlAltEnd_Sent:
+                    return "{0}+{1}+End was caught and sent to the remote session.";
+                case LocalizationKeys.Hint_RemoteAltF4_Sent:
+                    return "{0}+F4 was caught and sent to the remote session.";
+                case LocalizationKeys.Hint_RemoteAltTab_Sent:
+                    return "{0}+Tab was caught and sent to the remote session.";
                 case LocalizationKeys.Hint_CtrlAltEnd_WithoutEffect_mstsc:
                     return "Hint: Ctrl+Alt+End usually without effect in this environment (special behaviour of mstsc).";
                 case LocalizationKeys.Hint_WinR_Catched_NotForwardableToRemoteServer:

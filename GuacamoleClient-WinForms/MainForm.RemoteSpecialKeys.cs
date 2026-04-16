@@ -1,4 +1,5 @@
 using InfoBox;
+using GuacamoleClient.Common.Localization;
 using Microsoft.Web.WebView2.Core;
 using System;
 using System.Runtime.InteropServices;
@@ -108,19 +109,19 @@ namespace GuacamoleClient.WinForms
             }
 
             if (ctrl && alt && key == Keys.Delete)
-                return TriggerRemoteSpecialKey(RemoteSpecialKeyCommand.CtrlAltDel, $"Caught {FormatControlKeyName(controlKey)}+{FormatAltKeyName(altKey)}+Del and sent it to the remote session.", controlKey, altKey);
+                return TriggerRemoteSpecialKey(RemoteSpecialKeyCommand.CtrlAltDel, LocalizationProvider.Get(LocalizationKeys.Hint_RemoteCtrlAltDel_Sent, FormatControlKeyName(controlKey), FormatAltKeyName(altKey)), controlKey, altKey);
 
             if (ctrl && shift && key == Keys.Escape)
-                return TriggerRemoteSpecialKey(RemoteSpecialKeyCommand.CtrlShiftEsc, $"Caught {FormatControlKeyName(controlKey)}+{FormatShiftKeyName(shiftKey)}+Esc and sent it to the remote session.", controlKey, null, shiftKey);
+                return TriggerRemoteSpecialKey(RemoteSpecialKeyCommand.CtrlShiftEsc, LocalizationProvider.Get(LocalizationKeys.Hint_RemoteCtrlShiftEsc_Sent, FormatControlKeyName(controlKey), FormatShiftKeyName(shiftKey)), controlKey, null, shiftKey);
 
             if (ctrl && alt && key == Keys.End)
-                return TriggerRemoteSpecialKey(RemoteSpecialKeyCommand.CtrlAltEnd, $"Caught {FormatControlKeyName(controlKey)}+{FormatAltKeyName(altKey)}+End and sent it to the remote session.", controlKey, altKey);
+                return TriggerRemoteSpecialKey(RemoteSpecialKeyCommand.CtrlAltEnd, LocalizationProvider.Get(LocalizationKeys.Hint_RemoteCtrlAltEnd_Sent, FormatControlKeyName(controlKey), FormatAltKeyName(altKey)), controlKey, altKey);
 
             if (alt && !ctrl && key == Keys.F4)
-                return TriggerRemoteSpecialKey(RemoteSpecialKeyCommand.AltF4, $"Caught {FormatAltKeyName(altKey)}+F4 and sent it to the remote session.", null, altKey);
+                return TriggerRemoteSpecialKey(RemoteSpecialKeyCommand.AltF4, LocalizationProvider.Get(LocalizationKeys.Hint_RemoteAltF4_Sent, FormatAltKeyName(altKey)), null, altKey);
 
             if (alt && !ctrl && key == Keys.Tab)
-                return TriggerRemoteSpecialKey(RemoteSpecialKeyCommand.AltTab, $"Caught {FormatAltKeyName(altKey)}+Tab and sent it to the remote session.", null, altKey);
+                return TriggerRemoteSpecialKey(RemoteSpecialKeyCommand.AltTab, LocalizationProvider.Get(LocalizationKeys.Hint_RemoteAltTab_Sent, FormatAltKeyName(altKey)), null, altKey);
 
             if (_windowsChordActive && !IsModifierKey(key))
             {
@@ -142,7 +143,7 @@ namespace GuacamoleClient.WinForms
                 _activeWindowsKey = Keys.LWin;
 
                 if (sendStandaloneWindows)
-                    return TriggerRemoteSpecialKey(RemoteSpecialKeyCommand.Windows, $"Caught {FormatWindowsKeyName(releasedWindowsKey)} and sent it to the remote session.");
+                    return TriggerRemoteSpecialKey(RemoteSpecialKeyCommand.Windows, LocalizationProvider.Get(LocalizationKeys.Hint_RemoteWindowsKey_Sent, FormatWindowsKeyName(releasedWindowsKey)));
 
                 return true;
             }
@@ -178,15 +179,15 @@ namespace GuacamoleClient.WinForms
                     if (key == Keys.Pause)
                     {
                         await SendRemoteSpecialKeyAsync(RemoteSpecialKeyCommand.WinPause, windowsKey).ConfigureAwait(true);
-                        ShowTransientHint($"Caught {FormatWindowsKeyName(windowsKey)}+Pause. The remote Pause/Break mapping is currently not reliable and may have no effect.");
+                        ShowTransientHint(LocalizationProvider.Get(LocalizationKeys.Hint_RemoteWindowsPause_NotReliable, FormatWindowsKeyName(windowsKey)));
                     }
                     else
                     {
                         bool sent = await TrySendRemoteWindowsCombinationAsync(windowsKey, key).ConfigureAwait(true);
                         if (sent)
-                            ShowTransientHint($"Caught {FormatWindowsKeyName(windowsKey)}+{key} and sent it to the remote session.");
+                            ShowTransientHint(LocalizationProvider.Get(LocalizationKeys.Hint_RemoteWindowsCombination_Sent, FormatWindowsKeyName(windowsKey), key));
                         else
-                            ShowTransientHint($"Caught {FormatWindowsKeyName(windowsKey)}+{key}, but this key is currently not mapped for DOM forwarding.");
+                            ShowTransientHint(LocalizationProvider.Get(LocalizationKeys.Hint_RemoteWindowsCombination_NotMapped, FormatWindowsKeyName(windowsKey), key));
                     }
                 }
                 catch (Exception ex)
