@@ -61,6 +61,7 @@ namespace GuacamoleClient.WinForms
 
             //Assign commands to close timer
             _closeTimer.Tick += (_, __) => { _closeTimer.Stop(); Close(); };
+            this.FormClosed += (_, __) => RemoveKeyboardHook();
 
             //Tooltip
             _tip = new ToolTip
@@ -78,6 +79,8 @@ namespace GuacamoleClient.WinForms
         }
 
         private readonly ToolTip _tip;
+        private readonly Queue<string> _keyboardSpikeLog = new();
+        private const int KeyboardSpikeLogCapacity = 40;
 
         /// <summary>
         /// The (usually disabled) timer to close the form
@@ -737,6 +740,144 @@ namespace GuacamoleClient.WinForms
 
         private async void testToolStripMenuItem_Click(object sender, EventArgs e)
         {
+        }
+
+        private void AppendKeyboardSpikeLog(string message)
+        {
+            string line = $"{DateTime.Now:HH:mm:ss.fff}  {message}";
+            _keyboardSpikeLog.Enqueue(line);
+            while (_keyboardSpikeLog.Count > KeyboardSpikeLogCapacity)
+            {
+                _keyboardSpikeLog.Dequeue();
+            }
+        }
+
+        private void keyboardSpikeLogToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            string body = _keyboardSpikeLog.Count == 0
+                ? "No keyboard spike events logged yet."
+                : string.Join(Environment.NewLine, _keyboardSpikeLog);
+
+            ShowMessageBoxNonModal(body, "Keyboard Spike Log", InformationBoxButtons.OK, InformationBoxIcon.Information);
+        }
+
+        private async Task<string> DispatchSyntheticKeyboardSequenceAsync(params string[] eventDefinitionsJson)
+        {
+            if (_webview2_core == null)
+                throw new InvalidOperationException("WebView2 Core not initialized.");
+
+            string serializedDefinitions = string.Join("," + Environment.NewLine, eventDefinitionsJson);
+            string script = $$"""
+                (() => {
+                    const target = document.activeElement || document.body || document.documentElement;
+                    const events = [{{serializedDefinitions}}];
+                    const summary = [];
+                    for (const def of events) {
+                        const event = new KeyboardEvent(def.type, {
+                            key: def.key,
+                            code: def.code,
+                            location: def.location ?? 0,
+                            repeat: false,
+                            ctrlKey: !!def.ctrlKey,
+                            altKey: !!def.altKey,
+                            shiftKey: !!def.shiftKey,
+                            metaKey: !!def.metaKey,
+                            bubbles: true,
+                            cancelable: true,
+                            composed: true
+                        });
+                        const dispatchTarget = target || document;
+                        dispatchTarget.dispatchEvent(event);
+                        summary.push({
+                            type: def.type,
+                            key: def.key,
+                            code: def.code,
+                            targetTag: dispatchTarget.tagName || '#document',
+                            isTrusted: event.isTrusted,
+                            defaultPrevented: event.defaultPrevented
+                        });
+                    }
+                    return JSON.stringify({
+                        activeElement: target?.tagName || null,
+                        events: summary
+                    });
+                })();
+                """;
+
+            return await _webview2_core.ExecuteScriptAsync(script).ConfigureAwait(false);
+        }
+
+        private async Task ShowSyntheticKeyboardDispatchResultAsync(string title, params string[] eventDefinitionsJson)
+        {
+            try
+            {
+                string raw = await DispatchSyntheticKeyboardSequenceAsync(eventDefinitionsJson);
+                string? json = JsonSerializer.Deserialize<string>(raw);
+                AppendKeyboardSpikeLog($"{title}: {json}");
+                ShowMessageBoxNonModal(json ?? "No result", title, InformationBoxButtons.OK, InformationBoxIcon.Information);
+            }
+            catch (Exception ex)
+            {
+                AppendKeyboardSpikeLog($"{title}: ERROR {ex.Message}");
+                ShowMessageBoxNonModal(ex.ToString(), title, InformationBoxButtons.OK, InformationBoxIcon.Error);
+            }
+        }
+
+        private async void sendSyntheticWindowsKeyToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            await ShowSyntheticKeyboardDispatchResultAsync(
+                "Synthetic Windows Key",
+                """{ "type": "keydown", "key": "Meta", "code": "MetaLeft", "metaKey": true, "location": 1 }""",
+                """{ "type": "keyup", "key": "Meta", "code": "MetaLeft", "metaKey": false, "location": 1 }"""
+            );
+        }
+
+        private async void sendSyntheticCtrlAltDelToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            await ShowSyntheticKeyboardDispatchResultAsync(
+                "Synthetic Ctrl+Alt+Del",
+                """{ "type": "keydown", "key": "Control", "code": "ControlLeft", "ctrlKey": true, "location": 1 }""",
+                """{ "type": "keydown", "key": "Alt", "code": "AltLeft", "ctrlKey": true, "altKey": true, "location": 1 }""",
+                """{ "type": "keydown", "key": "Delete", "code": "Delete", "ctrlKey": true, "altKey": true }""",
+                """{ "type": "keyup", "key": "Delete", "code": "Delete", "ctrlKey": true, "altKey": true }""",
+                """{ "type": "keyup", "key": "Alt", "code": "AltLeft", "ctrlKey": true, "altKey": false, "location": 1 }""",
+                """{ "type": "keyup", "key": "Control", "code": "ControlLeft", "ctrlKey": false, "location": 1 }"""
+            );
+        }
+
+        private async void sendSyntheticCtrlAltEndToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            await ShowSyntheticKeyboardDispatchResultAsync(
+                "Synthetic Ctrl+Alt+End",
+                """{ "type": "keydown", "key": "Control", "code": "ControlLeft", "ctrlKey": true, "location": 1 }""",
+                """{ "type": "keydown", "key": "Alt", "code": "AltLeft", "ctrlKey": true, "altKey": true, "location": 1 }""",
+                """{ "type": "keydown", "key": "End", "code": "End", "ctrlKey": true, "altKey": true }""",
+                """{ "type": "keyup", "key": "End", "code": "End", "ctrlKey": true, "altKey": true }""",
+                """{ "type": "keyup", "key": "Alt", "code": "AltLeft", "ctrlKey": true, "altKey": false, "location": 1 }""",
+                """{ "type": "keyup", "key": "Control", "code": "ControlLeft", "ctrlKey": false, "location": 1 }"""
+            );
+        }
+
+        private async void sendSyntheticAltF4ToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            await ShowSyntheticKeyboardDispatchResultAsync(
+                "Synthetic Alt+F4",
+                """{ "type": "keydown", "key": "Alt", "code": "AltLeft", "altKey": true, "location": 1 }""",
+                """{ "type": "keydown", "key": "F4", "code": "F4", "altKey": true }""",
+                """{ "type": "keyup", "key": "F4", "code": "F4", "altKey": true }""",
+                """{ "type": "keyup", "key": "Alt", "code": "AltLeft", "altKey": false, "location": 1 }"""
+            );
+        }
+
+        private async void sendSyntheticWinRToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            await ShowSyntheticKeyboardDispatchResultAsync(
+                "Synthetic Win+R",
+                """{ "type": "keydown", "key": "Meta", "code": "MetaLeft", "metaKey": true, "location": 1 }""",
+                """{ "type": "keydown", "key": "r", "code": "KeyR", "metaKey": true }""",
+                """{ "type": "keyup", "key": "r", "code": "KeyR", "metaKey": true }""",
+                """{ "type": "keyup", "key": "Meta", "code": "MetaLeft", "metaKey": false, "location": 1 }"""
+            );
         }
 
         /// <summary>

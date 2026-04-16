@@ -107,6 +107,7 @@ namespace GuacamoleClient.WinForms
             WebBrowserHostPanel.Focus();
             _webview2_controller?.MoveFocus(CoreWebView2MoveFocusReason.Programmatic);
             IsKeyboardFocusBoundToWebview2Control = KeyboardCaptureMode.GrabbingEnabled_ShowKeyboardShortcutInfo;
+            UpdateKeyboardHookState();
         }
 
         /// <summary>
@@ -125,6 +126,7 @@ namespace GuacamoleClient.WinForms
                 IsKeyboardFocusBoundToWebview2Control = KeyboardCaptureMode.GrabbingDisabled_HideKeyboardShortcutInfo;
             else
                 IsKeyboardFocusBoundToWebview2Control = KeyboardCaptureMode.GrabbingDisabled_ShowKeyboardShortcutInfo;
+            UpdateKeyboardHookState();
         }
 
         /// <summary>
