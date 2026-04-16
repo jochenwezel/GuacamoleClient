@@ -20,6 +20,7 @@ namespace GuacamoleClient.WinForms
         private void Controller_AcceleratorKeyPressed(object? sender, CoreWebView2AcceleratorKeyPressedEventArgs e)
         {
             if (this.IsMenuOpen) return;
+            AppendKeyboardSpikeLog($"WebView2 accel kind={e.KeyEventKind} vk=0x{e.VirtualKey:X} mods={Control.ModifierKeys}");
 
             // Nur KeyDown / SystemKeyDown interessieren
             if (e.KeyEventKind != CoreWebView2KeyEventKind.KeyDown &&
@@ -57,7 +58,10 @@ namespace GuacamoleClient.WinForms
             if (e.VirtualKey == VK_F4 && alt && !ctrl)
             {
                 e.Handled = true;
-                ShowHint(LocalizationKeys.Hint_AltF4_CatchedAndIgnored);
+                if (ShouldRouteSpecialKeysToRemote())
+                    TriggerRemoteSpecialKey(RemoteSpecialKeyCommand.AltF4, "Caught Alt+F4 and sent it to the remote session.");
+                else
+                    ShowHint(LocalizationKeys.Hint_AltF4_CatchedAndIgnored);
                 return;
             }
 
@@ -80,16 +84,26 @@ namespace GuacamoleClient.WinForms
             if (e.VirtualKey == VK_ESC && ctrl && shift)
             {
                 e.Handled = true; // lokal abfangen
-                ShowHint(LocalizationKeys.Hint_CtrlShiftEsc_Catched_NotForwardableToRemoteServer);
+                if (ShouldRouteSpecialKeysToRemote())
+                    TriggerRemoteSpecialKey(RemoteSpecialKeyCommand.CtrlShiftEsc, "Caught Ctrl+Shift+Esc and sent it to the remote session.");
+                else
+                    ShowHint(LocalizationKeys.Hint_CtrlShiftEsc_Catched_NotForwardableToRemoteServer);
                 return;
             }
 
             // --- Ctrl+Alt+End: in WebView2/Guacamole typischerweise ohne Wirkung ---
             if (e.VirtualKey == VK_END && ctrl && alt)
             {
-                // Wir lassen es durch – aber informieren, dass es i. d. R. nichts bewirkt.
-                e.Handled = false;
-                ShowHint(LocalizationKeys.Hint_CtrlAltEnd_WithoutEffect_mstsc);
+                if (ShouldRouteSpecialKeysToRemote())
+                {
+                    e.Handled = true;
+                    TriggerRemoteSpecialKey(RemoteSpecialKeyCommand.CtrlAltEnd, "Caught Ctrl+Alt+End and sent it to the remote session.");
+                }
+                else
+                {
+                    e.Handled = false;
+                    ShowHint(LocalizationKeys.Hint_CtrlAltEnd_WithoutEffect_mstsc);
+                }
                 return;
             }
 
@@ -98,7 +112,10 @@ namespace GuacamoleClient.WinForms
             if ((IsWinPressed() && e.VirtualKey == VK_R))
             {
                 e.Handled = true;
-                ShowHint(LocalizationKeys.Hint_WinR_Catched_NotForwardableToRemoteServer);
+                if (ShouldRouteSpecialKeysToRemote())
+                    TriggerRemoteSpecialKey(RemoteSpecialKeyCommand.WinR, "Caught Win+R and sent it to the remote session.");
+                else
+                    ShowHint(LocalizationKeys.Hint_WinR_Catched_NotForwardableToRemoteServer);
                 return;
             }
 
@@ -150,6 +167,7 @@ namespace GuacamoleClient.WinForms
         /// <param name="e"></param>
         private void MainForm_KeyDown(object? sender, KeyEventArgs e)
         {
+            AppendKeyboardSpikeLog($"Form keydown key={e.KeyCode} mods={Control.ModifierKeys} handled={e.Handled}");
 
             // Nur KeyDown / SystemKeyDown interessieren
             if (e.Handled)
@@ -188,7 +206,10 @@ namespace GuacamoleClient.WinForms
             if (e.KeyCode == VK_F4 && alt && !ctrl)
             {
                 e.Handled = true;
-                ShowHint(LocalizationKeys.Hint_AltF4_CatchedAndIgnored);
+                if (ShouldRouteSpecialKeysToRemote())
+                    TriggerRemoteSpecialKey(RemoteSpecialKeyCommand.AltF4, "Caught Alt+F4 and sent it to the remote session.");
+                else
+                    ShowHint(LocalizationKeys.Hint_AltF4_CatchedAndIgnored);
                 return;
             }
 
@@ -211,16 +232,26 @@ namespace GuacamoleClient.WinForms
             if (e.KeyCode == VK_ESC && ctrl && shift)
             {
                 e.Handled = true; // lokal abfangen
-                ShowHint(LocalizationKeys.Hint_CtrlShiftEsc_Catched_NotForwardableToRemoteServer);
+                if (ShouldRouteSpecialKeysToRemote())
+                    TriggerRemoteSpecialKey(RemoteSpecialKeyCommand.CtrlShiftEsc, "Caught Ctrl+Shift+Esc and sent it to the remote session.");
+                else
+                    ShowHint(LocalizationKeys.Hint_CtrlShiftEsc_Catched_NotForwardableToRemoteServer);
                 return;
             }
 
             // --- Ctrl+Alt+End: in WebView2/Guacamole typischerweise ohne Wirkung ---
             if (e.KeyCode == VK_END && ctrl && alt)
             {
-                // Wir lassen es durch – aber informieren, dass es i. d. R. nichts bewirkt.
-                e.Handled = false;
-                ShowHint(LocalizationKeys.Hint_CtrlAltEnd_WithoutEffect_mstsc);
+                if (ShouldRouteSpecialKeysToRemote())
+                {
+                    e.Handled = true;
+                    TriggerRemoteSpecialKey(RemoteSpecialKeyCommand.CtrlAltEnd, "Caught Ctrl+Alt+End and sent it to the remote session.");
+                }
+                else
+                {
+                    e.Handled = false;
+                    ShowHint(LocalizationKeys.Hint_CtrlAltEnd_WithoutEffect_mstsc);
+                }
                 return;
             }
 
@@ -229,7 +260,10 @@ namespace GuacamoleClient.WinForms
             if ((IsWinPressed() && e.KeyCode == VK_R))
             {
                 e.Handled = true;
-                ShowHint(LocalizationKeys.Hint_WinR_Catched_NotForwardableToRemoteServer);
+                if (ShouldRouteSpecialKeysToRemote())
+                    TriggerRemoteSpecialKey(RemoteSpecialKeyCommand.WinR, "Caught Win+R and sent it to the remote session.");
+                else
+                    ShowHint(LocalizationKeys.Hint_WinR_Catched_NotForwardableToRemoteServer);
                 return;
             }
 

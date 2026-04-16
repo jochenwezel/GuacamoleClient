@@ -94,6 +94,8 @@ namespace GuacamoleClient.Common.Localization
                         return "Verbindung";
                     case LocalizationKeys.Menu_View:
                         return "Ansicht";
+                    case LocalizationKeys.Menu_SendKeyCombination:
+                        return "Tasten-Kombination senden";
                     case LocalizationKeys.Menu_ViewFullScreen:
                         return "Vollbild-Modus";
                     case LocalizationKeys.Menu_Quit:
@@ -106,6 +108,18 @@ namespace GuacamoleClient.Common.Localization
                         return "Guacamole Benutzer-Einstellungen";
                     case LocalizationKeys.Menu_GuacamoleConnectionConfigurations:
                         return "Guacamole Verbindungs-Konfiguration";
+                    case LocalizationKeys.Menu_SendWindowsKey:
+                        return "Windows-Taste";
+                    case LocalizationKeys.Menu_SendCtrlAltDel:
+                        return "Strg+Alt+Entf";
+                    case LocalizationKeys.Menu_SendCtrlAltEnd:
+                        return "Strg+Alt+Ende";
+                    case LocalizationKeys.Menu_SendCtrlShiftEsc:
+                        return "Strg+Umschalt+Esc";
+                    case LocalizationKeys.Menu_SendAltF4:
+                        return "Alt+F4";
+                    case LocalizationKeys.Menu_SendWinR:
+                        return "Win+R";
 
                     // Choose server dialog
                     case LocalizationKeys.ChooseServer_Column_Name:
@@ -257,6 +271,8 @@ namespace GuacamoleClient.Common.Localization
                     return "Connection";
                 case LocalizationKeys.Menu_View:
                     return "View";
+                case LocalizationKeys.Menu_SendKeyCombination:
+                    return "Send key combination";
                 case LocalizationKeys.Menu_ViewFullScreen:
                     return "Full-Screen";
                 case LocalizationKeys.Menu_Quit:
@@ -269,6 +285,18 @@ namespace GuacamoleClient.Common.Localization
                     return "Guacamole User Settings";
                 case LocalizationKeys.Menu_GuacamoleConnectionConfigurations:
                     return "Guacamole Connections Configuration";
+                case LocalizationKeys.Menu_SendWindowsKey:
+                    return "Windows key";
+                case LocalizationKeys.Menu_SendCtrlAltDel:
+                    return "Ctrl+Alt+Del";
+                case LocalizationKeys.Menu_SendCtrlAltEnd:
+                    return "Ctrl+Alt+End";
+                case LocalizationKeys.Menu_SendCtrlShiftEsc:
+                    return "Ctrl+Shift+Esc";
+                case LocalizationKeys.Menu_SendAltF4:
+                    return "Alt+F4";
+                case LocalizationKeys.Menu_SendWinR:
+                    return "Win+R";
 
                 // Choose server dialog
                 case LocalizationKeys.ChooseServer_Column_Name:
