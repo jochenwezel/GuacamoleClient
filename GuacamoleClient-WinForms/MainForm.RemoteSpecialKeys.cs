@@ -2,6 +2,8 @@ using InfoBox;
 using GuacamoleClient.Common.Localization;
 using Microsoft.Web.WebView2.Core;
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text.Json;
 using System.Threading.Tasks;
@@ -30,6 +32,10 @@ namespace GuacamoleClient.WinForms
         private bool _windowsChordActive;
         private bool _windowsChordHadCombination;
         private Keys _activeWindowsKey = Keys.LWin;
+        private readonly HashSet<Keys> _activeModifierKeys = new();
+        private readonly HashSet<Keys> _heldRemoteModifiers = new();
+        private readonly List<Keys> _modifierOnlyChordOrder = new();
+        private bool _modifierOnlyChordHadNonModifier;
 
         private void UpdateKeyboardHookState()
         {
@@ -63,6 +69,11 @@ namespace GuacamoleClient.WinForms
             _windowsChordActive = false;
             _windowsChordHadCombination = false;
             _activeWindowsKey = Keys.LWin;
+            _activeModifierKeys.Clear();
+            _heldRemoteModifiers.Clear();
+            _modifierOnlyChordOrder.Clear();
+            _modifierOnlyChordHadNonModifier = false;
+            HideTransientHint();
         }
 
         private IntPtr KeyboardHookCallback(int nCode, IntPtr wParam, IntPtr lParam)
@@ -75,11 +86,15 @@ namespace GuacamoleClient.WinForms
 
                 if (msg == NativeKeyboardMethods.WM_KEYDOWN || msg == NativeKeyboardMethods.WM_SYSKEYDOWN)
                 {
+                    UpdateModifierState(key, true);
+                    SyncHeldRemoteModifiersToTrackedState();
                     if (TryHandleRemoteSpecialShortcutKeyDown(key))
                         return (IntPtr)1;
                 }
                 else if (msg == NativeKeyboardMethods.WM_KEYUP || msg == NativeKeyboardMethods.WM_SYSKEYUP)
                 {
+                    UpdateModifierState(key, false);
+                    SyncHeldRemoteModifiersToTrackedState();
                     if (TryHandleRemoteSpecialShortcutKeyUp(key))
                         return (IntPtr)1;
                 }
@@ -90,9 +105,12 @@ namespace GuacamoleClient.WinForms
 
         private bool TryHandleRemoteSpecialShortcutKeyDown(Keys key)
         {
-            Keys? controlKey = GetActiveControlKey();
-            Keys? altKey = GetActiveAltKey();
-            Keys? shiftKey = GetActiveShiftKey();
+            if (!IsModifierKey(key) && _activeModifierKeys.Count > 0)
+                _modifierOnlyChordHadNonModifier = true;
+
+            Keys? controlKey = GetTrackedControlKey();
+            Keys? altKey = GetTrackedAltKey();
+            Keys? shiftKey = GetTrackedShiftKey();
             bool ctrl = controlKey.HasValue;
             bool alt = altKey.HasValue;
             bool shift = shiftKey.HasValue;
@@ -121,7 +139,7 @@ namespace GuacamoleClient.WinForms
                 return TriggerRemoteSpecialKey(RemoteSpecialKeyCommand.AltF4, LocalizationProvider.Get(LocalizationKeys.Hint_RemoteAltF4_Sent, FormatAltKeyName(altKey)), null, altKey);
 
             if (alt && !ctrl && key == Keys.Tab)
-                return TriggerRemoteSpecialKey(RemoteSpecialKeyCommand.AltTab, LocalizationProvider.Get(LocalizationKeys.Hint_RemoteAltTab_Sent, FormatAltKeyName(altKey)), null, altKey);
+                return TriggerRemoteAltTab(altKey ?? Keys.LMenu);
 
             if (_windowsChordActive && !IsModifierKey(key))
             {
@@ -145,7 +163,14 @@ namespace GuacamoleClient.WinForms
                 if (sendStandaloneWindows)
                     return TriggerRemoteSpecialKey(RemoteSpecialKeyCommand.Windows, LocalizationProvider.Get(LocalizationKeys.Hint_RemoteWindowsKey_Sent, FormatWindowsKeyName(releasedWindowsKey)));
 
+                TriggerRemoteModifierRelease(releasedWindowsKey);
                 return true;
+            }
+
+            if (_heldRemoteModifiers.Contains(key))
+            {
+                TriggerRemoteModifierRelease(key);
+                return IsModifierKey(key);
             }
 
             return key is Keys.LWin or Keys.RWin;
@@ -167,6 +192,39 @@ namespace GuacamoleClient.WinForms
                 }
             });
             return true;
+        }
+
+        private bool TriggerRemoteAltTab(Keys altKey)
+        {
+            BeginInvoke(async () =>
+            {
+                try
+                {
+                    await EnsureRemoteModifierHeldAsync(altKey).ConfigureAwait(true);
+                    await SendRemoteKeyPulseAsync(Keys.Tab).ConfigureAwait(true);
+                    ShowTransientHint(LocalizationProvider.Get(LocalizationKeys.Hint_RemoteAltTab_Sent, FormatAltKeyName(altKey)));
+                }
+                catch (Exception ex)
+                {
+                    ShowMessageBoxNonModal(ex.ToString(), "Remote Alt+Tab", InformationBoxButtons.OK, InformationBoxIcon.Error);
+                }
+            });
+            return true;
+        }
+
+        private void TriggerRemoteModifierRelease(Keys key)
+        {
+            BeginInvoke(async () =>
+            {
+                try
+                {
+                    await ReleaseRemoteModifierAsync(key).ConfigureAwait(true);
+                }
+                catch (Exception ex)
+                {
+                    ShowMessageBoxNonModal(ex.ToString(), "Remote modifier key", InformationBoxButtons.OK, InformationBoxIcon.Error);
+                }
+            });
         }
 
         private bool TriggerRemoteWindowsCombination(Keys key)
@@ -204,6 +262,11 @@ namespace GuacamoleClient.WinForms
         private void ShowTransientHint(string text)
         {
             try { _tip.Show(text, this, 20, 20, RemoteShortcutHintDurationMs); } catch { }
+        }
+
+        private void HideTransientHint()
+        {
+            try { _tip.Hide(this); } catch { }
         }
 
         private async Task SendRemoteSpecialKeyAsync(RemoteSpecialKeyCommand command, Keys windowsKey = Keys.LWin, Keys? controlKey = null, Keys? altKey = null, Keys? shiftKey = null)
@@ -288,14 +351,39 @@ namespace GuacamoleClient.WinForms
             if (mapped == null)
                 return false;
 
-            var meta = MapWindowsKeyDomDefinition(windowsKey);
-            await DispatchSyntheticKeyboardSequenceAsync(
-                $$"""{"type":"keydown","key":"Meta","code":"{{meta.code}}","metaKey":true,"location":{{meta.location}}}""",
-                $$"""{"type":"keydown","key":"{{mapped.Value.key}}","code":"{{mapped.Value.code}}","metaKey":true}""",
-                $$"""{"type":"keyup","key":"{{mapped.Value.key}}","code":"{{mapped.Value.code}}","metaKey":true}""",
-                $$"""{"type":"keyup","key":"Meta","code":"{{meta.code}}","metaKey":false,"location":{{meta.location}}}"""
-            );
+            await EnsureRemoteModifierHeldAsync(windowsKey).ConfigureAwait(false);
+            await SendRemoteKeyPulseAsync(key).ConfigureAwait(false);
             return true;
+        }
+
+        private async Task EnsureRemoteModifierHeldAsync(Keys key)
+        {
+            if (_heldRemoteModifiers.Contains(key))
+                return;
+
+            _heldRemoteModifiers.Add(key);
+            await DispatchSyntheticKeyboardSequenceAsync(BuildModifierKeyboardEventJson("keydown", key, _heldRemoteModifiers)).ConfigureAwait(false);
+        }
+
+        private async Task ReleaseRemoteModifierAsync(Keys key)
+        {
+            if (!_heldRemoteModifiers.Contains(key))
+                return;
+
+            _heldRemoteModifiers.Remove(key);
+            await DispatchSyntheticKeyboardSequenceAsync(BuildModifierKeyboardEventJson("keyup", key, _heldRemoteModifiers)).ConfigureAwait(false);
+        }
+
+        private async Task SendRemoteKeyPulseAsync(Keys key)
+        {
+            var mapped = MapKeyToDomDefinition(key);
+            if (mapped == null)
+                throw new NotSupportedException($"No DOM key mapping implemented for {key}.");
+
+            await DispatchSyntheticKeyboardSequenceAsync(
+                BuildKeyboardEventJson("keydown", mapped.Value.key, mapped.Value.code, _heldRemoteModifiers),
+                BuildKeyboardEventJson("keyup", mapped.Value.key, mapped.Value.code, _heldRemoteModifiers)
+            );
         }
 
         private static (string code, int location) MapWindowsKeyDomDefinition(Keys key)
@@ -321,6 +409,204 @@ namespace GuacamoleClient.WinForms
 
         private static string FormatShiftKeyName(Keys? key)
             => key == Keys.RShiftKey ? "RShift" : "LShift";
+
+        private void UpdateModifierState(Keys key, bool isDown)
+        {
+            if (!TryNormalizeModifierKey(key, out Keys normalizedKey))
+                return;
+
+            if (isDown && _activeModifierKeys.Count == 0)
+            {
+                _modifierOnlyChordOrder.Clear();
+                _modifierOnlyChordHadNonModifier = false;
+            }
+
+            if (isDown)
+            {
+                _activeModifierKeys.Add(normalizedKey);
+                if (!_modifierOnlyChordOrder.Contains(normalizedKey))
+                    _modifierOnlyChordOrder.Add(normalizedKey);
+            }
+            else
+            {
+                _activeModifierKeys.Remove(normalizedKey);
+                if (_activeModifierKeys.Count == 0)
+                {
+                    bool onlyWindowsKeys = _modifierOnlyChordOrder.Count > 0 && _modifierOnlyChordOrder.All(k => k is Keys.LWin or Keys.RWin);
+
+                    if (!_modifierOnlyChordHadNonModifier && _modifierOnlyChordOrder.Count > 0 && !onlyWindowsKeys)
+                    {
+                        var chord = _modifierOnlyChordOrder.ToArray();
+                        BeginInvoke(async () =>
+                        {
+                            try
+                            {
+                                await SendModifierOnlyChordAsync(chord).ConfigureAwait(true);
+                            }
+                            catch (Exception ex)
+                            {
+                                ShowMessageBoxNonModal(ex.ToString(), "Remote modifier keys", InformationBoxButtons.OK, InformationBoxIcon.Error);
+                            }
+                        });
+                    }
+
+                    _modifierOnlyChordOrder.Clear();
+                    _modifierOnlyChordHadNonModifier = false;
+                }
+            }
+
+            ShowActiveModifierHint();
+        }
+
+        private void ShowActiveModifierHint()
+        {
+            string text = FormatActiveModifierState();
+            if (string.IsNullOrWhiteSpace(text))
+            {
+                HideTransientHint();
+                return;
+            }
+
+            ShowTransientHint(LocalizationProvider.Get(LocalizationKeys.Hint_ActiveModifiers, text));
+        }
+
+        private void SyncHeldRemoteModifiersToTrackedState()
+        {
+            if (_heldRemoteModifiers.Count == 0)
+                return;
+
+            var staleKeys = _heldRemoteModifiers.Where(key => !_activeModifierKeys.Contains(key)).ToArray();
+            if (staleKeys.Length == 0)
+                return;
+
+            foreach (Keys staleKey in staleKeys)
+                _heldRemoteModifiers.Remove(staleKey);
+
+            BeginInvoke(async () =>
+            {
+                try
+                {
+                    foreach (Keys staleKey in staleKeys)
+                    {
+                        await DispatchSyntheticKeyboardSequenceAsync(
+                            BuildModifierKeyboardEventJson("keyup", staleKey, _heldRemoteModifiers)
+                        ).ConfigureAwait(true);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    ShowMessageBoxNonModal(ex.ToString(), "Remote modifier sync", InformationBoxButtons.OK, InformationBoxIcon.Error);
+                }
+            });
+        }
+
+        private string FormatActiveModifierState()
+        {
+            if (_activeModifierKeys.Count == 0)
+                return string.Empty;
+
+            var names = new List<string>();
+
+            bool leftCtrl = _activeModifierKeys.Contains(Keys.LControlKey);
+            bool rightCtrl = _activeModifierKeys.Contains(Keys.RControlKey);
+            bool leftAlt = _activeModifierKeys.Contains(Keys.LMenu);
+            bool rightAlt = _activeModifierKeys.Contains(Keys.RMenu);
+
+            if (rightAlt && leftCtrl && !leftAlt && !rightCtrl)
+                names.Add("AltGr");
+            else
+            {
+                if (leftCtrl) names.Add("LCtrl");
+                if (rightCtrl) names.Add("RCtrl");
+                if (leftAlt) names.Add("LAlt");
+                if (rightAlt) names.Add("RAlt");
+            }
+
+            if (_activeModifierKeys.Contains(Keys.LShiftKey)) names.Add("LShift");
+            if (_activeModifierKeys.Contains(Keys.RShiftKey)) names.Add("RShift");
+            if (_activeModifierKeys.Contains(Keys.LWin)) names.Add("LWin");
+            if (_activeModifierKeys.Contains(Keys.RWin)) names.Add("RWin");
+
+            return string.Join("+", names.Distinct());
+        }
+
+        private static bool TryNormalizeModifierKey(Keys key, out Keys normalizedKey)
+        {
+            normalizedKey = key switch
+            {
+                Keys.ControlKey => Keys.LControlKey,
+                Keys.Menu => Keys.LMenu,
+                Keys.ShiftKey => Keys.LShiftKey,
+                Keys.LControlKey or Keys.RControlKey or
+                Keys.LMenu or Keys.RMenu or
+                Keys.LShiftKey or Keys.RShiftKey or
+                Keys.LWin or Keys.RWin => key,
+                _ => Keys.None,
+            };
+
+            return normalizedKey != Keys.None;
+        }
+
+        private async Task SendModifierOnlyChordAsync(IReadOnlyList<Keys> modifierKeys)
+        {
+            if (modifierKeys.Count == 0)
+                return;
+
+            var events = new List<string>();
+            var pressed = new HashSet<Keys>();
+
+            foreach (Keys key in modifierKeys)
+            {
+                pressed.Add(key);
+                events.Add(BuildModifierKeyboardEventJson("keydown", key, pressed));
+            }
+
+            for (int i = modifierKeys.Count - 1; i >= 0; i--)
+            {
+                Keys key = modifierKeys[i];
+                pressed.Remove(key);
+                events.Add(BuildModifierKeyboardEventJson("keyup", key, pressed));
+            }
+
+            await DispatchSyntheticKeyboardSequenceAsync(events.ToArray());
+        }
+
+        private static string BuildModifierKeyboardEventJson(string type, Keys key, IReadOnlyCollection<Keys> pressedAfterEvent)
+        {
+            var mapped = MapModifierDomDefinition(key);
+            return BuildKeyboardEventJson(type, mapped.key, mapped.code, pressedAfterEvent, mapped.location);
+        }
+
+        private static string BuildKeyboardEventJson(string type, string key, string code, IReadOnlyCollection<Keys> activeModifiers, int location = 0)
+        {
+            var payload = new
+            {
+                type,
+                key,
+                code,
+                ctrlKey = activeModifiers.Contains(Keys.LControlKey) || activeModifiers.Contains(Keys.RControlKey),
+                altKey = activeModifiers.Contains(Keys.LMenu) || activeModifiers.Contains(Keys.RMenu),
+                shiftKey = activeModifiers.Contains(Keys.LShiftKey) || activeModifiers.Contains(Keys.RShiftKey),
+                metaKey = activeModifiers.Contains(Keys.LWin) || activeModifiers.Contains(Keys.RWin),
+                location
+            };
+
+            return JsonSerializer.Serialize(payload);
+        }
+
+        private static (string key, string code, int location) MapModifierDomDefinition(Keys key)
+            => key switch
+            {
+                Keys.LControlKey => ("Control", "ControlLeft", 1),
+                Keys.RControlKey => ("Control", "ControlRight", 2),
+                Keys.LMenu => ("Alt", "AltLeft", 1),
+                Keys.RMenu => ("Alt", "AltRight", 2),
+                Keys.LShiftKey => ("Shift", "ShiftLeft", 1),
+                Keys.RShiftKey => ("Shift", "ShiftRight", 2),
+                Keys.LWin => ("Meta", "MetaLeft", 1),
+                Keys.RWin => ("Meta", "MetaRight", 2),
+                _ => throw new NotSupportedException($"No DOM modifier mapping implemented for {key}.")
+            };
 
         private static (string key, string code)? MapKeyToDomDefinition(Keys key)
         {
@@ -461,18 +747,24 @@ namespace GuacamoleClient.WinForms
 
         private static bool IsKeyCurrentlyDown(Keys key) => (NativeKeyboardMethods.GetAsyncKeyState((int)key) & 0x8000) != 0;
 
-        private static Keys? GetActiveControlKey()
-            => IsKeyCurrentlyDown(Keys.RControlKey) ? Keys.RControlKey :
+        private Keys? GetTrackedControlKey()
+            => _activeModifierKeys.Contains(Keys.RControlKey) ? Keys.RControlKey :
+               _activeModifierKeys.Contains(Keys.LControlKey) ? Keys.LControlKey :
+               IsKeyCurrentlyDown(Keys.RControlKey) ? Keys.RControlKey :
                IsKeyCurrentlyDown(Keys.LControlKey) ? Keys.LControlKey :
                IsKeyCurrentlyDown(Keys.ControlKey) ? Keys.LControlKey : null;
 
-        private static Keys? GetActiveAltKey()
-            => IsKeyCurrentlyDown(Keys.RMenu) ? Keys.RMenu :
+        private Keys? GetTrackedAltKey()
+            => _activeModifierKeys.Contains(Keys.RMenu) ? Keys.RMenu :
+               _activeModifierKeys.Contains(Keys.LMenu) ? Keys.LMenu :
+               IsKeyCurrentlyDown(Keys.RMenu) ? Keys.RMenu :
                IsKeyCurrentlyDown(Keys.LMenu) ? Keys.LMenu :
                IsKeyCurrentlyDown(Keys.Menu) ? Keys.LMenu : null;
 
-        private static Keys? GetActiveShiftKey()
-            => IsKeyCurrentlyDown(Keys.RShiftKey) ? Keys.RShiftKey :
+        private Keys? GetTrackedShiftKey()
+            => _activeModifierKeys.Contains(Keys.RShiftKey) ? Keys.RShiftKey :
+               _activeModifierKeys.Contains(Keys.LShiftKey) ? Keys.LShiftKey :
+               IsKeyCurrentlyDown(Keys.RShiftKey) ? Keys.RShiftKey :
                IsKeyCurrentlyDown(Keys.LShiftKey) ? Keys.LShiftKey :
                IsKeyCurrentlyDown(Keys.ShiftKey) ? Keys.LShiftKey : null;
 

@@ -74,6 +74,8 @@ namespace GuacamoleClient.Common.Localization
                         return "{0}+F4 wurde abgefangen und an die Remote-Sitzung gesendet.";
                     case LocalizationKeys.Hint_RemoteAltTab_Sent:
                         return "{0}+Tab wurde abgefangen und an die Remote-Sitzung gesendet.";
+                    case LocalizationKeys.Hint_ActiveModifiers:
+                        return "Aktive Sondertasten: {0}";
                     case LocalizationKeys.Hint_CtrlAltEnd_WithoutEffect_mstsc:
                         return "Hinweis: Strg+Alt+Ende hat in diesem Setup üblicherweise keine Wirkung (mstsc-Sonderfall).";
                     case LocalizationKeys.Hint_WinR_Catched_NotForwardableToRemoteServer:
@@ -269,6 +271,8 @@ namespace GuacamoleClient.Common.Localization
                     return "{0}+F4 was caught and sent to the remote session.";
                 case LocalizationKeys.Hint_RemoteAltTab_Sent:
                     return "{0}+Tab was caught and sent to the remote session.";
+                case LocalizationKeys.Hint_ActiveModifiers:
+                    return "Active special keys: {0}";
                 case LocalizationKeys.Hint_CtrlAltEnd_WithoutEffect_mstsc:
                     return "Hint: Ctrl+Alt+End usually without effect in this environment (special behaviour of mstsc).";
                 case LocalizationKeys.Hint_WinR_Catched_NotForwardableToRemoteServer:

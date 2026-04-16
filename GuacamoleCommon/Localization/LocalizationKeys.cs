@@ -25,6 +25,7 @@ namespace GuacamoleClient.Common.Localization
         Hint_RemoteCtrlAltEnd_Sent,
         Hint_RemoteAltF4_Sent,
         Hint_RemoteAltTab_Sent,
+        Hint_ActiveModifiers,
         /// <summary>
         /// Gets the hint message indicating that pressing Ctrl+Alt+End has no effect in Remote Desktop sessions
         /// (well-known keyboard shortcut from mstsc).
