@@ -40,13 +40,15 @@ namespace GuacamoleClient.WinForms
 
             bool ctrl = (Control.ModifierKeys & Keys.Control) == Keys.Control;
             bool alt = (Control.ModifierKeys & Keys.Alt) == Keys.Alt;     // AltGr erscheint hier als Ctrl+Alt
+            bool altGr = IsAltGrPressed();
             bool shift = (Control.ModifierKeys & Keys.Shift) == Keys.Shift;
             bool lwin = (Control.ModifierKeys & Keys.LWin) == Keys.LWin;
             bool rwin = (Control.ModifierKeys & Keys.RWin) == Keys.RWin;
             bool win = (lwin || rwin);
+            bool hostCtrlAlt = ctrl && alt && !altGr;
 
             // --- App-Policy: Ctrl+Alt+F4 schließt die App ---
-            if (e.VirtualKey == VK_F4 && ctrl && alt)
+            if (e.VirtualKey == VK_F4 && hostCtrlAlt)
             {
                 e.Handled = true;
                 ShowHint(LocalizationKeys.Hint_CtrlAltF4_AppWillBeClosed);
@@ -55,11 +57,11 @@ namespace GuacamoleClient.WinForms
             }
 
             // --- Alt+F4 blocken (App bleibt offen) ---
-            if (e.VirtualKey == VK_F4 && alt && !ctrl)
+            if (e.VirtualKey == VK_F4 && alt && (!ctrl || altGr))
             {
                 e.Handled = true;
                 if (ShouldRouteSpecialKeysToRemote())
-                    TriggerRemoteSpecialKey(RemoteSpecialKeyCommand.AltF4, "Caught Alt+F4 and sent it to the remote session.");
+                    TriggerRemoteSpecialKey(RemoteSpecialKeyCommand.AltF4, altGr ? "Caught RAlt+F4 and sent it to the remote session." : "Caught Alt+F4 and sent it to the remote session.", null, altGr ? Keys.RMenu : null);
                 else
                     ShowHint(LocalizationKeys.Hint_AltF4_CatchedAndIgnored);
                 return;
@@ -73,7 +75,7 @@ namespace GuacamoleClient.WinForms
             }
 
             // --- App-Policy: Ctrl+Alt+Backspace gibt Tastaturfokus frei ---
-            if (e.VirtualKey == VK_BACKSPACE && ctrl && alt)
+            if (e.VirtualKey == VK_BACKSPACE && hostCtrlAlt)
             {
                 e.Handled = true;
                 DetachWebViewFocus(false);
@@ -92,7 +94,7 @@ namespace GuacamoleClient.WinForms
             }
 
             // --- Ctrl+Alt+End: in WebView2/Guacamole typischerweise ohne Wirkung ---
-            if (e.VirtualKey == VK_END && ctrl && alt)
+            if (e.VirtualKey == VK_END && hostCtrlAlt)
             {
                 if (ShouldRouteSpecialKeysToRemote())
                 {
@@ -119,7 +121,7 @@ namespace GuacamoleClient.WinForms
                 return;
             }
 
-            if (fullScreenToolStripMenuItem.Checked && e.VirtualKey == (uint)Keys.Cancel && alt && ctrl)
+            if (fullScreenToolStripMenuItem.Checked && e.VirtualKey == (uint)Keys.Cancel && hostCtrlAlt)
             {
                 e.Handled = true;
                 SwitchFullScreenMode(false);
@@ -128,7 +130,7 @@ namespace GuacamoleClient.WinForms
             }
 
             // Restore window state from fullscreen on Strg+Break
-            if (e.VirtualKey == (uint)Keys.Insert && alt && ctrl)
+            if (e.VirtualKey == (uint)Keys.Insert && hostCtrlAlt)
             {
                 e.Handled = true;
                 SwitchFullScreenMode(!fullScreenToolStripMenuItem.Checked);
@@ -140,7 +142,7 @@ namespace GuacamoleClient.WinForms
             }
 
             // Go to guacamole home screen
-            if (e.VirtualKey == (uint)Keys.Home && alt && ctrl)
+            if (e.VirtualKey == (uint)Keys.Home && hostCtrlAlt)
             {
                 e.Handled = true;
                 connectionHomeToolStripMenuItem.PerformClick();
@@ -148,7 +150,7 @@ namespace GuacamoleClient.WinForms
             }
 
             // New Window
-            if (e.VirtualKey == (uint)Keys.N && alt && ctrl)
+            if (e.VirtualKey == (uint)Keys.N && hostCtrlAlt)
             {
                 e.Handled = true;
                 newWindowToolStripMenuItem.PerformClick();
@@ -188,13 +190,15 @@ namespace GuacamoleClient.WinForms
 
             bool ctrl = (Control.ModifierKeys & Keys.Control) == Keys.Control;
             bool alt = (Control.ModifierKeys & Keys.Alt) == Keys.Alt;     // AltGr erscheint hier als Ctrl+Alt
+            bool altGr = IsAltGrPressed();
             bool shift = (Control.ModifierKeys & Keys.Shift) == Keys.Shift;
             bool lwin = (Control.ModifierKeys & Keys.LWin) == Keys.LWin;
             bool rwin = (Control.ModifierKeys & Keys.RWin) == Keys.RWin;
             bool win = (lwin || rwin);
+            bool hostCtrlAlt = ctrl && alt && !altGr;
 
             // --- App-Policy: Ctrl+Alt+F4 schließt die App ---
-            if (e.KeyCode == VK_F4 && ctrl && alt)
+            if (e.KeyCode == VK_F4 && hostCtrlAlt)
             {
                 e.Handled = true;
                 ShowHint(LocalizationKeys.Hint_CtrlAltF4_AppWillBeClosed);
@@ -203,11 +207,11 @@ namespace GuacamoleClient.WinForms
             }
 
             // --- Alt+F4 blocken (App bleibt offen) ---
-            if (e.KeyCode == VK_F4 && alt && !ctrl)
+            if (e.KeyCode == VK_F4 && alt && (!ctrl || altGr))
             {
                 e.Handled = true;
                 if (ShouldRouteSpecialKeysToRemote())
-                    TriggerRemoteSpecialKey(RemoteSpecialKeyCommand.AltF4, "Caught Alt+F4 and sent it to the remote session.");
+                    TriggerRemoteSpecialKey(RemoteSpecialKeyCommand.AltF4, altGr ? "Caught RAlt+F4 and sent it to the remote session." : "Caught Alt+F4 and sent it to the remote session.", null, altGr ? Keys.RMenu : null);
                 else
                     ShowHint(LocalizationKeys.Hint_AltF4_CatchedAndIgnored);
                 return;
@@ -221,7 +225,7 @@ namespace GuacamoleClient.WinForms
             }
 
             // --- App-Policy: Ctrl+Alt+Backspace gibt Tastaturfokus frei ---
-            if (e.KeyCode == VK_BACKSPACE && ctrl && alt)
+            if (e.KeyCode == VK_BACKSPACE && hostCtrlAlt)
             {
                 e.Handled = true;
                 SetFocusToWebview2Control();
@@ -240,7 +244,7 @@ namespace GuacamoleClient.WinForms
             }
 
             // --- Ctrl+Alt+End: in WebView2/Guacamole typischerweise ohne Wirkung ---
-            if (e.KeyCode == VK_END && ctrl && alt)
+            if (e.KeyCode == VK_END && hostCtrlAlt)
             {
                 if (ShouldRouteSpecialKeysToRemote())
                 {
@@ -267,7 +271,7 @@ namespace GuacamoleClient.WinForms
                 return;
             }
 
-            if (fullScreenToolStripMenuItem.Checked && e.KeyCode == Keys.Cancel && alt && ctrl)
+            if (fullScreenToolStripMenuItem.Checked && e.KeyCode == Keys.Cancel && hostCtrlAlt)
             {
                 e.Handled = true;
                 SwitchFullScreenMode(false);
@@ -276,7 +280,7 @@ namespace GuacamoleClient.WinForms
             }
 
             // Restore window state from fullscreen on Strg+Break
-            if (e.KeyCode == Keys.Insert && alt && ctrl)
+            if (e.KeyCode == Keys.Insert && hostCtrlAlt)
             {
                 e.Handled = true;
                 SwitchFullScreenMode(!fullScreenToolStripMenuItem.Checked);
@@ -288,7 +292,7 @@ namespace GuacamoleClient.WinForms
             }
 
             // Go to guacamole home screen
-            if (e.KeyCode == Keys.Home && alt && ctrl)
+            if (e.KeyCode == Keys.Home && hostCtrlAlt)
             {
                 e.Handled = true;
                 connectionHomeToolStripMenuItem.PerformClick();
@@ -296,7 +300,7 @@ namespace GuacamoleClient.WinForms
             }
 
             // New window
-            if (e.KeyCode == Keys.N && alt && ctrl)
+            if (e.KeyCode == Keys.N && hostCtrlAlt)
             {
                 e.Handled = true;
                 newWindowToolStripMenuItem.PerformClick();
@@ -357,6 +361,17 @@ namespace GuacamoleClient.WinForms
             // Minimalprüfung: Abfrage per GetKeyState (links/rechts) – optional.
             short GetKeyState(int vk) => NativeMethods.GetKeyState(vk);
             return (GetKeyState(0x5B) < 0) || (GetKeyState(0x5C) < 0); // VK_LWIN, VK_RWIN
+        }
+
+        private static bool IsAltGrPressed()
+        {
+            short GetKeyState(int vk) => NativeMethods.GetKeyState(vk);
+            bool rightAlt = GetKeyState(0xA5) < 0;     // VK_RMENU
+            bool leftAlt = GetKeyState(0xA4) < 0;      // VK_LMENU
+            bool leftCtrl = GetKeyState(0xA2) < 0;     // VK_LCONTROL
+            bool rightCtrl = GetKeyState(0xA3) < 0;    // VK_RCONTROL
+
+            return rightAlt && !leftAlt && leftCtrl && !rightCtrl;
         }
 
         private static class NativeMethods

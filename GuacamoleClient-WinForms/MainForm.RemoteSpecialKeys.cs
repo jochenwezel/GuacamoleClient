@@ -89,10 +89,12 @@ namespace GuacamoleClient.WinForms
 
         private bool TryHandleRemoteSpecialShortcutKeyDown(Keys key)
         {
-            bool ctrl = IsKeyCurrentlyDown(Keys.ControlKey);
-            bool alt = IsKeyCurrentlyDown(Keys.Menu);
-            bool shift = IsKeyCurrentlyDown(Keys.ShiftKey);
-            bool win = IsKeyCurrentlyDown(Keys.LWin) || IsKeyCurrentlyDown(Keys.RWin) || key is Keys.LWin or Keys.RWin;
+            Keys? controlKey = GetActiveControlKey();
+            Keys? altKey = GetActiveAltKey();
+            Keys? shiftKey = GetActiveShiftKey();
+            bool ctrl = controlKey.HasValue;
+            bool alt = altKey.HasValue;
+            bool shift = shiftKey.HasValue;
 
             if (ctrl && alt && key == Keys.Back)
                 return false; // existing local focus release shortcut keeps current behavior
@@ -106,19 +108,19 @@ namespace GuacamoleClient.WinForms
             }
 
             if (ctrl && alt && key == Keys.Delete)
-                return TriggerRemoteSpecialKey(RemoteSpecialKeyCommand.CtrlAltDel, "Caught Ctrl+Alt+Del and sent it to the remote session.");
+                return TriggerRemoteSpecialKey(RemoteSpecialKeyCommand.CtrlAltDel, $"Caught {FormatControlKeyName(controlKey)}+{FormatAltKeyName(altKey)}+Del and sent it to the remote session.", controlKey, altKey);
 
             if (ctrl && shift && key == Keys.Escape)
-                return TriggerRemoteSpecialKey(RemoteSpecialKeyCommand.CtrlShiftEsc, "Caught Ctrl+Shift+Esc and sent it to the remote session.");
+                return TriggerRemoteSpecialKey(RemoteSpecialKeyCommand.CtrlShiftEsc, $"Caught {FormatControlKeyName(controlKey)}+{FormatShiftKeyName(shiftKey)}+Esc and sent it to the remote session.", controlKey, null, shiftKey);
 
             if (ctrl && alt && key == Keys.End)
-                return TriggerRemoteSpecialKey(RemoteSpecialKeyCommand.CtrlAltEnd, "Caught Ctrl+Alt+End and sent it to the remote session.");
+                return TriggerRemoteSpecialKey(RemoteSpecialKeyCommand.CtrlAltEnd, $"Caught {FormatControlKeyName(controlKey)}+{FormatAltKeyName(altKey)}+End and sent it to the remote session.", controlKey, altKey);
 
             if (alt && !ctrl && key == Keys.F4)
-                return TriggerRemoteSpecialKey(RemoteSpecialKeyCommand.AltF4, "Caught Alt+F4 and sent it to the remote session.");
+                return TriggerRemoteSpecialKey(RemoteSpecialKeyCommand.AltF4, $"Caught {FormatAltKeyName(altKey)}+F4 and sent it to the remote session.", null, altKey);
 
             if (alt && !ctrl && key == Keys.Tab)
-                return TriggerRemoteSpecialKey(RemoteSpecialKeyCommand.AltTab, "Caught Alt+Tab and sent it to the remote session.");
+                return TriggerRemoteSpecialKey(RemoteSpecialKeyCommand.AltTab, $"Caught {FormatAltKeyName(altKey)}+Tab and sent it to the remote session.", null, altKey);
 
             if (_windowsChordActive && !IsModifierKey(key))
             {
@@ -148,14 +150,14 @@ namespace GuacamoleClient.WinForms
             return key is Keys.LWin or Keys.RWin;
         }
 
-        private bool TriggerRemoteSpecialKey(RemoteSpecialKeyCommand command, string tooltipText)
+        private bool TriggerRemoteSpecialKey(RemoteSpecialKeyCommand command, string tooltipText, Keys? controlKey = null, Keys? altKey = null, Keys? shiftKey = null)
         {
             Keys windowsKey = _activeWindowsKey;
             BeginInvoke(async () =>
             {
                 try
                 {
-                    await SendRemoteSpecialKeyAsync(command, windowsKey).ConfigureAwait(true);
+                    await SendRemoteSpecialKeyAsync(command, windowsKey, controlKey, altKey, shiftKey).ConfigureAwait(true);
                     ShowTransientHint(tooltipText);
                 }
                 catch (Exception ex)
@@ -203,7 +205,7 @@ namespace GuacamoleClient.WinForms
             try { _tip.Show(text, this, 20, 20, RemoteShortcutHintDurationMs); } catch { }
         }
 
-        private async Task SendRemoteSpecialKeyAsync(RemoteSpecialKeyCommand command, Keys windowsKey = Keys.LWin)
+        private async Task SendRemoteSpecialKeyAsync(RemoteSpecialKeyCommand command, Keys windowsKey = Keys.LWin, Keys? controlKey = null, Keys? altKey = null, Keys? shiftKey = null)
         {
             switch (command)
             {
@@ -215,49 +217,57 @@ namespace GuacamoleClient.WinForms
                     );
                     return;
                 case RemoteSpecialKeyCommand.CtrlAltDel:
+                    var ctrlForDel = MapControlKeyDomDefinition(controlKey ?? Keys.LControlKey);
+                    var altForDel = MapAltKeyDomDefinition(altKey ?? Keys.LMenu);
                     await DispatchSyntheticKeyboardSequenceAsync(
-                        """{ "type": "keydown", "key": "Control", "code": "ControlLeft", "ctrlKey": true, "location": 1 }""",
-                        """{ "type": "keydown", "key": "Alt", "code": "AltLeft", "ctrlKey": true, "altKey": true, "location": 1 }""",
+                        $$"""{"type":"keydown","key":"Control","code":"{{ctrlForDel.code}}","ctrlKey":true,"location":{{ctrlForDel.location}}}""",
+                        $$"""{"type":"keydown","key":"Alt","code":"{{altForDel.code}}","ctrlKey":true,"altKey":true,"location":{{altForDel.location}}}""",
                         """{ "type": "keydown", "key": "Delete", "code": "Delete", "ctrlKey": true, "altKey": true }""",
                         """{ "type": "keyup", "key": "Delete", "code": "Delete", "ctrlKey": true, "altKey": true }""",
-                        """{ "type": "keyup", "key": "Alt", "code": "AltLeft", "ctrlKey": true, "altKey": false, "location": 1 }""",
-                        """{ "type": "keyup", "key": "Control", "code": "ControlLeft", "ctrlKey": false, "location": 1 }"""
+                        $$"""{"type":"keyup","key":"Alt","code":"{{altForDel.code}}","ctrlKey":true,"altKey":false,"location":{{altForDel.location}}}""",
+                        $$"""{"type":"keyup","key":"Control","code":"{{ctrlForDel.code}}","ctrlKey":false,"location":{{ctrlForDel.location}}}"""
                     );
                     return;
                 case RemoteSpecialKeyCommand.CtrlAltEnd:
+                    var ctrlForEnd = MapControlKeyDomDefinition(controlKey ?? Keys.LControlKey);
+                    var altForEnd = MapAltKeyDomDefinition(altKey ?? Keys.LMenu);
                     await DispatchSyntheticKeyboardSequenceAsync(
-                        """{ "type": "keydown", "key": "Control", "code": "ControlLeft", "ctrlKey": true, "location": 1 }""",
-                        """{ "type": "keydown", "key": "Alt", "code": "AltLeft", "ctrlKey": true, "altKey": true, "location": 1 }""",
+                        $$"""{"type":"keydown","key":"Control","code":"{{ctrlForEnd.code}}","ctrlKey":true,"location":{{ctrlForEnd.location}}}""",
+                        $$"""{"type":"keydown","key":"Alt","code":"{{altForEnd.code}}","ctrlKey":true,"altKey":true,"location":{{altForEnd.location}}}""",
                         """{ "type": "keydown", "key": "End", "code": "End", "ctrlKey": true, "altKey": true }""",
                         """{ "type": "keyup", "key": "End", "code": "End", "ctrlKey": true, "altKey": true }""",
-                        """{ "type": "keyup", "key": "Alt", "code": "AltLeft", "ctrlKey": true, "altKey": false, "location": 1 }""",
-                        """{ "type": "keyup", "key": "Control", "code": "ControlLeft", "ctrlKey": false, "location": 1 }"""
+                        $$"""{"type":"keyup","key":"Alt","code":"{{altForEnd.code}}","ctrlKey":true,"altKey":false,"location":{{altForEnd.location}}}""",
+                        $$"""{"type":"keyup","key":"Control","code":"{{ctrlForEnd.code}}","ctrlKey":false,"location":{{ctrlForEnd.location}}}"""
                     );
                     return;
                 case RemoteSpecialKeyCommand.CtrlShiftEsc:
+                    var ctrlForEsc = MapControlKeyDomDefinition(controlKey ?? Keys.LControlKey);
+                    var shiftForEsc = MapShiftKeyDomDefinition(shiftKey ?? Keys.LShiftKey);
                     await DispatchSyntheticKeyboardSequenceAsync(
-                        """{ "type": "keydown", "key": "Control", "code": "ControlLeft", "ctrlKey": true, "location": 1 }""",
-                        """{ "type": "keydown", "key": "Shift", "code": "ShiftLeft", "ctrlKey": true, "shiftKey": true, "location": 1 }""",
+                        $$"""{"type":"keydown","key":"Control","code":"{{ctrlForEsc.code}}","ctrlKey":true,"location":{{ctrlForEsc.location}}}""",
+                        $$"""{"type":"keydown","key":"Shift","code":"{{shiftForEsc.code}}","ctrlKey":true,"shiftKey":true,"location":{{shiftForEsc.location}}}""",
                         """{ "type": "keydown", "key": "Escape", "code": "Escape", "ctrlKey": true, "shiftKey": true }""",
                         """{ "type": "keyup", "key": "Escape", "code": "Escape", "ctrlKey": true, "shiftKey": true }""",
-                        """{ "type": "keyup", "key": "Shift", "code": "ShiftLeft", "ctrlKey": true, "shiftKey": false, "location": 1 }""",
-                        """{ "type": "keyup", "key": "Control", "code": "ControlLeft", "ctrlKey": false, "location": 1 }"""
+                        $$"""{"type":"keyup","key":"Shift","code":"{{shiftForEsc.code}}","ctrlKey":true,"shiftKey":false,"location":{{shiftForEsc.location}}}""",
+                        $$"""{"type":"keyup","key":"Control","code":"{{ctrlForEsc.code}}","ctrlKey":false,"location":{{ctrlForEsc.location}}}"""
                     );
                     return;
                 case RemoteSpecialKeyCommand.AltF4:
+                    var altForF4 = MapAltKeyDomDefinition(altKey ?? Keys.LMenu);
                     await DispatchSyntheticKeyboardSequenceAsync(
-                        """{ "type": "keydown", "key": "Alt", "code": "AltLeft", "altKey": true, "location": 1 }""",
+                        $$"""{"type":"keydown","key":"Alt","code":"{{altForF4.code}}","altKey":true,"location":{{altForF4.location}}}""",
                         """{ "type": "keydown", "key": "F4", "code": "F4", "altKey": true }""",
                         """{ "type": "keyup", "key": "F4", "code": "F4", "altKey": true }""",
-                        """{ "type": "keyup", "key": "Alt", "code": "AltLeft", "altKey": false, "location": 1 }"""
+                        $$"""{"type":"keyup","key":"Alt","code":"{{altForF4.code}}","altKey":false,"location":{{altForF4.location}}}"""
                     );
                     return;
                 case RemoteSpecialKeyCommand.AltTab:
+                    var altForTab = MapAltKeyDomDefinition(altKey ?? Keys.LMenu);
                     await DispatchSyntheticKeyboardSequenceAsync(
-                        """{ "type": "keydown", "key": "Alt", "code": "AltLeft", "altKey": true, "location": 1 }""",
+                        $$"""{"type":"keydown","key":"Alt","code":"{{altForTab.code}}","altKey":true,"location":{{altForTab.location}}}""",
                         """{ "type": "keydown", "key": "Tab", "code": "Tab", "altKey": true }""",
                         """{ "type": "keyup", "key": "Tab", "code": "Tab", "altKey": true }""",
-                        """{ "type": "keyup", "key": "Alt", "code": "AltLeft", "altKey": false, "location": 1 }"""
+                        $$"""{"type":"keyup","key":"Alt","code":"{{altForTab.code}}","altKey":false,"location":{{altForTab.location}}}"""
                     );
                     return;
                 case RemoteSpecialKeyCommand.WinR:
@@ -290,8 +300,26 @@ namespace GuacamoleClient.WinForms
         private static (string code, int location) MapWindowsKeyDomDefinition(Keys key)
             => key == Keys.RWin ? ("MetaRight", 2) : ("MetaLeft", 1);
 
+        private static (string code, int location) MapControlKeyDomDefinition(Keys key)
+            => key == Keys.RControlKey ? ("ControlRight", 2) : ("ControlLeft", 1);
+
+        private static (string code, int location) MapAltKeyDomDefinition(Keys key)
+            => key == Keys.RMenu ? ("AltRight", 2) : ("AltLeft", 1);
+
+        private static (string code, int location) MapShiftKeyDomDefinition(Keys key)
+            => key == Keys.RShiftKey ? ("ShiftRight", 2) : ("ShiftLeft", 1);
+
         private static string FormatWindowsKeyName(Keys key)
             => key == Keys.RWin ? "RWin" : "LWin";
+
+        private static string FormatControlKeyName(Keys? key)
+            => key == Keys.RControlKey ? "RCtrl" : "LCtrl";
+
+        private static string FormatAltKeyName(Keys? key)
+            => key == Keys.RMenu ? "RAlt" : "LAlt";
+
+        private static string FormatShiftKeyName(Keys? key)
+            => key == Keys.RShiftKey ? "RShift" : "LShift";
 
         private static (string key, string code)? MapKeyToDomDefinition(Keys key)
         {
@@ -431,6 +459,21 @@ namespace GuacamoleClient.WinForms
         }
 
         private static bool IsKeyCurrentlyDown(Keys key) => (NativeKeyboardMethods.GetAsyncKeyState((int)key) & 0x8000) != 0;
+
+        private static Keys? GetActiveControlKey()
+            => IsKeyCurrentlyDown(Keys.RControlKey) ? Keys.RControlKey :
+               IsKeyCurrentlyDown(Keys.LControlKey) ? Keys.LControlKey :
+               IsKeyCurrentlyDown(Keys.ControlKey) ? Keys.LControlKey : null;
+
+        private static Keys? GetActiveAltKey()
+            => IsKeyCurrentlyDown(Keys.RMenu) ? Keys.RMenu :
+               IsKeyCurrentlyDown(Keys.LMenu) ? Keys.LMenu :
+               IsKeyCurrentlyDown(Keys.Menu) ? Keys.LMenu : null;
+
+        private static Keys? GetActiveShiftKey()
+            => IsKeyCurrentlyDown(Keys.RShiftKey) ? Keys.RShiftKey :
+               IsKeyCurrentlyDown(Keys.LShiftKey) ? Keys.LShiftKey :
+               IsKeyCurrentlyDown(Keys.ShiftKey) ? Keys.LShiftKey : null;
 
         private static bool IsModifierKey(Keys key)
             => key is Keys.LWin or Keys.RWin or Keys.ControlKey or Keys.LControlKey or Keys.RControlKey or Keys.Menu or Keys.LMenu or Keys.RMenu or Keys.ShiftKey or Keys.LShiftKey or Keys.RShiftKey;
