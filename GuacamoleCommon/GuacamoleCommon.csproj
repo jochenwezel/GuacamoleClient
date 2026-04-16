@@ -5,6 +5,9 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <RootNamespace>GuacamoleClient.Common</RootNamespace>
+    <Company>CompuMaster GmbH</Company>
+    <Product>GuacamoleClient</Product>
+    <Copyright>2025-2026 CompuMaster GmbH</Copyright>
   </PropertyGroup>
 
   <ItemGroup>

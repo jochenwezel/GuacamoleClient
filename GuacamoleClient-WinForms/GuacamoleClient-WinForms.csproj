@@ -17,7 +17,7 @@
     </Description>
     <Company>CompuMaster GmbH</Company>
     <Product>CompuMaster windows client for remote desktop to Guacamole servers</Product>
-    <Copyright>2025 CompuMaster GmbH</Copyright>
+    <Copyright>2025-2026 CompuMaster GmbH</Copyright>
     <GeneratePackageOnBuild>False</GeneratePackageOnBuild>
     <ApplicationIcon>guac.ico</ApplicationIcon>
     <PackageIcon>apple-touch-icon.png</PackageIcon>
