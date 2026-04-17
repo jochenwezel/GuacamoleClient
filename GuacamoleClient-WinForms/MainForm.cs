@@ -876,12 +876,25 @@ namespace GuacamoleClient.WinForms
 
         private async Task ToggleGuacamoleMenuSafeAsync()
         {
-            var result = await TryToggleGuacamoleMenuAsync().ConfigureAwait(true);
-            bool toggled = result.toggled;
-            if (!toggled)
-                throw new InvalidOperationException($"Unable to toggle the Guacamole menu in the embedded client. Reason: {result.reason ?? "unknown"}");
+            await ToggleGuacamoleMenuSafeAsync(ignoreUnavailableMenuScope: false).ConfigureAwait(true);
+        }
 
-            ShowHint(LocalizationKeys.Hint_GuacamoleMenu_Toggled);
+        private static bool IsUnavailableGuacamoleMenuScope(string? reason)
+            => string.Equals(reason, "menu-scope-unavailable", StringComparison.Ordinal);
+
+        private async Task<bool> ToggleGuacamoleMenuSafeAsync(bool ignoreUnavailableMenuScope)
+        {
+            var result = await TryToggleGuacamoleMenuAsync().ConfigureAwait(true);
+            if (result.toggled)
+            {
+                ShowHint(LocalizationKeys.Hint_GuacamoleMenu_Toggled);
+                return true;
+            }
+
+            if (ignoreUnavailableMenuScope && IsUnavailableGuacamoleMenuScope(result.reason))
+                return false;
+
+            throw new InvalidOperationException($"Unable to toggle the Guacamole menu in the embedded client. Reason: {result.reason ?? "unknown"}");
         }
 
         private async void openGuacamoleMenuToolStripMenuItem_Click(object sender, EventArgs e)

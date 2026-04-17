@@ -131,7 +131,7 @@ namespace GuacamoleClient.WinForms
                 {
                     try
                     {
-                        await ToggleGuacamoleMenuSafeAsync().ConfigureAwait(true);
+                        await ToggleGuacamoleMenuSafeAsync(ignoreUnavailableMenuScope: true).ConfigureAwait(true);
                     }
                     catch (Exception ex)
                     {
