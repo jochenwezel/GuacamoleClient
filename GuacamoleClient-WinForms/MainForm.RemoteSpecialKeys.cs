@@ -20,6 +20,7 @@ namespace GuacamoleClient.WinForms
             Windows,
             CtrlAltDel,
             CtrlAltEnd,
+            CtrlAltBackspace,
             CtrlShiftEsc,
             AltF4,
             AltTab,
@@ -133,7 +134,7 @@ namespace GuacamoleClient.WinForms
                 return TriggerRemoteSpecialKey(RemoteSpecialKeyCommand.CtrlShiftEsc, LocalizationProvider.Get(LocalizationKeys.Hint_RemoteCtrlShiftEsc_Sent, FormatControlKeyName(controlKey), FormatShiftKeyName(shiftKey)), controlKey, null, shiftKey);
 
             if (ctrl && alt && key == Keys.End)
-                return TriggerRemoteSpecialKey(RemoteSpecialKeyCommand.CtrlAltEnd, LocalizationProvider.Get(LocalizationKeys.Hint_RemoteCtrlAltEnd_Sent, FormatControlKeyName(controlKey), FormatAltKeyName(altKey)), controlKey, altKey);
+                return TriggerRemoteSpecialKey(RemoteSpecialKeyCommand.CtrlAltDel, LocalizationProvider.Get(LocalizationKeys.Hint_RemoteCtrlAltEnd_AsCtrlAltDel_Sent, FormatControlKeyName(controlKey), FormatAltKeyName(altKey)), controlKey, altKey);
 
             if (alt && !ctrl && key == Keys.F4)
                 return TriggerRemoteSpecialKey(RemoteSpecialKeyCommand.AltF4, LocalizationProvider.Get(LocalizationKeys.Hint_RemoteAltF4_Sent, FormatAltKeyName(altKey)), null, altKey);
@@ -304,6 +305,18 @@ namespace GuacamoleClient.WinForms
                         $$"""{"type":"keyup","key":"Control","code":"{{ctrlForEnd.code}}","ctrlKey":false,"location":{{ctrlForEnd.location}}}"""
                     );
                     return;
+                case RemoteSpecialKeyCommand.CtrlAltBackspace:
+                    var ctrlForBackspace = MapControlKeyDomDefinition(controlKey ?? Keys.LControlKey);
+                    var altForBackspace = MapAltKeyDomDefinition(altKey ?? Keys.LMenu);
+                    await DispatchSyntheticKeyboardSequenceAsync(
+                        $$"""{"type":"keydown","key":"Control","code":"{{ctrlForBackspace.code}}","ctrlKey":true,"location":{{ctrlForBackspace.location}}}""",
+                        $$"""{"type":"keydown","key":"Alt","code":"{{altForBackspace.code}}","ctrlKey":true,"altKey":true,"location":{{altForBackspace.location}}}""",
+                        """{ "type": "keydown", "key": "Backspace", "code": "Backspace", "ctrlKey": true, "altKey": true }""",
+                        """{ "type": "keyup", "key": "Backspace", "code": "Backspace", "ctrlKey": true, "altKey": true }""",
+                        $$"""{"type":"keyup","key":"Alt","code":"{{altForBackspace.code}}","ctrlKey":true,"altKey":false,"location":{{altForBackspace.location}}}""",
+                        $$"""{"type":"keyup","key":"Control","code":"{{ctrlForBackspace.code}}","ctrlKey":false,"location":{{ctrlForBackspace.location}}}"""
+                    );
+                    return;
                 case RemoteSpecialKeyCommand.CtrlShiftEsc:
                     var ctrlForEsc = MapControlKeyDomDefinition(controlKey ?? Keys.LControlKey);
                     var shiftForEsc = MapShiftKeyDomDefinition(shiftKey ?? Keys.LShiftKey);
@@ -338,7 +351,7 @@ namespace GuacamoleClient.WinForms
                     await TrySendRemoteWindowsCombinationAsync(windowsKey, Keys.R);
                     return;
                 case RemoteSpecialKeyCommand.WinPause:
-                    await SendRemoteWindowsPauseTestSequenceAsync(windowsKey);
+                    await TrySendRemoteWindowsCombinationAsync(windowsKey, Keys.Pause);
                     return;
                 default:
                     throw new NotSupportedException($"Unsupported remote special key command: {command}");
@@ -608,6 +621,15 @@ namespace GuacamoleClient.WinForms
                 _ => throw new NotSupportedException($"No DOM modifier mapping implemented for {key}.")
             };
 
+        /// <summary>
+        /// Maps a WinForms <see cref="Keys"/> value to the corresponding DOM <c>key</c>/<c>code</c> pair
+        /// used for synthetic keyboard events in the embedded Guacamole session.
+        /// </summary>
+        /// <param name="key">The WinForms key to translate.</param>
+        /// <returns>
+        /// A tuple containing the DOM <c>key</c> and <c>code</c> values, or <see langword="null"/> if
+        /// the key is currently not supported for synthetic forwarding.
+        /// </returns>
         private static (string key, string code)? MapKeyToDomDefinition(Keys key)
         {
             if (key >= Keys.A && key <= Keys.Z)
@@ -676,37 +698,13 @@ namespace GuacamoleClient.WinForms
                 _ => null,
             };
         }
-
-        private async Task SendRemoteWindowsPauseTestSequenceAsync(Keys windowsKey)
-        {
-            var meta = MapWindowsKeyDomDefinition(windowsKey);
-
-            // Known exception: the host catches Win+Pause correctly, but Guacamole/the remote
-            // session does not currently interpret Pause/Break reliably. We keep this as a
-            // contained probe sequence for future investigation instead of treating it as a
-            // generally supported Win+<key> combination.
-            await DispatchSyntheticKeyboardSequenceAsync(
-                $$"""{"type":"keydown","key":"Meta","code":"{{meta.code}}","metaKey":true,"location":{{meta.location}}}""",
-
-                """{ "type": "keydown", "key": "Pause", "code": "Pause", "metaKey": true }""",
-                """{ "type": "keyup", "key": "Pause", "code": "Pause", "metaKey": true }""",
-
-                """{ "type": "keydown", "key": "Pause", "code": "Cancel", "metaKey": true }""",
-                """{ "type": "keyup", "key": "Pause", "code": "Cancel", "metaKey": true }""",
-
-                """{ "type": "keydown", "key": "Break", "code": "Pause", "metaKey": true }""",
-                """{ "type": "keyup", "key": "Break", "code": "Pause", "metaKey": true }""",
-
-                $$"""{"type":"keyup","key":"Meta","code":"{{meta.code}}","metaKey":false,"location":{{meta.location}}}"""
-            );
-        }
-
-        private async void sendRemoteWindowsKeyToolStripMenuItem_Click(object sender, EventArgs e) => await SendRemoteSpecialKeyAsync(RemoteSpecialKeyCommand.Windows);
         private async void sendRemoteCtrlAltDelToolStripMenuItem_Click(object sender, EventArgs e) => await SendRemoteSpecialKeyAsync(RemoteSpecialKeyCommand.CtrlAltDel);
         private async void sendRemoteCtrlAltEndToolStripMenuItem_Click(object sender, EventArgs e) => await SendRemoteSpecialKeyAsync(RemoteSpecialKeyCommand.CtrlAltEnd);
-        private async void sendRemoteCtrlShiftEscToolStripMenuItem_Click(object sender, EventArgs e) => await SendRemoteSpecialKeyAsync(RemoteSpecialKeyCommand.CtrlShiftEsc);
-        private async void sendRemoteAltF4ToolStripMenuItem_Click(object sender, EventArgs e) => await SendRemoteSpecialKeyAsync(RemoteSpecialKeyCommand.AltF4);
-        private async void sendRemoteWinRToolStripMenuItem_Click(object sender, EventArgs e) => await SendRemoteSpecialKeyAsync(RemoteSpecialKeyCommand.WinR);
+        private async void sendRemoteCtrlAltBackspaceToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            await SendRemoteSpecialKeyAsync(RemoteSpecialKeyCommand.CtrlAltBackspace).ConfigureAwait(true);
+            ShowTransientHint(LocalizationProvider.Get(LocalizationKeys.Hint_RemoteCtrlAltBackspace_Sent, "LCtrl", "LAlt"));
+        }
 
         private static class NativeKeyboardMethods
         {

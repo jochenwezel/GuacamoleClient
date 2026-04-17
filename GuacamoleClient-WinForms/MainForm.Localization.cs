@@ -19,12 +19,10 @@ namespace GuacamoleClient.WinForms
             this.connectionHomeToolStripMenuItem.Text = LocalizationProvider.Get(LocalizationKeys.Menu_ConnectionHome);
             this.guacamoleUserSettingsToolStripMenuItem.Text = LocalizationProvider.Get(LocalizationKeys.Menu_GuacamoleUserSettings);
             this.guacamoleConnectionConfigurationsToolStripMenuItem.Text = LocalizationProvider.Get(LocalizationKeys.Menu_GuacamoleConnectionConfigurations);
-            this.sendRemoteWindowsKeyToolStripMenuItem.Text = LocalizationProvider.Get(LocalizationKeys.Menu_SendWindowsKey);
             this.sendRemoteCtrlAltDelToolStripMenuItem.Text = LocalizationProvider.Get(LocalizationKeys.Menu_SendCtrlAltDel);
             this.sendRemoteCtrlAltEndToolStripMenuItem.Text = LocalizationProvider.Get(LocalizationKeys.Menu_SendCtrlAltEnd);
-            this.sendRemoteCtrlShiftEscToolStripMenuItem.Text = LocalizationProvider.Get(LocalizationKeys.Menu_SendCtrlShiftEsc);
-            this.sendRemoteAltF4ToolStripMenuItem.Text = LocalizationProvider.Get(LocalizationKeys.Menu_SendAltF4);
-            this.sendRemoteWinRToolStripMenuItem.Text = LocalizationProvider.Get(LocalizationKeys.Menu_SendWinR);
+            this.sendRemoteCtrlAltBackspaceToolStripMenuItem.Text = LocalizationProvider.Get(LocalizationKeys.Menu_SendCtrlAltBackspace);
+            this.sendRemoteCtrlAltDelToolStripMenuItem.ShortcutKeyDisplayString = LocalizationProvider.Get(LocalizationKeys.ShortcutKeystroke_SendCtrlAltDelToolStripMenuItem);
             this.connectionHomeToolStripMenuItem.ShortcutKeyDisplayString = LocalizationProvider.Get(LocalizationKeys.ShortcutKeystroke_ConnectionHome);
             this.newWindowToolStripMenuItem.ShortcutKeyDisplayString = LocalizationProvider.Get(LocalizationKeys.ShortcutKeystroke_NewWindowToolStripMenuItem);
             this.quitToolStripMenuItem.ShortcutKeyDisplayString = LocalizationProvider.Get(LocalizationKeys.ShortcutKeystroke_QuitToolStripMenuItem);

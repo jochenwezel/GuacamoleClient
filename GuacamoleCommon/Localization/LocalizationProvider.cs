@@ -66,6 +66,10 @@ namespace GuacamoleClient.Common.Localization
                         return "{0}+Pause wurde abgefangen. Das Remote-Pause/Break-Mapping ist derzeit nicht zuverlässig und kann ohne Wirkung bleiben.";
                     case LocalizationKeys.Hint_RemoteCtrlAltDel_Sent:
                         return "{0}+{1}+Entf wurde abgefangen und an die Remote-Sitzung gesendet.";
+                    case LocalizationKeys.Hint_RemoteCtrlAltEnd_AsCtrlAltDel_Sent:
+                        return "{0}+{1}+Ende wurde abgefangen und als {0}+{1}+Entf an die Remote-Sitzung gesendet.";
+                    case LocalizationKeys.Hint_RemoteCtrlAltBackspace_Sent:
+                        return "{0}+{1}+Rücktaste wurde an die Remote-Sitzung gesendet.";
                     case LocalizationKeys.Hint_RemoteCtrlShiftEsc_Sent:
                         return "{0}+{1}+Esc wurde abgefangen und an die Remote-Sitzung gesendet.";
                     case LocalizationKeys.Hint_RemoteCtrlAltEnd_Sent:
@@ -95,17 +99,19 @@ namespace GuacamoleClient.Common.Localization
 
                     // Shortcut keystroke descriptions
                     case LocalizationKeys.ShortcutKeystroke_ConnectionHome:
-                        return "Strg+Alt+Pos1 / Alt-Gr+Pos1";
+                        return "Strg+Alt+Pos1";
                     case LocalizationKeys.ShortcutKeystroke_NewWindowToolStripMenuItem:
-                        return "Strg+Alt+N / Alt-Gr+N";
+                        return "Strg+Alt+N";
                     case LocalizationKeys.ShortcutKeystroke_QuitToolStripMenuItem:
-                        return "Strg+Alt+F4 / Alt-Gr+F4";
+                        return "Strg+Alt+F4";
                     case LocalizationKeys.ShortcutKeystroke_FullScreenToolStripMenuItem:
-                        return "Strg+Alt+Einfg / Alt-Gr+Einfg";
+                        return "Strg+Alt+Einfg";
                     case LocalizationKeys.ShortcutKeystroke_StopFullScreenModeToolStripMenuItem:
-                        return "Strg+Alt+Untbr / Alt-Gr+Untbr";
+                        return "Strg+Alt+Untbr";
                     case LocalizationKeys.ShortcutKeystroke_HintStopWebcontrol2FocusShortcut:
                         return "Strg+Alt+Rücktaste zum Einfangen/Freigeben der Tastatur";
+                    case LocalizationKeys.ShortcutKeystroke_SendCtrlAltDelToolStripMenuItem:
+                        return "Strg+Alt+Ende";
 
                     // Menu
                     case LocalizationKeys.Menu_OpenAnotherGuacamoleServer:
@@ -128,18 +134,12 @@ namespace GuacamoleClient.Common.Localization
                         return "Guacamole Benutzer-Einstellungen";
                     case LocalizationKeys.Menu_GuacamoleConnectionConfigurations:
                         return "Guacamole Verbindungs-Konfiguration";
-                    case LocalizationKeys.Menu_SendWindowsKey:
-                        return "Windows-Taste";
                     case LocalizationKeys.Menu_SendCtrlAltDel:
-                        return "Strg+Alt+Entf";
+                        return "Sende Strg+Alt+Entf";
                     case LocalizationKeys.Menu_SendCtrlAltEnd:
-                        return "Strg+Alt+Ende";
-                    case LocalizationKeys.Menu_SendCtrlShiftEsc:
-                        return "Strg+Umschalt+Esc";
-                    case LocalizationKeys.Menu_SendAltF4:
-                        return "Alt+F4";
-                    case LocalizationKeys.Menu_SendWinR:
-                        return "Win+R";
+                        return "Sende Strg+Alt+Ende";
+                    case LocalizationKeys.Menu_SendCtrlAltBackspace:
+                        return "Sende Strg+Alt+Rücktaste";
 
                     // Choose server dialog
                     case LocalizationKeys.ChooseServer_Column_Name:
@@ -263,6 +263,10 @@ namespace GuacamoleClient.Common.Localization
                     return "{0}+Pause was caught. The remote Pause/Break mapping is currently not reliable and may have no effect.";
                 case LocalizationKeys.Hint_RemoteCtrlAltDel_Sent:
                     return "{0}+{1}+Del was caught and sent to the remote session.";
+                case LocalizationKeys.Hint_RemoteCtrlAltEnd_AsCtrlAltDel_Sent:
+                    return "{0}+{1}+End was caught and sent to the remote session as {0}+{1}+Del.";
+                case LocalizationKeys.Hint_RemoteCtrlAltBackspace_Sent:
+                    return "{0}+{1}+Backspace was sent to the remote session.";
                 case LocalizationKeys.Hint_RemoteCtrlShiftEsc_Sent:
                     return "{0}+{1}+Esc was caught and sent to the remote session.";
                 case LocalizationKeys.Hint_RemoteCtrlAltEnd_Sent:
@@ -292,17 +296,19 @@ namespace GuacamoleClient.Common.Localization
 
                 // Shortcut keystroke descriptions
                 case LocalizationKeys.ShortcutKeystroke_ConnectionHome:
-                    return "Ctrl+Alt+Pos1 / Alt-Gr+Pos1";
+                    return "Ctrl+Alt+Pos1";
                 case LocalizationKeys.ShortcutKeystroke_NewWindowToolStripMenuItem:
-                    return "Ctrl+Alt+N / Alt-Gr+N";
+                    return "Ctrl+Alt+N";
                 case LocalizationKeys.ShortcutKeystroke_QuitToolStripMenuItem:
-                    return "Ctrl+Alt+F4 / Alt-Gr+F4";
+                    return "Ctrl+Alt+F4";
                 case LocalizationKeys.ShortcutKeystroke_FullScreenToolStripMenuItem:
-                    return "Ctrl+Alt+Insert / Alt-Gr+Insert";
+                    return "Ctrl+Alt+Insert";
                 case LocalizationKeys.ShortcutKeystroke_StopFullScreenModeToolStripMenuItem:
-                    return "Ctrl+Alt+Break / Alt-Gr+Break";
+                    return "Ctrl+Alt+Break";
                 case LocalizationKeys.ShortcutKeystroke_HintStopWebcontrol2FocusShortcut:
                     return "Ctrl+Alt+Backspace to capture/release keyboard";
+                case LocalizationKeys.ShortcutKeystroke_SendCtrlAltDelToolStripMenuItem:
+                    return "Ctrl+Alt+End";
 
                 // Menu
                 case LocalizationKeys.Menu_OpenAnotherGuacamoleServer:
@@ -325,18 +331,12 @@ namespace GuacamoleClient.Common.Localization
                     return "Guacamole User Settings";
                 case LocalizationKeys.Menu_GuacamoleConnectionConfigurations:
                     return "Guacamole Connections Configuration";
-                case LocalizationKeys.Menu_SendWindowsKey:
-                    return "Windows key";
                 case LocalizationKeys.Menu_SendCtrlAltDel:
-                    return "Ctrl+Alt+Del";
+                    return "Send Ctrl+Alt+Del";
                 case LocalizationKeys.Menu_SendCtrlAltEnd:
-                    return "Ctrl+Alt+End";
-                case LocalizationKeys.Menu_SendCtrlShiftEsc:
-                    return "Ctrl+Shift+Esc";
-                case LocalizationKeys.Menu_SendAltF4:
-                    return "Alt+F4";
-                case LocalizationKeys.Menu_SendWinR:
-                    return "Win+R";
+                    return "Send Ctrl+Alt+End";
+                case LocalizationKeys.Menu_SendCtrlAltBackspace:
+                    return "Send Ctrl+Alt+Backspace";
 
                 // Choose server dialog
                 case LocalizationKeys.ChooseServer_Column_Name:

@@ -21,6 +21,8 @@ namespace GuacamoleClient.Common.Localization
         Hint_RemoteWindowsCombination_NotMapped,
         Hint_RemoteWindowsPause_NotReliable,
         Hint_RemoteCtrlAltDel_Sent,
+        Hint_RemoteCtrlAltEnd_AsCtrlAltDel_Sent,
+        Hint_RemoteCtrlAltBackspace_Sent,
         Hint_RemoteCtrlShiftEsc_Sent,
         Hint_RemoteCtrlAltEnd_Sent,
         Hint_RemoteAltF4_Sent,
@@ -50,6 +52,7 @@ namespace GuacamoleClient.Common.Localization
         ShortcutKeystroke_FullScreenToolStripMenuItem,
         ShortcutKeystroke_StopFullScreenModeToolStripMenuItem,
         ShortcutKeystroke_HintStopWebcontrol2FocusShortcut,
+        ShortcutKeystroke_SendCtrlAltDelToolStripMenuItem,
 
         // Menu
         Menu_OpenAnotherGuacamoleServer,
@@ -62,12 +65,9 @@ namespace GuacamoleClient.Common.Localization
         Menu_ConnectionHome,
         Menu_GuacamoleUserSettings,
         Menu_GuacamoleConnectionConfigurations,
-        Menu_SendWindowsKey,
         Menu_SendCtrlAltDel,
         Menu_SendCtrlAltEnd,
-        Menu_SendCtrlShiftEsc,
-        Menu_SendAltF4,
-        Menu_SendWinR,
+        Menu_SendCtrlAltBackspace,
 
         // Choose/Manage servers dialog
         ChooseServer_Column_Name,

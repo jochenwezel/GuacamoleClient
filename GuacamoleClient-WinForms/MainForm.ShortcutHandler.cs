@@ -59,7 +59,7 @@ namespace GuacamoleClient.WinForms
             {
                 e.Handled = true;
                 if (ShouldRouteSpecialKeysToRemote())
-                    TriggerRemoteSpecialKey(RemoteSpecialKeyCommand.AltF4, altGr ? "Caught RAlt+F4 and sent it to the remote session." : "Caught Alt+F4 and sent it to the remote session.", null, altGr ? Keys.RMenu : null);
+                    TriggerRemoteSpecialKey(RemoteSpecialKeyCommand.AltF4, LocalizationProvider.Get(LocalizationKeys.Hint_RemoteAltF4_Sent, altGr ? "RAlt" : "LAlt"), null, altGr ? Keys.RMenu : null);
                 else
                     ShowHint(LocalizationKeys.Hint_AltF4_CatchedAndIgnored);
                 return;
@@ -85,19 +85,19 @@ namespace GuacamoleClient.WinForms
             {
                 e.Handled = true; // lokal abfangen
                 if (ShouldRouteSpecialKeysToRemote())
-                    TriggerRemoteSpecialKey(RemoteSpecialKeyCommand.CtrlShiftEsc, "Caught Ctrl+Shift+Esc and sent it to the remote session.");
+                    TriggerRemoteSpecialKey(RemoteSpecialKeyCommand.CtrlShiftEsc, LocalizationProvider.Get(LocalizationKeys.Hint_RemoteCtrlShiftEsc_Sent, "LCtrl", "LShift"));
                 else
                     ShowHint(LocalizationKeys.Hint_CtrlShiftEsc_Catched_NotForwardableToRemoteServer);
                 return;
             }
 
-            // --- Ctrl+Alt+End: in WebView2/Guacamole typischerweise ohne Wirkung ---
+            // --- Ctrl+Alt+End: lokaler Ersatz für Ctrl+Alt+Del an die Remote-Sitzung ---
             if (e.VirtualKey == VK_END && hostCtrlAlt)
             {
                 if (ShouldRouteSpecialKeysToRemote())
                 {
                     e.Handled = true;
-                    TriggerRemoteSpecialKey(RemoteSpecialKeyCommand.CtrlAltEnd, "Caught Ctrl+Alt+End and sent it to the remote session.");
+                    TriggerRemoteSpecialKey(RemoteSpecialKeyCommand.CtrlAltDel, LocalizationProvider.Get(LocalizationKeys.Hint_RemoteCtrlAltEnd_AsCtrlAltDel_Sent, "LCtrl", "LAlt"));
                 }
                 else
                 {
@@ -113,7 +113,7 @@ namespace GuacamoleClient.WinForms
             {
                 e.Handled = true;
                 if (ShouldRouteSpecialKeysToRemote())
-                    TriggerRemoteSpecialKey(RemoteSpecialKeyCommand.WinR, "Caught Win+R and sent it to the remote session.");
+                    TriggerRemoteSpecialKey(RemoteSpecialKeyCommand.WinR, LocalizationProvider.Get(LocalizationKeys.Hint_RemoteWindowsCombination_Sent, "LWin", Keys.R));
                 else
                     ShowHint(LocalizationKeys.Hint_WinR_Catched_NotForwardableToRemoteServer);
                 return;
@@ -207,7 +207,7 @@ namespace GuacamoleClient.WinForms
             {
                 e.Handled = true;
                 if (ShouldRouteSpecialKeysToRemote())
-                    TriggerRemoteSpecialKey(RemoteSpecialKeyCommand.AltF4, altGr ? "Caught RAlt+F4 and sent it to the remote session." : "Caught Alt+F4 and sent it to the remote session.", null, altGr ? Keys.RMenu : null);
+                    TriggerRemoteSpecialKey(RemoteSpecialKeyCommand.AltF4, LocalizationProvider.Get(LocalizationKeys.Hint_RemoteAltF4_Sent, altGr ? "RAlt" : "LAlt"), null, altGr ? Keys.RMenu : null);
                 else
                     ShowHint(LocalizationKeys.Hint_AltF4_CatchedAndIgnored);
                 return;
@@ -233,19 +233,19 @@ namespace GuacamoleClient.WinForms
             {
                 e.Handled = true; // lokal abfangen
                 if (ShouldRouteSpecialKeysToRemote())
-                    TriggerRemoteSpecialKey(RemoteSpecialKeyCommand.CtrlShiftEsc, "Caught Ctrl+Shift+Esc and sent it to the remote session.");
+                    TriggerRemoteSpecialKey(RemoteSpecialKeyCommand.CtrlShiftEsc, LocalizationProvider.Get(LocalizationKeys.Hint_RemoteCtrlShiftEsc_Sent, "LCtrl", "LShift"));
                 else
                     ShowHint(LocalizationKeys.Hint_CtrlShiftEsc_Catched_NotForwardableToRemoteServer);
                 return;
             }
 
-            // --- Ctrl+Alt+End: in WebView2/Guacamole typischerweise ohne Wirkung ---
+            // --- Ctrl+Alt+End: lokaler Ersatz für Ctrl+Alt+Del an die Remote-Sitzung ---
             if (e.KeyCode == VK_END && hostCtrlAlt)
             {
                 if (ShouldRouteSpecialKeysToRemote())
                 {
                     e.Handled = true;
-                    TriggerRemoteSpecialKey(RemoteSpecialKeyCommand.CtrlAltEnd, "Caught Ctrl+Alt+End and sent it to the remote session.");
+                    TriggerRemoteSpecialKey(RemoteSpecialKeyCommand.CtrlAltDel, LocalizationProvider.Get(LocalizationKeys.Hint_RemoteCtrlAltEnd_AsCtrlAltDel_Sent, "LCtrl", "LAlt"));
                 }
                 else
                 {
@@ -261,7 +261,7 @@ namespace GuacamoleClient.WinForms
             {
                 e.Handled = true;
                 if (ShouldRouteSpecialKeysToRemote())
-                    TriggerRemoteSpecialKey(RemoteSpecialKeyCommand.WinR, "Caught Win+R and sent it to the remote session.");
+                    TriggerRemoteSpecialKey(RemoteSpecialKeyCommand.WinR, LocalizationProvider.Get(LocalizationKeys.Hint_RemoteWindowsCombination_Sent, "LWin", Keys.R));
                 else
                     ShowHint(LocalizationKeys.Hint_WinR_Catched_NotForwardableToRemoteServer);
                 return;

@@ -62,23 +62,20 @@ namespace GuacamoleClient.WinForms
             toolStripSeparator1 = new ToolStripSeparator();
             quitToolStripMenuItem = new ToolStripMenuItem();
             testToolStripMenuItem = new ToolStripMenuItem();
+            authorizationUserContextToolStripMenuItem = new ToolStripMenuItem();
+            restApiClientRequestsLogToolStripMenuItem = new ToolStripMenuItem();
             viewToolStripMenuItem = new ToolStripMenuItem();
-            sendKeyCombinationToolStripMenuItem = new ToolStripMenuItem();
             fullScreenToolStripMenuItem = new ToolStripMenuItem();
             stopFullScreenModeToolStripMenuItem = new ToolStripMenuItem();
+            sendKeyCombinationToolStripMenuItem = new ToolStripMenuItem();
+            sendRemoteCtrlAltDelToolStripMenuItem = new ToolStripMenuItem();
+            sendRemoteCtrlAltEndToolStripMenuItem = new ToolStripMenuItem();
+            sendRemoteCtrlAltBackspaceToolStripMenuItem = new ToolStripMenuItem();
             connectionNameInFullScreenModeToolStripMenuItem = new ToolStripMenuItem();
             HintStopWebcontrol2FocusShortcut = new ToolStripMenuItem();
             WebBrowserHostPanel = new Panel();
             formTitleRefreshTimer = new Timer(components);
             _focusSink = new TextBox();
-            authorizationUserContextToolStripMenuItem = new ToolStripMenuItem();
-            restApiClientRequestsLogToolStripMenuItem = new ToolStripMenuItem();
-            sendRemoteWindowsKeyToolStripMenuItem = new ToolStripMenuItem();
-            sendRemoteCtrlAltDelToolStripMenuItem = new ToolStripMenuItem();
-            sendRemoteCtrlAltEndToolStripMenuItem = new ToolStripMenuItem();
-            sendRemoteCtrlShiftEscToolStripMenuItem = new ToolStripMenuItem();
-            sendRemoteAltF4ToolStripMenuItem = new ToolStripMenuItem();
-            sendRemoteWinRToolStripMenuItem = new ToolStripMenuItem();
             mainMenuStrip.SuspendLayout();
             SuspendLayout();
             // 
@@ -101,60 +98,60 @@ namespace GuacamoleClient.WinForms
             // connectionHomeToolStripMenuItem
             // 
             connectionHomeToolStripMenuItem.Name = "connectionHomeToolStripMenuItem";
-            connectionHomeToolStripMenuItem.ShortcutKeyDisplayString = "Ctrl+Alt+Pos1 / Alt-Gr+Pos1";
-            connectionHomeToolStripMenuItem.Size = new Size(330, 22);
+            connectionHomeToolStripMenuItem.ShortcutKeyDisplayString = "Ctrl+Alt+Pos1";
+            connectionHomeToolStripMenuItem.Size = new Size(254, 22);
             connectionHomeToolStripMenuItem.Text = "Connection Home";
             connectionHomeToolStripMenuItem.Click += connectionHomeToolStripMenuItem_Click;
             // 
             // newWindowToolStripMenuItem
             // 
             newWindowToolStripMenuItem.Name = "newWindowToolStripMenuItem";
-            newWindowToolStripMenuItem.ShortcutKeyDisplayString = "Ctrl+Alt+N / Alt-Gr+N";
-            newWindowToolStripMenuItem.Size = new Size(330, 22);
+            newWindowToolStripMenuItem.ShortcutKeyDisplayString = "Ctrl+Alt+N";
+            newWindowToolStripMenuItem.Size = new Size(254, 22);
             newWindowToolStripMenuItem.Text = "New Window";
             newWindowToolStripMenuItem.Click += newWindowToolStripMenuItem_Click;
             // 
             // toolStripSeparator3
             // 
             toolStripSeparator3.Name = "toolStripSeparator3";
-            toolStripSeparator3.Size = new Size(327, 6);
+            toolStripSeparator3.Size = new Size(251, 6);
             // 
             // guacamoleUserSettingsToolStripMenuItem
             // 
             guacamoleUserSettingsToolStripMenuItem.Name = "guacamoleUserSettingsToolStripMenuItem";
-            guacamoleUserSettingsToolStripMenuItem.Size = new Size(330, 22);
+            guacamoleUserSettingsToolStripMenuItem.Size = new Size(254, 22);
             guacamoleUserSettingsToolStripMenuItem.Text = "Guacamole User Settings";
             guacamoleUserSettingsToolStripMenuItem.Click += guacamoleUserSettingsToolStripMenuItem_Click;
             // 
             // guacamoleConnectionConfigurationsToolStripMenuItem
             // 
             guacamoleConnectionConfigurationsToolStripMenuItem.Name = "guacamoleConnectionConfigurationsToolStripMenuItem";
-            guacamoleConnectionConfigurationsToolStripMenuItem.Size = new Size(330, 22);
+            guacamoleConnectionConfigurationsToolStripMenuItem.Size = new Size(254, 22);
             guacamoleConnectionConfigurationsToolStripMenuItem.Text = "Connection Configurations";
             guacamoleConnectionConfigurationsToolStripMenuItem.Click += guacamoleConnectionConfigurationsToolStripMenuItem_Click;
             // 
             // toolStripSeparator2
             // 
             toolStripSeparator2.Name = "toolStripSeparator2";
-            toolStripSeparator2.Size = new Size(327, 6);
+            toolStripSeparator2.Size = new Size(251, 6);
             // 
             // openAnotherGuacamoleServerToolStripMenuItem
             // 
             openAnotherGuacamoleServerToolStripMenuItem.Name = "openAnotherGuacamoleServerToolStripMenuItem";
-            openAnotherGuacamoleServerToolStripMenuItem.Size = new Size(330, 22);
+            openAnotherGuacamoleServerToolStripMenuItem.Size = new Size(254, 22);
             openAnotherGuacamoleServerToolStripMenuItem.Text = "Open another Guacamole server...";
             openAnotherGuacamoleServerToolStripMenuItem.Click += openAnotherGuacamoleServerToolStripMenuItem_Click;
             // 
             // toolStripSeparator1
             // 
             toolStripSeparator1.Name = "toolStripSeparator1";
-            toolStripSeparator1.Size = new Size(327, 6);
+            toolStripSeparator1.Size = new Size(251, 6);
             // 
             // quitToolStripMenuItem
             // 
             quitToolStripMenuItem.Name = "quitToolStripMenuItem";
-            quitToolStripMenuItem.ShortcutKeyDisplayString = "Ctrl+Alt+F4 / Alt-Gr+F4";
-            quitToolStripMenuItem.Size = new Size(330, 22);
+            quitToolStripMenuItem.ShortcutKeyDisplayString = "Ctrl+Alt+F4";
+            quitToolStripMenuItem.Size = new Size(254, 22);
             quitToolStripMenuItem.Text = "&Quit";
             quitToolStripMenuItem.Click += quitToolStripMenuItem_Click;
             // 
@@ -166,6 +163,20 @@ namespace GuacamoleClient.WinForms
             testToolStripMenuItem.Text = "Test";
             testToolStripMenuItem.Click += testToolStripMenuItem_Click;
             // 
+            // authorizationUserContextToolStripMenuItem
+            // 
+            authorizationUserContextToolStripMenuItem.Name = "authorizationUserContextToolStripMenuItem";
+            authorizationUserContextToolStripMenuItem.Size = new Size(228, 22);
+            authorizationUserContextToolStripMenuItem.Text = "Authorization & User Context";
+            authorizationUserContextToolStripMenuItem.Click += authorizationUserContextToolStripMenuItem_Click;
+            // 
+            // restApiClientRequestsLogToolStripMenuItem
+            // 
+            restApiClientRequestsLogToolStripMenuItem.Name = "restApiClientRequestsLogToolStripMenuItem";
+            restApiClientRequestsLogToolStripMenuItem.Size = new Size(228, 22);
+            restApiClientRequestsLogToolStripMenuItem.Text = "REST API Client Requests Log";
+            restApiClientRequestsLogToolStripMenuItem.Click += restApiClientRequestsLogToolStripMenuItem_Click;
+            // 
             // viewToolStripMenuItem
             // 
             viewToolStripMenuItem.DropDownItems.AddRange(new ToolStripItem[] { fullScreenToolStripMenuItem, stopFullScreenModeToolStripMenuItem });
@@ -173,28 +184,50 @@ namespace GuacamoleClient.WinForms
             viewToolStripMenuItem.Size = new Size(44, 20);
             viewToolStripMenuItem.Text = "&View";
             // 
-            // sendKeyCombinationToolStripMenuItem
-            // 
-            sendKeyCombinationToolStripMenuItem.DropDownItems.AddRange(new ToolStripItem[] { sendRemoteWindowsKeyToolStripMenuItem, sendRemoteCtrlAltDelToolStripMenuItem, sendRemoteCtrlAltEndToolStripMenuItem, sendRemoteCtrlShiftEscToolStripMenuItem, sendRemoteAltF4ToolStripMenuItem, sendRemoteWinRToolStripMenuItem });
-            sendKeyCombinationToolStripMenuItem.Name = "sendKeyCombinationToolStripMenuItem";
-            sendKeyCombinationToolStripMenuItem.Size = new Size(144, 20);
-            sendKeyCombinationToolStripMenuItem.Text = "Send key combination";
-            // 
             // fullScreenToolStripMenuItem
             // 
             fullScreenToolStripMenuItem.Name = "fullScreenToolStripMenuItem";
-            fullScreenToolStripMenuItem.ShortcutKeyDisplayString = "Ctrl+Alt+Insert / Alt-Gr+Insert";
-            fullScreenToolStripMenuItem.Size = new Size(360, 22);
+            fullScreenToolStripMenuItem.ShortcutKeyDisplayString = "Ctrl+Alt+Insert";
+            fullScreenToolStripMenuItem.Size = new Size(280, 22);
             fullScreenToolStripMenuItem.Text = "Full-Screen";
             fullScreenToolStripMenuItem.Click += fullScreenToolStripMenuItem_Click;
             // 
             // stopFullScreenModeToolStripMenuItem
             // 
             stopFullScreenModeToolStripMenuItem.Name = "stopFullScreenModeToolStripMenuItem";
-            stopFullScreenModeToolStripMenuItem.ShortcutKeyDisplayString = "Ctrl+Alt+Break / Alt-Gr+Break";
-            stopFullScreenModeToolStripMenuItem.Size = new Size(360, 22);
+            stopFullScreenModeToolStripMenuItem.ShortcutKeyDisplayString = "Ctrl+Alt+Break";
+            stopFullScreenModeToolStripMenuItem.Size = new Size(280, 22);
             stopFullScreenModeToolStripMenuItem.Text = "Stop Full-Screen Mode";
             stopFullScreenModeToolStripMenuItem.Click += stopFullScreenModeToolStripMenuItem_Click;
+            // 
+            // sendKeyCombinationToolStripMenuItem
+            // 
+            sendKeyCombinationToolStripMenuItem.DropDownItems.AddRange(new ToolStripItem[] { sendRemoteCtrlAltDelToolStripMenuItem, sendRemoteCtrlAltEndToolStripMenuItem, sendRemoteCtrlAltBackspaceToolStripMenuItem });
+            sendKeyCombinationToolStripMenuItem.Name = "sendKeyCombinationToolStripMenuItem";
+            sendKeyCombinationToolStripMenuItem.Size = new Size(137, 20);
+            sendKeyCombinationToolStripMenuItem.Text = "Send key combination";
+            // 
+            // sendRemoteCtrlAltDelToolStripMenuItem
+            // 
+            sendRemoteCtrlAltDelToolStripMenuItem.Name = "sendRemoteCtrlAltDelToolStripMenuItem";
+            sendRemoteCtrlAltDelToolStripMenuItem.ShortcutKeyDisplayString = "Ctrl+Alt+End";
+            sendRemoteCtrlAltDelToolStripMenuItem.Size = new Size(247, 22);
+            sendRemoteCtrlAltDelToolStripMenuItem.Text = "Send Ctrl+Alt+Del";
+            sendRemoteCtrlAltDelToolStripMenuItem.Click += sendRemoteCtrlAltDelToolStripMenuItem_Click;
+            // 
+            // sendRemoteCtrlAltEndToolStripMenuItem
+            // 
+            sendRemoteCtrlAltEndToolStripMenuItem.Name = "sendRemoteCtrlAltEndToolStripMenuItem";
+            sendRemoteCtrlAltEndToolStripMenuItem.Size = new Size(247, 22);
+            sendRemoteCtrlAltEndToolStripMenuItem.Text = "Send Ctrl+Alt+End";
+            sendRemoteCtrlAltEndToolStripMenuItem.Click += sendRemoteCtrlAltEndToolStripMenuItem_Click;
+            // 
+            // sendRemoteCtrlAltBackspaceToolStripMenuItem
+            // 
+            sendRemoteCtrlAltBackspaceToolStripMenuItem.Name = "sendRemoteCtrlAltBackspaceToolStripMenuItem";
+            sendRemoteCtrlAltBackspaceToolStripMenuItem.Size = new Size(247, 22);
+            sendRemoteCtrlAltBackspaceToolStripMenuItem.Text = "Send Ctrl+Alt+Backspace";
+            sendRemoteCtrlAltBackspaceToolStripMenuItem.Click += sendRemoteCtrlAltBackspaceToolStripMenuItem_Click;
             // 
             // connectionNameInFullScreenModeToolStripMenuItem
             // 
@@ -233,62 +266,6 @@ namespace GuacamoleClient.WinForms
             _focusSink.TabStop = false;
             _focusSink.Visible = false;
             // 
-            // authorizationUserContextToolStripMenuItem
-            // 
-            authorizationUserContextToolStripMenuItem.Name = "authorizationUserContextToolStripMenuItem";
-            authorizationUserContextToolStripMenuItem.Size = new Size(228, 22);
-            authorizationUserContextToolStripMenuItem.Text = "Authorization & User Context";
-            authorizationUserContextToolStripMenuItem.Click += authorizationUserContextToolStripMenuItem_Click;
-            // 
-            // rESTAPIClientRequestsLogToolStripMenuItem
-            // 
-            restApiClientRequestsLogToolStripMenuItem.Name = "rESTAPIClientRequestsLogToolStripMenuItem";
-            restApiClientRequestsLogToolStripMenuItem.Size = new Size(228, 22);
-            restApiClientRequestsLogToolStripMenuItem.Text = "REST API Client Requests Log";
-            restApiClientRequestsLogToolStripMenuItem.Click += restApiClientRequestsLogToolStripMenuItem_Click;
-            // 
-            // sendRemoteWindowsKeyToolStripMenuItem
-            // 
-            sendRemoteWindowsKeyToolStripMenuItem.Name = "sendRemoteWindowsKeyToolStripMenuItem";
-            sendRemoteWindowsKeyToolStripMenuItem.Size = new Size(228, 22);
-            sendRemoteWindowsKeyToolStripMenuItem.Text = "Windows key";
-            sendRemoteWindowsKeyToolStripMenuItem.Click += sendRemoteWindowsKeyToolStripMenuItem_Click;
-            // 
-            // sendRemoteCtrlAltDelToolStripMenuItem
-            // 
-            sendRemoteCtrlAltDelToolStripMenuItem.Name = "sendRemoteCtrlAltDelToolStripMenuItem";
-            sendRemoteCtrlAltDelToolStripMenuItem.Size = new Size(228, 22);
-            sendRemoteCtrlAltDelToolStripMenuItem.Text = "Ctrl+Alt+Del";
-            sendRemoteCtrlAltDelToolStripMenuItem.Click += sendRemoteCtrlAltDelToolStripMenuItem_Click;
-            // 
-            // sendRemoteCtrlAltEndToolStripMenuItem
-            // 
-            sendRemoteCtrlAltEndToolStripMenuItem.Name = "sendRemoteCtrlAltEndToolStripMenuItem";
-            sendRemoteCtrlAltEndToolStripMenuItem.Size = new Size(228, 22);
-            sendRemoteCtrlAltEndToolStripMenuItem.Text = "Ctrl+Alt+End";
-            sendRemoteCtrlAltEndToolStripMenuItem.Click += sendRemoteCtrlAltEndToolStripMenuItem_Click;
-            // 
-            // sendRemoteCtrlShiftEscToolStripMenuItem
-            // 
-            sendRemoteCtrlShiftEscToolStripMenuItem.Name = "sendRemoteCtrlShiftEscToolStripMenuItem";
-            sendRemoteCtrlShiftEscToolStripMenuItem.Size = new Size(228, 22);
-            sendRemoteCtrlShiftEscToolStripMenuItem.Text = "Ctrl+Shift+Esc";
-            sendRemoteCtrlShiftEscToolStripMenuItem.Click += sendRemoteCtrlShiftEscToolStripMenuItem_Click;
-            // 
-            // sendRemoteAltF4ToolStripMenuItem
-            // 
-            sendRemoteAltF4ToolStripMenuItem.Name = "sendRemoteAltF4ToolStripMenuItem";
-            sendRemoteAltF4ToolStripMenuItem.Size = new Size(228, 22);
-            sendRemoteAltF4ToolStripMenuItem.Text = "Alt+F4";
-            sendRemoteAltF4ToolStripMenuItem.Click += sendRemoteAltF4ToolStripMenuItem_Click;
-            // 
-            // sendRemoteWinRToolStripMenuItem
-            // 
-            sendRemoteWinRToolStripMenuItem.Name = "sendRemoteWinRToolStripMenuItem";
-            sendRemoteWinRToolStripMenuItem.Size = new Size(228, 22);
-            sendRemoteWinRToolStripMenuItem.Text = "Win+R";
-            sendRemoteWinRToolStripMenuItem.Click += sendRemoteWinRToolStripMenuItem_Click;
-            // 
             // MainForm
             // 
             ClientSize = new Size(1264, 725);
@@ -313,11 +290,8 @@ namespace GuacamoleClient.WinForms
         private ToolStripSeparator toolStripSeparator2;
         private ToolStripMenuItem authorizationUserContextToolStripMenuItem;
         private ToolStripMenuItem restApiClientRequestsLogToolStripMenuItem;
-        private ToolStripMenuItem sendRemoteWindowsKeyToolStripMenuItem;
         private ToolStripMenuItem sendRemoteCtrlAltDelToolStripMenuItem;
         private ToolStripMenuItem sendRemoteCtrlAltEndToolStripMenuItem;
-        private ToolStripMenuItem sendRemoteCtrlShiftEscToolStripMenuItem;
-        private ToolStripMenuItem sendRemoteAltF4ToolStripMenuItem;
-        private ToolStripMenuItem sendRemoteWinRToolStripMenuItem;
+        private ToolStripMenuItem sendRemoteCtrlAltBackspaceToolStripMenuItem;
     }
 }
