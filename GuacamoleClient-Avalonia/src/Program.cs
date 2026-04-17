@@ -1,7 +1,10 @@
 using Avalonia;
-using System;
-using System.Threading.Tasks;
 using GuacamoleClient.Common.Localization;
+using GuacamoleClient.Common.Settings;
+using System;
+using System.IO;
+using System.Threading.Tasks;
+using WebViewControl;
 
 namespace GuacClient;
 internal static class Program
@@ -10,6 +13,7 @@ internal static class Program
     public static void Main(string[] args)
     {
         RegisterGlobalExceptionHandlers();
+        ConfigurePersistentBrowserProfile();
 
         try
         {
@@ -26,6 +30,17 @@ internal static class Program
         => AppBuilder.Configure<App>()
             .UsePlatformDetect()
             .LogToTrace();
+
+    private static void ConfigurePersistentBrowserProfile()
+    {
+        string browserProfileDirectory = Path.Combine(
+            GuacamoleSettingsPaths.GetDefaultSettingsDirectory("GuacamoleClient-Avalonia"),
+            "BrowserProfile");
+
+        Directory.CreateDirectory(browserProfileDirectory);
+        WebView.Settings.CachePath = browserProfileDirectory;
+        WebView.Settings.PersistCache = true;
+    }
 
     private static void RegisterGlobalExceptionHandlers()
     {

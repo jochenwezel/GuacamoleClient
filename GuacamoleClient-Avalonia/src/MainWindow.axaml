@@ -1,9 +1,41 @@
-﻿<Window xmlns="https://github.com/avaloniaui"
+<Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:wv="clr-namespace:WebViewControl;assembly=WebViewControl.Avalonia"
         x:Class="GuacClient.MainWindow"
         Width="1280" Height="800"
         Title="GuacamoleClient">
 
-  <wv:WebView x:Name="Web" />
+  <DockPanel>
+    <Menu DockPanel.Dock="Top">
+      <MenuItem x:Name="ConnectionMenuItem">
+        <MenuItem x:Name="ResetUrlMenuItem" />
+        <Separator />
+        <MenuItem x:Name="QuitMenuItem" />
+      </MenuItem>
+      <MenuItem x:Name="SendKeyCombinationMenuItem">
+        <MenuItem x:Name="SendRemoteCtrlAltDelMenuItem" />
+        <MenuItem x:Name="SendRemoteCtrlAltEndMenuItem" />
+        <MenuItem x:Name="SendRemoteCtrlAltBackspaceMenuItem" />
+      </MenuItem>
+      <MenuItem x:Name="KeyboardCaptureStatusMenuItem" />
+      <MenuItem x:Name="KeyboardHintMenuItem" />
+    </Menu>
+
+    <Grid>
+      <wv:WebView x:Name="Web" />
+
+      <Border x:Name="HintOverlay"
+              IsVisible="False"
+              HorizontalAlignment="Left"
+              VerticalAlignment="Top"
+              Margin="16"
+              Padding="10,6"
+              CornerRadius="6"
+              Background="#CC1F2937">
+        <TextBlock x:Name="HintOverlayText"
+                   Foreground="White"
+                   TextWrapping="Wrap" />
+      </Border>
+    </Grid>
+  </DockPanel>
 </Window>
