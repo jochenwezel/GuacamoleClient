@@ -956,8 +956,9 @@ namespace GuacamoleClient.WinForms
                 }))()");
 
             // 1) äußere JS-String-Escapes entfernen
-            var unescaped = System.Text.Json.JsonSerializer.Deserialize<string>(js)!;
-            if (!string.IsNullOrEmpty(unescaped)) return null; //e.g. on ERR_CONNECTION_TIMED_OUT browser error page
+            var unescaped = System.Text.Json.JsonSerializer.Deserialize<string>(js);
+            if (string.IsNullOrWhiteSpace(unescaped)) return null; // e.g. on browser error pages
+
             using var doc = System.Text.Json.JsonDocument.Parse(unescaped);
 
             // 2) Token auslesen
