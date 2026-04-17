@@ -62,6 +62,7 @@ namespace GuacamoleClient.Common.Localization
         Menu_View,
         Menu_SendKeyCombination,
         Menu_ViewFullScreen,
+        Menu_ViewWindowMode,
         Menu_Quit,
         Menu_NewWindow,
         Menu_ConnectionHome,

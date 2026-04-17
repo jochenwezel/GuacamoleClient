@@ -12,6 +12,10 @@
         <Separator />
         <MenuItem x:Name="QuitMenuItem" />
       </MenuItem>
+      <MenuItem x:Name="ViewMenuItem">
+        <MenuItem x:Name="EnterFullScreenMenuItem" />
+        <MenuItem x:Name="ExitFullScreenMenuItem" />
+      </MenuItem>
       <MenuItem x:Name="SendKeyCombinationMenuItem">
         <MenuItem x:Name="SendRemoteCtrlAltDelMenuItem" />
         <MenuItem x:Name="SendRemoteCtrlAltEndMenuItem" />

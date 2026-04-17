@@ -43,9 +43,12 @@ namespace GuacClient
         private Border _hintOverlay = default!;
         private TextBlock _hintOverlayText = default!;
         private MenuItem _connectionMenuItem = default!;
+        private MenuItem _viewMenuItem = default!;
         private MenuItem _sendKeyCombinationMenuItem = default!;
         private MenuItem _resetUrlMenuItem = default!;
         private MenuItem _quitMenuItem = default!;
+        private MenuItem _enterFullScreenMenuItem = default!;
+        private MenuItem _exitFullScreenMenuItem = default!;
         private MenuItem _sendRemoteCtrlAltDelMenuItem = default!;
         private MenuItem _sendRemoteCtrlAltEndMenuItem = default!;
         private MenuItem _sendRemoteCtrlAltBackspaceMenuItem = default!;
@@ -57,6 +60,7 @@ namespace GuacClient
         private bool _windowsChordHadCombination;
         private Key _activeWindowsKey = Key.LWin;
         private bool _modifierOnlyChordHadNonModifier;
+        private bool _closeRequested;
 
         public MainWindow()
         {
@@ -66,9 +70,12 @@ namespace GuacClient
             _hintOverlay = this.FindControl<Border>("HintOverlay")!;
             _hintOverlayText = this.FindControl<TextBlock>("HintOverlayText")!;
             _connectionMenuItem = this.FindControl<MenuItem>("ConnectionMenuItem")!;
+            _viewMenuItem = this.FindControl<MenuItem>("ViewMenuItem")!;
             _sendKeyCombinationMenuItem = this.FindControl<MenuItem>("SendKeyCombinationMenuItem")!;
             _resetUrlMenuItem = this.FindControl<MenuItem>("ResetUrlMenuItem")!;
             _quitMenuItem = this.FindControl<MenuItem>("QuitMenuItem")!;
+            _enterFullScreenMenuItem = this.FindControl<MenuItem>("EnterFullScreenMenuItem")!;
+            _exitFullScreenMenuItem = this.FindControl<MenuItem>("ExitFullScreenMenuItem")!;
             _sendRemoteCtrlAltDelMenuItem = this.FindControl<MenuItem>("SendRemoteCtrlAltDelMenuItem")!;
             _sendRemoteCtrlAltEndMenuItem = this.FindControl<MenuItem>("SendRemoteCtrlAltEndMenuItem")!;
             _sendRemoteCtrlAltBackspaceMenuItem = this.FindControl<MenuItem>("SendRemoteCtrlAltBackspaceMenuItem")!;
@@ -81,6 +88,8 @@ namespace GuacClient
 
             _resetUrlMenuItem.Click += ResetUrlMenuItem_Click;
             _quitMenuItem.Click += QuitMenuItem_Click;
+            _enterFullScreenMenuItem.Click += EnterFullScreenMenuItem_Click;
+            _exitFullScreenMenuItem.Click += ExitFullScreenMenuItem_Click;
             _sendRemoteCtrlAltDelMenuItem.Click += SendRemoteCtrlAltDelMenuItem_Click;
             _sendRemoteCtrlAltEndMenuItem.Click += SendRemoteCtrlAltEndMenuItem_Click;
             _sendRemoteCtrlAltBackspaceMenuItem.Click += SendRemoteCtrlAltBackspaceMenuItem_Click;
@@ -89,8 +98,14 @@ namespace GuacClient
             {
                 await EnsureAndLoadUrlAsync();
                 UpdateKeyboardHookState();
+                UpdateViewMenuState();
             };
             this.Activated += (_, __) => UpdateKeyboardHookState();
+            this.PropertyChanged += (_, e) =>
+            {
+                if (e.Property == WindowStateProperty)
+                    UpdateViewMenuState();
+            };
             this.Deactivated += (_, __) =>
             {
                 ResetTrackedKeyboardState();
@@ -109,17 +124,23 @@ namespace GuacClient
         private void InitializeLocalization()
         {
             _connectionMenuItem.Header = LocalizationProvider.Get(LocalizationKeys.Menu_Connection);
+            _viewMenuItem.Header = LocalizationProvider.Get(LocalizationKeys.Menu_View);
             _sendKeyCombinationMenuItem.Header = LocalizationProvider.Get(LocalizationKeys.Menu_SendKeyCombination);
             _resetUrlMenuItem.Header = LocalizationProvider.Get(LocalizationKeys.Menu_OpenAnotherGuacamoleServer);
             _quitMenuItem.Header = LocalizationProvider.Get(LocalizationKeys.Menu_Quit);
+            _enterFullScreenMenuItem.Header = LocalizationProvider.Get(LocalizationKeys.Menu_ViewFullScreen);
+            _enterFullScreenMenuItem.InputGesture = new KeyGesture(Key.Insert, KeyModifiers.Control | KeyModifiers.Alt);
+            _exitFullScreenMenuItem.Header = LocalizationProvider.Get(LocalizationKeys.Menu_ViewWindowMode);
+            _exitFullScreenMenuItem.InputGesture = new KeyGesture(Key.Pause, KeyModifiers.Control | KeyModifiers.Alt);
 
             _sendRemoteCtrlAltDelMenuItem.Header = LocalizationProvider.Get(LocalizationKeys.Menu_SendCtrlAltDel);
-            _sendRemoteCtrlAltDelMenuItem.HotKey = new KeyGesture(Key.End, KeyModifiers.Control | KeyModifiers.Alt);
+            _sendRemoteCtrlAltDelMenuItem.InputGesture = new KeyGesture(Key.End, KeyModifiers.Control | KeyModifiers.Alt);
             _sendRemoteCtrlAltEndMenuItem.Header = LocalizationProvider.Get(LocalizationKeys.Menu_SendCtrlAltEnd);
             _sendRemoteCtrlAltBackspaceMenuItem.Header = LocalizationProvider.Get(LocalizationKeys.Menu_SendCtrlAltBackspace);
             _keyboardHintMenuItem.Header = string.Empty;
             _keyboardHintMenuItem.IsEnabled = false;
             UpdateKeyboardCaptureStatusUi();
+            UpdateViewMenuState();
         }
 
         private void UpdateKeyboardCaptureStatusUi()
@@ -134,6 +155,13 @@ namespace GuacClient
         {
             _keyboardHintMenuItem.Header = text ?? string.Empty;
             _keyboardHintMenuItem.IsVisible = !string.IsNullOrWhiteSpace(text);
+        }
+
+        private void UpdateViewMenuState()
+        {
+            bool isFullScreen = WindowState == WindowState.FullScreen;
+            _enterFullScreenMenuItem.IsEnabled = !isFullScreen;
+            _exitFullScreenMenuItem.IsEnabled = isFullScreen;
         }
 
         private void UpdateKeyboardHookState()
@@ -213,6 +241,29 @@ namespace GuacClient
             bool ctrl = controlKey.HasValue;
             bool alt = altKey.HasValue;
             bool shift = shiftKey.HasValue;
+            bool hostCtrlAlt = ctrl && alt && !IsAltGrCombination();
+
+            if (hostCtrlAlt && key == Key.F4)
+            {
+                Dispatcher.UIThread.Post(() => _ = CloseApplicationWithHintAsync());
+                return true;
+            }
+
+            if (hostCtrlAlt && key == Key.Insert)
+            {
+                Dispatcher.UIThread.Post(() =>
+                    SetFullScreenMode(WindowState != WindowState.FullScreen, WindowState == WindowState.FullScreen
+                        ? LocalizationProvider.Get(LocalizationKeys.Hint_CtrlAltIns_FullscreenModeOff)
+                        : LocalizationProvider.Get(LocalizationKeys.Hint_CtrlAltIns_FullscreenModeOn)));
+                return true;
+            }
+
+            if (hostCtrlAlt && key == Key.Pause && WindowState == WindowState.FullScreen)
+            {
+                Dispatcher.UIThread.Post(() =>
+                    SetFullScreenMode(false, LocalizationProvider.Get(LocalizationKeys.Hint_CtrlAltBreak_FullscreenModeOff)));
+                return true;
+            }
 
             if (key is Key.LWin or Key.RWin)
             {
@@ -351,6 +402,12 @@ namespace GuacClient
         private void QuitMenuItem_Click(object? sender, RoutedEventArgs e)
             => Close();
 
+        private void EnterFullScreenMenuItem_Click(object? sender, RoutedEventArgs e)
+            => SetFullScreenMode(true, LocalizationProvider.Get(LocalizationKeys.Hint_CtrlAltIns_FullscreenModeOn));
+
+        private void ExitFullScreenMenuItem_Click(object? sender, RoutedEventArgs e)
+            => SetFullScreenMode(false, LocalizationProvider.Get(LocalizationKeys.Hint_CtrlAltBreak_FullscreenModeOff));
+
         private async void SendRemoteCtrlAltDelMenuItem_Click(object? sender, RoutedEventArgs e)
         {
             await SendRemoteSpecialKeySafeAsync(
@@ -473,12 +530,45 @@ namespace GuacClient
 
             if (ctrl && alt && key == Key.F4 && !IsAltGrCombination())
             {
-                ShowTransientHint(LocalizationProvider.Get(LocalizationKeys.Hint_CtrlAltF4_AppWillBeClosed));
-                Close();
+                _ = CloseApplicationWithHintAsync();
+                return true;
+            }
+
+            if (ctrl && alt && key == Key.Insert)
+            {
+                SetFullScreenMode(WindowState != WindowState.FullScreen, WindowState == WindowState.FullScreen
+                    ? LocalizationProvider.Get(LocalizationKeys.Hint_CtrlAltIns_FullscreenModeOff)
+                    : LocalizationProvider.Get(LocalizationKeys.Hint_CtrlAltIns_FullscreenModeOn));
+                return true;
+            }
+
+            if (ctrl && alt && key == Key.Pause && WindowState == WindowState.FullScreen)
+            {
+                SetFullScreenMode(false, LocalizationProvider.Get(LocalizationKeys.Hint_CtrlAltBreak_FullscreenModeOff));
                 return true;
             }
 
             return false;
+        }
+
+        private void SetFullScreenMode(bool enabled, string? hint = null)
+        {
+            WindowState = enabled ? WindowState.FullScreen : WindowState.Normal;
+            UpdateViewMenuState();
+            _web.Focus();
+            if (!string.IsNullOrWhiteSpace(hint))
+                ShowTransientHint(hint);
+        }
+
+        private async Task CloseApplicationWithHintAsync()
+        {
+            if (_closeRequested)
+                return;
+
+            _closeRequested = true;
+            ShowTransientHint(LocalizationProvider.Get(LocalizationKeys.Hint_CtrlAltF4_AppWillBeClosed));
+            await Task.Delay(600).ConfigureAwait(true);
+            Close();
         }
 
         private bool TryHandleRemoteSpecialShortcutKeyDown(Key key)
@@ -1144,6 +1234,7 @@ namespace GuacClient
 
             return vk switch
             {
+                NativeKeyboardMethods.VK_CANCEL => Key.Pause,
                 NativeKeyboardMethods.VK_BACK => Key.Back,
                 NativeKeyboardMethods.VK_TAB => Key.Tab,
                 NativeKeyboardMethods.VK_PAUSE => Key.Pause,
@@ -1221,6 +1312,7 @@ namespace GuacClient
             public const int WM_KEYUP = 0x0101;
             public const int WM_SYSKEYDOWN = 0x0104;
             public const int WM_SYSKEYUP = 0x0105;
+            public const int VK_CANCEL = 0x03;
             public const int VK_BACK = 0x08;
             public const int VK_TAB = 0x09;
             public const int VK_PAUSE = 0x13;

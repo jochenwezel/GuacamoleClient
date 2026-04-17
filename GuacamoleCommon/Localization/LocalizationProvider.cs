@@ -128,6 +128,8 @@ namespace GuacamoleClient.Common.Localization
                         return "Tasten-Kombination senden";
                     case LocalizationKeys.Menu_ViewFullScreen:
                         return "Vollbild-Modus";
+                    case LocalizationKeys.Menu_ViewWindowMode:
+                        return "Fenster-Modus";
                     case LocalizationKeys.Menu_Quit:
                         return "Beenden";
                     case LocalizationKeys.Menu_NewWindow:
@@ -331,6 +333,8 @@ namespace GuacamoleClient.Common.Localization
                     return "Send key combination";
                 case LocalizationKeys.Menu_ViewFullScreen:
                     return "Full-Screen";
+                case LocalizationKeys.Menu_ViewWindowMode:
+                    return "Windowed Mode";
                 case LocalizationKeys.Menu_Quit:
                     return "Quit";
                 case LocalizationKeys.Menu_NewWindow:
