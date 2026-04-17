@@ -27,6 +27,7 @@ namespace GuacamoleClient.Common.Localization
         Hint_RemoteCtrlAltEnd_Sent,
         Hint_RemoteAltF4_Sent,
         Hint_RemoteAltTab_Sent,
+        Hint_GuacamoleMenu_Toggled,
         Hint_ActiveModifiers,
         /// <summary>
         /// Gets the hint message indicating that pressing Ctrl+Alt+End has no effect in Remote Desktop sessions
@@ -53,6 +54,7 @@ namespace GuacamoleClient.Common.Localization
         ShortcutKeystroke_StopFullScreenModeToolStripMenuItem,
         ShortcutKeystroke_HintStopWebcontrol2FocusShortcut,
         ShortcutKeystroke_SendCtrlAltDelToolStripMenuItem,
+        ShortcutKeystroke_OpenGuacamoleMenuToolStripMenuItem,
 
         // Menu
         Menu_OpenAnotherGuacamoleServer,
@@ -68,6 +70,7 @@ namespace GuacamoleClient.Common.Localization
         Menu_SendCtrlAltDel,
         Menu_SendCtrlAltEnd,
         Menu_SendCtrlAltBackspace,
+        Menu_OpenGuacamoleMenu,
 
         // Choose/Manage servers dialog
         ChooseServer_Column_Name,

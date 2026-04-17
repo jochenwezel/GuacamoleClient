@@ -786,6 +786,116 @@ namespace GuacamoleClient.WinForms
             return await _webview2_core.ExecuteScriptAsync(script).ConfigureAwait(false);
         }
 
+        private async Task<(bool toggled, string? reason)> TryToggleGuacamoleMenuAsync()
+        {
+            if (_webview2_core == null)
+                return (false, "webview-not-initialized");
+
+            string script = """
+                (() => {
+                    const ng = window.angular;
+                    if (!ng || typeof ng.element !== 'function')
+                        return JSON.stringify({ toggled: false, reason: 'angular-unavailable' });
+
+                    const candidates = [];
+                    const pushCandidate = (node) => {
+                        if (node && !candidates.includes(node))
+                            candidates.push(node);
+                    };
+
+                    pushCandidate(document.querySelector('[ng-controller="clientController"]'));
+                    pushCandidate(document.querySelector('.client'));
+                    pushCandidate(document.querySelector('[ng-view]'));
+                    pushCandidate(document.querySelector('.client-view'));
+                    pushCandidate(document.activeElement);
+                    pushCandidate(document.body);
+                    pushCandidate(document.documentElement);
+
+                    let scope = null;
+                    const tryGetScope = (node) => {
+                        let current = node;
+                        while (current) {
+                            const wrapped = ng.element(current);
+                            const localScope = (typeof wrapped.scope === 'function' && wrapped.scope())
+                                || (typeof wrapped.isolateScope === 'function' && wrapped.isolateScope());
+                            if (localScope && localScope.menu) {
+                                return localScope;
+                            }
+                            current = current.parentElement || current.parentNode;
+                        }
+                        return null;
+                    };
+
+                    for (const candidate of candidates) {
+                        scope = tryGetScope(candidate);
+                        if (scope)
+                            break;
+                    }
+
+                    if (!scope || !scope.menu)
+                        return JSON.stringify({
+                            toggled: false,
+                            reason: 'menu-scope-unavailable',
+                            candidates: candidates.map(node => node?.tagName || node?.nodeName || 'unknown')
+                        });
+
+                    const toggle = () => {
+                        scope.menu.shown = !scope.menu.shown;
+                    };
+
+                    if (typeof scope.$evalAsync === 'function') {
+                        scope.$evalAsync(toggle);
+                    }
+                    else {
+                        toggle();
+                        if (typeof scope.$applyAsync === 'function')
+                            scope.$applyAsync();
+                        else if (typeof scope.$apply === 'function')
+                            scope.$apply();
+                    }
+
+                    return JSON.stringify({ toggled: true });
+                })();
+                """;
+
+            string resultJson = await _webview2_core.ExecuteScriptAsync(script).ConfigureAwait(false);
+            string? unescapedJson = JsonSerializer.Deserialize<string>(resultJson);
+            if (string.IsNullOrWhiteSpace(unescapedJson))
+                return (false, "empty-webview-response");
+
+            using JsonDocument doc = JsonDocument.Parse(unescapedJson);
+            bool toggled = doc.RootElement.TryGetProperty("toggled", out JsonElement toggledElement)
+                && toggledElement.ValueKind == JsonValueKind.True;
+
+            string? reason = null;
+            if (doc.RootElement.TryGetProperty("reason", out JsonElement reasonElement) && reasonElement.ValueKind == JsonValueKind.String)
+                reason = reasonElement.GetString();
+
+            return (toggled, reason);
+        }
+
+        private async Task ToggleGuacamoleMenuSafeAsync()
+        {
+            var result = await TryToggleGuacamoleMenuAsync().ConfigureAwait(true);
+            bool toggled = result.toggled;
+            if (!toggled)
+                throw new InvalidOperationException($"Unable to toggle the Guacamole menu in the embedded client. Reason: {result.reason ?? "unknown"}");
+
+            ShowHint(LocalizationKeys.Hint_GuacamoleMenu_Toggled);
+        }
+
+        private async void openGuacamoleMenuToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                await ToggleGuacamoleMenuSafeAsync().ConfigureAwait(true);
+            }
+            catch (Exception ex)
+            {
+                ShowMessageBoxNonModal(ex.ToString(), "Guacamole menu", InformationBoxButtons.OK, InformationBoxIcon.Error);
+            }
+        }
+
         /// <summary>
         /// Show cached login session details or other valuable keys to analyse how to check of is-logged-on-state
         /// </summary>

@@ -26,6 +26,8 @@ namespace GuacamoleClient.WinForms
         private System.ComponentModel.IContainer components;
         private ToolStripMenuItem connectionNameInFullScreenModeToolStripMenuItem;
         private ToolStripMenuItem HintStopWebcontrol2FocusShortcut;
+        private ToolStripSeparator toolStripSeparator4;
+        private ToolStripMenuItem openGuacamoleMenuToolStripMenuItem;
 
         /// <summary>
         /// Invisible Textbox for capturing focus and while focused capturing keyboard shortcuts
@@ -71,6 +73,8 @@ namespace GuacamoleClient.WinForms
             sendRemoteCtrlAltDelToolStripMenuItem = new ToolStripMenuItem();
             sendRemoteCtrlAltEndToolStripMenuItem = new ToolStripMenuItem();
             sendRemoteCtrlAltBackspaceToolStripMenuItem = new ToolStripMenuItem();
+            toolStripSeparator4 = new ToolStripSeparator();
+            openGuacamoleMenuToolStripMenuItem = new ToolStripMenuItem();
             connectionNameInFullScreenModeToolStripMenuItem = new ToolStripMenuItem();
             HintStopWebcontrol2FocusShortcut = new ToolStripMenuItem();
             WebBrowserHostPanel = new Panel();
@@ -202,7 +206,7 @@ namespace GuacamoleClient.WinForms
             // 
             // sendKeyCombinationToolStripMenuItem
             // 
-            sendKeyCombinationToolStripMenuItem.DropDownItems.AddRange(new ToolStripItem[] { sendRemoteCtrlAltDelToolStripMenuItem, sendRemoteCtrlAltEndToolStripMenuItem, sendRemoteCtrlAltBackspaceToolStripMenuItem });
+            sendKeyCombinationToolStripMenuItem.DropDownItems.AddRange(new ToolStripItem[] { sendRemoteCtrlAltDelToolStripMenuItem, sendRemoteCtrlAltEndToolStripMenuItem, sendRemoteCtrlAltBackspaceToolStripMenuItem, toolStripSeparator4, openGuacamoleMenuToolStripMenuItem });
             sendKeyCombinationToolStripMenuItem.Name = "sendKeyCombinationToolStripMenuItem";
             sendKeyCombinationToolStripMenuItem.Size = new Size(137, 20);
             sendKeyCombinationToolStripMenuItem.Text = "Send key combination";
@@ -228,6 +232,19 @@ namespace GuacamoleClient.WinForms
             sendRemoteCtrlAltBackspaceToolStripMenuItem.Size = new Size(247, 22);
             sendRemoteCtrlAltBackspaceToolStripMenuItem.Text = "Send Ctrl+Alt+Backspace";
             sendRemoteCtrlAltBackspaceToolStripMenuItem.Click += sendRemoteCtrlAltBackspaceToolStripMenuItem_Click;
+            // 
+            // toolStripSeparator4
+            // 
+            toolStripSeparator4.Name = "toolStripSeparator4";
+            toolStripSeparator4.Size = new Size(244, 6);
+            // 
+            // openGuacamoleMenuToolStripMenuItem
+            // 
+            openGuacamoleMenuToolStripMenuItem.Name = "openGuacamoleMenuToolStripMenuItem";
+            openGuacamoleMenuToolStripMenuItem.ShortcutKeyDisplayString = "Ctrl+Alt+Shift";
+            openGuacamoleMenuToolStripMenuItem.Size = new Size(247, 22);
+            openGuacamoleMenuToolStripMenuItem.Text = "Open Guacamole menu";
+            openGuacamoleMenuToolStripMenuItem.Click += openGuacamoleMenuToolStripMenuItem_Click;
             // 
             // connectionNameInFullScreenModeToolStripMenuItem
             // 

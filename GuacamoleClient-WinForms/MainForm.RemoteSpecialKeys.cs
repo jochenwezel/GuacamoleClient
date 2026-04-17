@@ -37,6 +37,8 @@ namespace GuacamoleClient.WinForms
         private readonly HashSet<Keys> _heldRemoteModifiers = new();
         private readonly List<Keys> _modifierOnlyChordOrder = new();
         private bool _modifierOnlyChordHadNonModifier;
+        private bool _modifierOnlyChordHandledLocally;
+        private bool _guacamoleMenuShortcutActive;
 
         private void UpdateKeyboardHookState()
         {
@@ -74,6 +76,8 @@ namespace GuacamoleClient.WinForms
             _heldRemoteModifiers.Clear();
             _modifierOnlyChordOrder.Clear();
             _modifierOnlyChordHadNonModifier = false;
+            _modifierOnlyChordHandledLocally = false;
+            _guacamoleMenuShortcutActive = false;
             HideTransientHint();
         }
 
@@ -119,6 +123,24 @@ namespace GuacamoleClient.WinForms
             if (ctrl && alt && key == Keys.Back)
                 return false; // existing local focus release shortcut keeps current behavior
 
+            if (ctrl && alt && shift && !_guacamoleMenuShortcutActive)
+            {
+                _guacamoleMenuShortcutActive = true;
+                _modifierOnlyChordHandledLocally = true;
+                BeginInvoke(async () =>
+                {
+                    try
+                    {
+                        await ToggleGuacamoleMenuSafeAsync().ConfigureAwait(true);
+                    }
+                    catch (Exception ex)
+                    {
+                        ShowMessageBoxNonModal(ex.ToString(), "Guacamole menu", InformationBoxButtons.OK, InformationBoxIcon.Error);
+                    }
+                });
+                return true;
+            }
+
             if (key is Keys.LWin or Keys.RWin)
             {
                 _windowsChordActive = true;
@@ -153,6 +175,12 @@ namespace GuacamoleClient.WinForms
 
         private bool TryHandleRemoteSpecialShortcutKeyUp(Keys key)
         {
+            Keys? controlKey = GetTrackedControlKey();
+            Keys? altKey = GetTrackedAltKey();
+            Keys? shiftKey = GetTrackedShiftKey();
+            if (_guacamoleMenuShortcutActive && !(controlKey.HasValue && altKey.HasValue && shiftKey.HasValue))
+                _guacamoleMenuShortcutActive = false;
+
             if (_windowsChordActive && key == _activeWindowsKey)
             {
                 bool sendStandaloneWindows = !_windowsChordHadCombination;
@@ -447,7 +475,7 @@ namespace GuacamoleClient.WinForms
                 {
                     bool onlyWindowsKeys = _modifierOnlyChordOrder.Count > 0 && _modifierOnlyChordOrder.All(k => k is Keys.LWin or Keys.RWin);
 
-                    if (!_modifierOnlyChordHadNonModifier && _modifierOnlyChordOrder.Count > 0 && !onlyWindowsKeys)
+                    if (!_modifierOnlyChordHandledLocally && !_modifierOnlyChordHadNonModifier && _modifierOnlyChordOrder.Count > 0 && !onlyWindowsKeys)
                     {
                         var chord = _modifierOnlyChordOrder.ToArray();
                         BeginInvoke(async () =>
@@ -465,6 +493,8 @@ namespace GuacamoleClient.WinForms
 
                     _modifierOnlyChordOrder.Clear();
                     _modifierOnlyChordHadNonModifier = false;
+                    _modifierOnlyChordHandledLocally = false;
+                    _guacamoleMenuShortcutActive = false;
                 }
             }
 

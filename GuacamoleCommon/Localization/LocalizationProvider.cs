@@ -78,6 +78,8 @@ namespace GuacamoleClient.Common.Localization
                         return "{0}+F4 wurde abgefangen und an die Remote-Sitzung gesendet.";
                     case LocalizationKeys.Hint_RemoteAltTab_Sent:
                         return "{0}+Tab wurde abgefangen und an die Remote-Sitzung gesendet.";
+                    case LocalizationKeys.Hint_GuacamoleMenu_Toggled:
+                        return "Guacamole-Menü wurde umgeschaltet.";
                     case LocalizationKeys.Hint_ActiveModifiers:
                         return "Aktive Sondertasten: {0}";
                     case LocalizationKeys.Hint_CtrlAltEnd_WithoutEffect_mstsc:
@@ -112,6 +114,8 @@ namespace GuacamoleClient.Common.Localization
                         return "Strg+Alt+Rücktaste zum Einfangen/Freigeben der Tastatur";
                     case LocalizationKeys.ShortcutKeystroke_SendCtrlAltDelToolStripMenuItem:
                         return "Strg+Alt+Ende";
+                    case LocalizationKeys.ShortcutKeystroke_OpenGuacamoleMenuToolStripMenuItem:
+                        return "Strg+Alt+Umschalt";
 
                     // Menu
                     case LocalizationKeys.Menu_OpenAnotherGuacamoleServer:
@@ -140,6 +144,8 @@ namespace GuacamoleClient.Common.Localization
                         return "Sende Strg+Alt+Ende";
                     case LocalizationKeys.Menu_SendCtrlAltBackspace:
                         return "Sende Strg+Alt+Rücktaste";
+                    case LocalizationKeys.Menu_OpenGuacamoleMenu:
+                        return "Guacamole-Menü öffnen";
 
                     // Choose server dialog
                     case LocalizationKeys.ChooseServer_Column_Name:
@@ -275,6 +281,8 @@ namespace GuacamoleClient.Common.Localization
                     return "{0}+F4 was caught and sent to the remote session.";
                 case LocalizationKeys.Hint_RemoteAltTab_Sent:
                     return "{0}+Tab was caught and sent to the remote session.";
+                case LocalizationKeys.Hint_GuacamoleMenu_Toggled:
+                    return "Guacamole menu was toggled.";
                 case LocalizationKeys.Hint_ActiveModifiers:
                     return "Active special keys: {0}";
                 case LocalizationKeys.Hint_CtrlAltEnd_WithoutEffect_mstsc:
@@ -309,6 +317,8 @@ namespace GuacamoleClient.Common.Localization
                     return "Ctrl+Alt+Backspace to capture/release keyboard";
                 case LocalizationKeys.ShortcutKeystroke_SendCtrlAltDelToolStripMenuItem:
                     return "Ctrl+Alt+End";
+                case LocalizationKeys.ShortcutKeystroke_OpenGuacamoleMenuToolStripMenuItem:
+                    return "Ctrl+Alt+Shift";
 
                 // Menu
                 case LocalizationKeys.Menu_OpenAnotherGuacamoleServer:
@@ -337,6 +347,8 @@ namespace GuacamoleClient.Common.Localization
                     return "Send Ctrl+Alt+End";
                 case LocalizationKeys.Menu_SendCtrlAltBackspace:
                     return "Send Ctrl+Alt+Backspace";
+                case LocalizationKeys.Menu_OpenGuacamoleMenu:
+                    return "Open Guacamole menu";
 
                 // Choose server dialog
                 case LocalizationKeys.ChooseServer_Column_Name:
