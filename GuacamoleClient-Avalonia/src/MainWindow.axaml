@@ -20,6 +20,8 @@
         <MenuItem x:Name="SendRemoteCtrlAltDelMenuItem" />
         <MenuItem x:Name="SendRemoteCtrlAltEndMenuItem" />
         <MenuItem x:Name="SendRemoteCtrlAltBackspaceMenuItem" />
+        <Separator />
+        <MenuItem x:Name="OpenGuacamoleMenuMenuItem" />
       </MenuItem>
       <MenuItem x:Name="KeyboardCaptureStatusMenuItem" />
       <MenuItem x:Name="KeyboardHintMenuItem" />

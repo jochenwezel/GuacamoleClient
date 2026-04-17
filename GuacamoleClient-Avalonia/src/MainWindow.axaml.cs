@@ -52,6 +52,7 @@ namespace GuacClient
         private MenuItem _sendRemoteCtrlAltDelMenuItem = default!;
         private MenuItem _sendRemoteCtrlAltEndMenuItem = default!;
         private MenuItem _sendRemoteCtrlAltBackspaceMenuItem = default!;
+        private MenuItem _openGuacamoleMenuMenuItem = default!;
         private MenuItem _keyboardCaptureStatusMenuItem = default!;
         private MenuItem _keyboardHintMenuItem = default!;
 
@@ -60,6 +61,8 @@ namespace GuacClient
         private bool _windowsChordHadCombination;
         private Key _activeWindowsKey = Key.LWin;
         private bool _modifierOnlyChordHadNonModifier;
+        private bool _modifierOnlyChordHandledLocally;
+        private bool _guacamoleMenuShortcutActive;
         private bool _closeRequested;
 
         public MainWindow()
@@ -79,6 +82,7 @@ namespace GuacClient
             _sendRemoteCtrlAltDelMenuItem = this.FindControl<MenuItem>("SendRemoteCtrlAltDelMenuItem")!;
             _sendRemoteCtrlAltEndMenuItem = this.FindControl<MenuItem>("SendRemoteCtrlAltEndMenuItem")!;
             _sendRemoteCtrlAltBackspaceMenuItem = this.FindControl<MenuItem>("SendRemoteCtrlAltBackspaceMenuItem")!;
+            _openGuacamoleMenuMenuItem = this.FindControl<MenuItem>("OpenGuacamoleMenuMenuItem")!;
             _keyboardCaptureStatusMenuItem = this.FindControl<MenuItem>("KeyboardCaptureStatusMenuItem")!;
             _keyboardHintMenuItem = this.FindControl<MenuItem>("KeyboardHintMenuItem")!;
 
@@ -93,6 +97,7 @@ namespace GuacClient
             _sendRemoteCtrlAltDelMenuItem.Click += SendRemoteCtrlAltDelMenuItem_Click;
             _sendRemoteCtrlAltEndMenuItem.Click += SendRemoteCtrlAltEndMenuItem_Click;
             _sendRemoteCtrlAltBackspaceMenuItem.Click += SendRemoteCtrlAltBackspaceMenuItem_Click;
+            _openGuacamoleMenuMenuItem.Click += OpenGuacamoleMenuMenuItem_Click;
             _keyboardCaptureStatusMenuItem.Click += KeyboardCaptureStatusMenuItem_Click;
             this.Opened += async (_, __) =>
             {
@@ -137,6 +142,8 @@ namespace GuacClient
             _sendRemoteCtrlAltDelMenuItem.InputGesture = new KeyGesture(Key.End, KeyModifiers.Control | KeyModifiers.Alt);
             _sendRemoteCtrlAltEndMenuItem.Header = LocalizationProvider.Get(LocalizationKeys.Menu_SendCtrlAltEnd);
             _sendRemoteCtrlAltBackspaceMenuItem.Header = LocalizationProvider.Get(LocalizationKeys.Menu_SendCtrlAltBackspace);
+            _openGuacamoleMenuMenuItem.Header = LocalizationProvider.Get(LocalizationKeys.Menu_OpenGuacamoleMenu);
+            _openGuacamoleMenuMenuItem.InputGesture = new KeyGesture(Key.LeftShift, KeyModifiers.Control | KeyModifiers.Alt);
             _keyboardHintMenuItem.Header = string.Empty;
             _keyboardHintMenuItem.IsEnabled = false;
             UpdateKeyboardCaptureStatusUi();
@@ -265,6 +272,14 @@ namespace GuacClient
                 return true;
             }
 
+            if (ctrl && alt && shift && !_guacamoleMenuShortcutActive)
+            {
+                _guacamoleMenuShortcutActive = true;
+                _modifierOnlyChordHandledLocally = true;
+                Dispatcher.UIThread.Post(() => _ = SendOpenGuacamoleMenuChordSafeAsync());
+                return true;
+            }
+
             if (key is Key.LWin or Key.RWin)
             {
                 _windowsChordActive = true;
@@ -334,6 +349,15 @@ namespace GuacClient
 
         private bool TryHandleHookKeyUp(Key key)
         {
+            Key? controlKey = IsKeyCurrentlyDown(Key.RightCtrl) ? Key.RightCtrl :
+                              IsKeyCurrentlyDown(Key.LeftCtrl) ? Key.LeftCtrl : null;
+            Key? altKey = IsKeyCurrentlyDown(Key.RightAlt) ? Key.RightAlt :
+                          IsKeyCurrentlyDown(Key.LeftAlt) ? Key.LeftAlt : null;
+            Key? shiftKey = IsKeyCurrentlyDown(Key.RightShift) ? Key.RightShift :
+                            IsKeyCurrentlyDown(Key.LeftShift) ? Key.LeftShift : null;
+            if (_guacamoleMenuShortcutActive && !(controlKey.HasValue && altKey.HasValue && shiftKey.HasValue))
+                _guacamoleMenuShortcutActive = false;
+
             if (_windowsChordActive && key == _activeWindowsKey)
             {
                 bool sendStandaloneWindows = !_windowsChordHadCombination;
@@ -427,6 +451,16 @@ namespace GuacClient
             await SendRemoteSpecialKeySafeAsync(
                 RemoteSpecialKeyCommand.CtrlAltBackspace,
                 LocalizationProvider.Get(LocalizationKeys.Hint_RemoteCtrlAltBackspace_Sent, "LCtrl", "LAlt"));
+        }
+
+        private void OpenGuacamoleMenuMenuItem_Click(object? sender, RoutedEventArgs e)
+        {
+            Dispatcher.UIThread.Post(async () =>
+            {
+                await Task.Delay(50).ConfigureAwait(true);
+                _web.Focus();
+                await SendOpenGuacamoleMenuChordSafeAsync().ConfigureAwait(true);
+            }, DispatcherPriority.Background);
         }
 
         private void KeyboardCaptureStatusMenuItem_Click(object? sender, RoutedEventArgs e)
@@ -571,6 +605,19 @@ namespace GuacClient
             Close();
         }
 
+        private async Task SendOpenGuacamoleMenuChordSafeAsync()
+        {
+            try
+            {
+                await SendModifierOnlyChordAsync(new[] { Key.LeftCtrl, Key.LeftAlt, Key.LeftShift }).ConfigureAwait(true);
+                ShowTransientHint(LocalizationProvider.Get(LocalizationKeys.Hint_GuacamoleMenu_Toggled));
+            }
+            catch (Exception ex)
+            {
+                await MessageBoxSimple.Show(this, LocalizationProvider.Get(LocalizationKeys.AppStart_BackgroundError_Title), ex.ToString());
+            }
+        }
+
         private bool TryHandleRemoteSpecialShortcutKeyDown(Key key)
         {
             if (!IsModifierKey(key) && _activeModifierKeys.Count > 0)
@@ -636,6 +683,14 @@ namespace GuacClient
                 return true;
             }
 
+            if (ctrl && alt && shift && !_guacamoleMenuShortcutActive)
+            {
+                _guacamoleMenuShortcutActive = true;
+                _modifierOnlyChordHandledLocally = true;
+                _ = SendOpenGuacamoleMenuChordSafeAsync();
+                return true;
+            }
+
             if (_windowsChordActive && !IsModifierKey(key))
             {
                 _windowsChordHadCombination = true;
@@ -648,6 +703,12 @@ namespace GuacClient
 
         private bool TryHandleRemoteSpecialShortcutKeyUp(Key key)
         {
+            Key? controlKey = GetTrackedControlKey();
+            Key? altKey = GetTrackedAltKey();
+            Key? shiftKey = GetTrackedShiftKey();
+            if (_guacamoleMenuShortcutActive && !(controlKey.HasValue && altKey.HasValue && shiftKey.HasValue))
+                _guacamoleMenuShortcutActive = false;
+
             if (_windowsChordActive && key == _activeWindowsKey)
             {
                 bool sendStandaloneWindows = !_windowsChordHadCombination;
@@ -965,7 +1026,7 @@ namespace GuacClient
                 {
                     bool onlyWindowsKeys = _modifierOnlyChordOrder.Count > 0 && _modifierOnlyChordOrder.All(k => k is Key.LWin or Key.RWin);
 
-                    if (_keyboardCaptureEnabled && !_modifierOnlyChordHadNonModifier && _modifierOnlyChordOrder.Count > 0 && !onlyWindowsKeys)
+                    if (_keyboardCaptureEnabled && !_modifierOnlyChordHandledLocally && !_modifierOnlyChordHadNonModifier && _modifierOnlyChordOrder.Count > 0 && !onlyWindowsKeys)
                     {
                         Key[] chord = _modifierOnlyChordOrder.ToArray();
                         _ = SendModifierOnlyChordSafeAsync(chord);
@@ -973,6 +1034,8 @@ namespace GuacClient
 
                     _modifierOnlyChordOrder.Clear();
                     _modifierOnlyChordHadNonModifier = false;
+                    _modifierOnlyChordHandledLocally = false;
+                    _guacamoleMenuShortcutActive = false;
                 }
             }
 
@@ -1077,6 +1140,8 @@ namespace GuacClient
             _hookHandledKeyUps.Clear();
             _modifierOnlyChordOrder.Clear();
             _modifierOnlyChordHadNonModifier = false;
+            _modifierOnlyChordHandledLocally = false;
+            _guacamoleMenuShortcutActive = false;
             _windowsChordActive = false;
             _windowsChordHadCombination = false;
             _activeWindowsKey = Key.LWin;
