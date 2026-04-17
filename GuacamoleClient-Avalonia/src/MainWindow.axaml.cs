@@ -44,6 +44,7 @@ namespace GuacClient
         private TextBlock _hintOverlayText = default!;
         private MenuItem _connectionMenuItem = default!;
         private MenuItem _connectionHomeMenuItem = default!;
+        private MenuItem _newWindowMenuItem = default!;
         private MenuItem _viewMenuItem = default!;
         private MenuItem _sendKeyCombinationMenuItem = default!;
         private MenuItem _resetUrlMenuItem = default!;
@@ -65,9 +66,16 @@ namespace GuacClient
         private bool _modifierOnlyChordHandledLocally;
         private bool _guacamoleMenuShortcutActive;
         private bool _closeRequested;
+        private readonly string? _initialUrlOverride;
 
         public MainWindow()
+            : this(null)
         {
+        }
+
+        public MainWindow(string? initialUrlOverride)
+        {
+            _initialUrlOverride = initialUrlOverride;
             InitializeComponent();
 
             _web = this.FindControl<WebView>("Web")!;
@@ -75,6 +83,7 @@ namespace GuacClient
             _hintOverlayText = this.FindControl<TextBlock>("HintOverlayText")!;
             _connectionMenuItem = this.FindControl<MenuItem>("ConnectionMenuItem")!;
             _connectionHomeMenuItem = this.FindControl<MenuItem>("ConnectionHomeMenuItem")!;
+            _newWindowMenuItem = this.FindControl<MenuItem>("NewWindowMenuItem")!;
             _viewMenuItem = this.FindControl<MenuItem>("ViewMenuItem")!;
             _sendKeyCombinationMenuItem = this.FindControl<MenuItem>("SendKeyCombinationMenuItem")!;
             _resetUrlMenuItem = this.FindControl<MenuItem>("ResetUrlMenuItem")!;
@@ -93,6 +102,7 @@ namespace GuacClient
             _hintTimer.Tick += (_, __) => HideTransientHint();
 
             _connectionHomeMenuItem.Click += ConnectionHomeMenuItem_Click;
+            _newWindowMenuItem.Click += NewWindowMenuItem_Click;
             _resetUrlMenuItem.Click += ResetUrlMenuItem_Click;
             _quitMenuItem.Click += QuitMenuItem_Click;
             _enterFullScreenMenuItem.Click += EnterFullScreenMenuItem_Click;
@@ -134,6 +144,8 @@ namespace GuacClient
             _connectionMenuItem.Header = LocalizationProvider.Get(LocalizationKeys.Menu_Connection);
             _connectionHomeMenuItem.Header = LocalizationProvider.Get(LocalizationKeys.Menu_ConnectionHome);
             _connectionHomeMenuItem.InputGesture = new KeyGesture(Key.Home, KeyModifiers.Control | KeyModifiers.Alt);
+            _newWindowMenuItem.Header = LocalizationProvider.Get(LocalizationKeys.Menu_NewWindow);
+            _newWindowMenuItem.InputGesture = new KeyGesture(Key.N, KeyModifiers.Control | KeyModifiers.Alt);
             _viewMenuItem.Header = LocalizationProvider.Get(LocalizationKeys.Menu_View);
             _sendKeyCombinationMenuItem.Header = LocalizationProvider.Get(LocalizationKeys.Menu_SendKeyCombination);
             _resetUrlMenuItem.Header = LocalizationProvider.Get(LocalizationKeys.Menu_OpenAnotherGuacamoleServer);
@@ -276,6 +288,12 @@ namespace GuacClient
                 return true;
             }
 
+            if (hostCtrlAlt && key == Key.N)
+            {
+                Dispatcher.UIThread.Post(OpenNewWindow);
+                return true;
+            }
+
             if (hostCtrlAlt && key == Key.Pause && WindowState == WindowState.FullScreen)
             {
                 Dispatcher.UIThread.Post(() =>
@@ -390,7 +408,7 @@ namespace GuacClient
 
         private async Task EnsureAndLoadUrlAsync()
         {
-            var url = _store.Load();
+            var url = _initialUrlOverride ?? GetConfiguredHomeUrl();
             if (!UrlInputDialog.IsValidUrl(url))
             {
                 var dlg = new UrlInputDialog { Icon = this.Icon };
@@ -436,6 +454,9 @@ namespace GuacClient
 
         private void ConnectionHomeMenuItem_Click(object? sender, RoutedEventArgs e)
             => GoToConnectionHome();
+
+        private void NewWindowMenuItem_Click(object? sender, RoutedEventArgs e)
+            => OpenNewWindow();
 
         private void QuitMenuItem_Click(object? sender, RoutedEventArgs e)
             => Close();
@@ -596,6 +617,12 @@ namespace GuacClient
                 return true;
             }
 
+            if (ctrl && alt && key == Key.N)
+            {
+                OpenNewWindow();
+                return true;
+            }
+
             if (ctrl && alt && key == Key.Pause && WindowState == WindowState.FullScreen)
             {
                 SetFullScreenMode(false, LocalizationProvider.Get(LocalizationKeys.Hint_CtrlAltBreak_FullscreenModeOff));
@@ -616,12 +643,29 @@ namespace GuacClient
 
         private void GoToConnectionHome()
         {
-            if (_store.Load() is not string url || !UrlInputDialog.IsValidUrl(url))
+            string? url = GetConfiguredHomeUrl();
+            if (!UrlInputDialog.IsValidUrl(url))
                 return;
 
             _web.Address = url;
             _web.Focus();
         }
+
+        private void OpenNewWindow()
+        {
+            string? homeUrl = GetConfiguredHomeUrl();
+            if (!UrlInputDialog.IsValidUrl(homeUrl))
+                return;
+
+            var window = new MainWindow(homeUrl)
+            {
+                Icon = this.Icon
+            };
+            window.Show();
+        }
+
+        private string? GetConfiguredHomeUrl()
+            => _store.Load();
 
         private async Task CloseApplicationWithHintAsync()
         {
