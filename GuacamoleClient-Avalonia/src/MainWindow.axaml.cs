@@ -118,7 +118,13 @@ namespace GuacClient
                 UpdateKeyboardHookState();
                 UpdateViewMenuState();
             };
-            this.Activated += (_, __) => UpdateKeyboardHookState();
+            this.Activated += (_, __) =>
+            {
+                RefreshTrackedModifierStateFromPhysicalKeyboard();
+                UpdateKeyboardHookState();
+                if (_keyboardCaptureEnabled)
+                    Dispatcher.UIThread.Post(() => _web.Focus(), DispatcherPriority.Background);
+            };
             this.PropertyChanged += (_, e) =>
             {
                 if (e.Property == WindowStateProperty)
@@ -193,7 +199,7 @@ namespace GuacClient
             if (!OperatingSystem.IsWindows())
                 return;
 
-            if (_keyboardCaptureEnabled && IsActive)
+            if (IsActive)
                 EnsureKeyboardHookInstalled();
             else
                 RemoveKeyboardHook();
@@ -223,7 +229,7 @@ namespace GuacClient
 
         private IntPtr KeyboardHookCallback(int nCode, IntPtr wParam, IntPtr lParam)
         {
-            if (nCode >= 0 && _keyboardCaptureEnabled)
+            if (nCode >= 0 && IsActive)
             {
                 int msg = wParam.ToInt32();
                 var info = Marshal.PtrToStructure<NativeKeyboardMethods.KBDLLHOOKSTRUCT>(lParam);
@@ -255,12 +261,9 @@ namespace GuacClient
 
         private bool TryHandleHookKeyDown(Key key)
         {
-            Key? controlKey = IsKeyCurrentlyDown(Key.RightCtrl) ? Key.RightCtrl :
-                              IsKeyCurrentlyDown(Key.LeftCtrl) ? Key.LeftCtrl : null;
-            Key? altKey = IsKeyCurrentlyDown(Key.RightAlt) ? Key.RightAlt :
-                          IsKeyCurrentlyDown(Key.LeftAlt) ? Key.LeftAlt : null;
-            Key? shiftKey = IsKeyCurrentlyDown(Key.RightShift) ? Key.RightShift :
-                            IsKeyCurrentlyDown(Key.LeftShift) ? Key.LeftShift : null;
+            Key? controlKey = GetCurrentControlKey();
+            Key? altKey = GetCurrentAltKey();
+            Key? shiftKey = GetCurrentShiftKey();
 
             bool ctrl = controlKey.HasValue;
             bool alt = altKey.HasValue;
@@ -281,6 +284,15 @@ namespace GuacClient
                         : LocalizationProvider.Get(LocalizationKeys.Hint_CtrlAltIns_FullscreenModeOn)));
                 return true;
             }
+
+            if (hostCtrlAlt && key == Key.Back)
+            {
+                Dispatcher.UIThread.Post(ToggleKeyboardCapture);
+                return true;
+            }
+
+            if (!_keyboardCaptureEnabled)
+                return false;
 
             if (hostCtrlAlt && key == Key.Home)
             {
@@ -378,14 +390,14 @@ namespace GuacClient
 
         private bool TryHandleHookKeyUp(Key key)
         {
-            Key? controlKey = IsKeyCurrentlyDown(Key.RightCtrl) ? Key.RightCtrl :
-                              IsKeyCurrentlyDown(Key.LeftCtrl) ? Key.LeftCtrl : null;
-            Key? altKey = IsKeyCurrentlyDown(Key.RightAlt) ? Key.RightAlt :
-                          IsKeyCurrentlyDown(Key.LeftAlt) ? Key.LeftAlt : null;
-            Key? shiftKey = IsKeyCurrentlyDown(Key.RightShift) ? Key.RightShift :
-                            IsKeyCurrentlyDown(Key.LeftShift) ? Key.LeftShift : null;
+            Key? controlKey = GetCurrentControlKey();
+            Key? altKey = GetCurrentAltKey();
+            Key? shiftKey = GetCurrentShiftKey();
             if (_guacamoleMenuShortcutActive && !(controlKey.HasValue && altKey.HasValue && shiftKey.HasValue))
                 _guacamoleMenuShortcutActive = false;
+
+            if (!_keyboardCaptureEnabled)
+                return false;
 
             if (_windowsChordActive && key == _activeWindowsKey)
             {
@@ -499,17 +511,7 @@ namespace GuacClient
         }
 
         private void KeyboardCaptureStatusMenuItem_Click(object? sender, RoutedEventArgs e)
-        {
-            _keyboardCaptureEnabled = !_keyboardCaptureEnabled;
-            ResetTrackedKeyboardState();
-            UpdateKeyboardHookState();
-            UpdateKeyboardCaptureStatusUi();
-            _web.Focus();
-            ShowTransientHint(LocalizationProvider.Get(
-                _keyboardCaptureEnabled
-                    ? LocalizationKeys.Tip_CtrlAltBackspace_StopKeyboardGrabbingOfGuacamoleWindow
-                    : LocalizationKeys.Tip_CtrlAltBackspace_StartKeyboardGrabbingOfGuacamoleWindow));
-        }
+            => ToggleKeyboardCapture();
 
         private async Task SendRemoteSpecialKeySafeAsync(RemoteSpecialKeyCommand command, string successHint, Key windowsKey = Key.LWin, Key? controlKey = null, Key? altKey = null, Key? shiftKey = null)
         {
@@ -568,20 +570,12 @@ namespace GuacClient
 
         private bool TryHandleLocalKeyDown(Key key)
         {
-            bool ctrl = GetTrackedControlKey().HasValue;
-            bool alt = GetTrackedAltKey().HasValue;
+            bool ctrl = GetCurrentControlKey().HasValue;
+            bool alt = GetCurrentAltKey().HasValue;
 
             if (ctrl && alt && key == Key.Back)
             {
-                _keyboardCaptureEnabled = !_keyboardCaptureEnabled;
-                ResetTrackedKeyboardState();
-                UpdateKeyboardHookState();
-                UpdateKeyboardCaptureStatusUi();
-                _web.Focus();
-                ShowTransientHint(LocalizationProvider.Get(
-                    _keyboardCaptureEnabled
-                        ? LocalizationKeys.Tip_CtrlAltBackspace_StopKeyboardGrabbingOfGuacamoleWindow
-                        : LocalizationKeys.Tip_CtrlAltBackspace_StartKeyboardGrabbingOfGuacamoleWindow));
+                ToggleKeyboardCapture();
                 return true;
             }
 
@@ -639,6 +633,26 @@ namespace GuacClient
             _web.Focus();
             if (!string.IsNullOrWhiteSpace(hint))
                 ShowTransientHint(hint);
+        }
+
+        private void ToggleKeyboardCapture()
+        {
+            _keyboardCaptureEnabled = !_keyboardCaptureEnabled;
+            ResetTrackedKeyboardState();
+            UpdateKeyboardHookState();
+            UpdateKeyboardCaptureStatusUi();
+            FocusKeyboardCaptureTarget();
+            ShowTransientHint(LocalizationProvider.Get(
+                _keyboardCaptureEnabled
+                    ? LocalizationKeys.Tip_CtrlAltBackspace_StopKeyboardGrabbingOfGuacamoleWindow
+                    : LocalizationKeys.Tip_CtrlAltBackspace_StartKeyboardGrabbingOfGuacamoleWindow));
+        }
+
+        private void FocusKeyboardCaptureTarget()
+        {
+            Activate();
+            Dispatcher.UIThread.Post(() => _web.Focus(), DispatcherPriority.Input);
+            Dispatcher.UIThread.Post(() => _web.Focus(), DispatcherPriority.Background);
         }
 
         private void GoToConnectionHome()
@@ -1263,10 +1277,10 @@ namespace GuacClient
 
         private bool IsAltGrCombination()
         {
-            bool leftCtrl = _activeModifierKeys.Contains(Key.LeftCtrl);
-            bool rightCtrl = _activeModifierKeys.Contains(Key.RightCtrl);
-            bool leftAlt = _activeModifierKeys.Contains(Key.LeftAlt);
-            bool rightAlt = _activeModifierKeys.Contains(Key.RightAlt);
+            bool leftCtrl = _activeModifierKeys.Contains(Key.LeftCtrl) || IsKeyCurrentlyDown(Key.LeftCtrl);
+            bool rightCtrl = _activeModifierKeys.Contains(Key.RightCtrl) || IsKeyCurrentlyDown(Key.RightCtrl);
+            bool leftAlt = _activeModifierKeys.Contains(Key.LeftAlt) || IsKeyCurrentlyDown(Key.LeftAlt);
+            bool rightAlt = _activeModifierKeys.Contains(Key.RightAlt) || IsKeyCurrentlyDown(Key.RightAlt);
             return leftCtrl && rightAlt && !rightCtrl && !leftAlt;
         }
 
@@ -1281,6 +1295,39 @@ namespace GuacClient
         private Key? GetTrackedShiftKey()
             => _activeModifierKeys.Contains(Key.RightShift) ? Key.RightShift :
                _activeModifierKeys.Contains(Key.LeftShift) ? Key.LeftShift : null;
+
+        private Key? GetCurrentControlKey()
+            => GetTrackedControlKey()
+               ?? (IsKeyCurrentlyDown(Key.RightCtrl) ? Key.RightCtrl :
+                   IsKeyCurrentlyDown(Key.LeftCtrl) ? Key.LeftCtrl : null);
+
+        private Key? GetCurrentAltKey()
+            => GetTrackedAltKey()
+               ?? (IsKeyCurrentlyDown(Key.RightAlt) ? Key.RightAlt :
+                   IsKeyCurrentlyDown(Key.LeftAlt) ? Key.LeftAlt : null);
+
+        private Key? GetCurrentShiftKey()
+            => GetTrackedShiftKey()
+               ?? (IsKeyCurrentlyDown(Key.RightShift) ? Key.RightShift :
+                   IsKeyCurrentlyDown(Key.LeftShift) ? Key.LeftShift : null);
+
+        private void RefreshTrackedModifierStateFromPhysicalKeyboard()
+        {
+            _activeModifierKeys.Clear();
+
+            AddModifierIfPhysicallyDown(Key.LeftCtrl);
+            AddModifierIfPhysicallyDown(Key.RightCtrl);
+            AddModifierIfPhysicallyDown(Key.LeftAlt);
+            AddModifierIfPhysicallyDown(Key.RightAlt);
+            AddModifierIfPhysicallyDown(Key.LeftShift);
+            AddModifierIfPhysicallyDown(Key.RightShift);
+        }
+
+        private void AddModifierIfPhysicallyDown(Key key)
+        {
+            if (IsKeyCurrentlyDown(key))
+                _activeModifierKeys.Add(key);
+        }
 
         private static bool IsModifierKey(Key key)
             => key is Key.LeftCtrl or Key.RightCtrl or
