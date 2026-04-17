@@ -43,6 +43,7 @@ namespace GuacClient
         private Border _hintOverlay = default!;
         private TextBlock _hintOverlayText = default!;
         private MenuItem _connectionMenuItem = default!;
+        private MenuItem _connectionHomeMenuItem = default!;
         private MenuItem _viewMenuItem = default!;
         private MenuItem _sendKeyCombinationMenuItem = default!;
         private MenuItem _resetUrlMenuItem = default!;
@@ -73,6 +74,7 @@ namespace GuacClient
             _hintOverlay = this.FindControl<Border>("HintOverlay")!;
             _hintOverlayText = this.FindControl<TextBlock>("HintOverlayText")!;
             _connectionMenuItem = this.FindControl<MenuItem>("ConnectionMenuItem")!;
+            _connectionHomeMenuItem = this.FindControl<MenuItem>("ConnectionHomeMenuItem")!;
             _viewMenuItem = this.FindControl<MenuItem>("ViewMenuItem")!;
             _sendKeyCombinationMenuItem = this.FindControl<MenuItem>("SendKeyCombinationMenuItem")!;
             _resetUrlMenuItem = this.FindControl<MenuItem>("ResetUrlMenuItem")!;
@@ -90,6 +92,7 @@ namespace GuacClient
 
             _hintTimer.Tick += (_, __) => HideTransientHint();
 
+            _connectionHomeMenuItem.Click += ConnectionHomeMenuItem_Click;
             _resetUrlMenuItem.Click += ResetUrlMenuItem_Click;
             _quitMenuItem.Click += QuitMenuItem_Click;
             _enterFullScreenMenuItem.Click += EnterFullScreenMenuItem_Click;
@@ -129,6 +132,8 @@ namespace GuacClient
         private void InitializeLocalization()
         {
             _connectionMenuItem.Header = LocalizationProvider.Get(LocalizationKeys.Menu_Connection);
+            _connectionHomeMenuItem.Header = LocalizationProvider.Get(LocalizationKeys.Menu_ConnectionHome);
+            _connectionHomeMenuItem.InputGesture = new KeyGesture(Key.Home, KeyModifiers.Control | KeyModifiers.Alt);
             _viewMenuItem.Header = LocalizationProvider.Get(LocalizationKeys.Menu_View);
             _sendKeyCombinationMenuItem.Header = LocalizationProvider.Get(LocalizationKeys.Menu_SendKeyCombination);
             _resetUrlMenuItem.Header = LocalizationProvider.Get(LocalizationKeys.Menu_OpenAnotherGuacamoleServer);
@@ -262,6 +267,12 @@ namespace GuacClient
                     SetFullScreenMode(WindowState != WindowState.FullScreen, WindowState == WindowState.FullScreen
                         ? LocalizationProvider.Get(LocalizationKeys.Hint_CtrlAltIns_FullscreenModeOff)
                         : LocalizationProvider.Get(LocalizationKeys.Hint_CtrlAltIns_FullscreenModeOn)));
+                return true;
+            }
+
+            if (hostCtrlAlt && key == Key.Home)
+            {
+                Dispatcher.UIThread.Post(GoToConnectionHome);
                 return true;
             }
 
@@ -423,6 +434,9 @@ namespace GuacClient
         private async void ResetUrlMenuItem_Click(object? sender, RoutedEventArgs e)
             => await ResetUrlAndReloadAsync();
 
+        private void ConnectionHomeMenuItem_Click(object? sender, RoutedEventArgs e)
+            => GoToConnectionHome();
+
         private void QuitMenuItem_Click(object? sender, RoutedEventArgs e)
             => Close();
 
@@ -576,6 +590,12 @@ namespace GuacClient
                 return true;
             }
 
+            if (ctrl && alt && key == Key.Home)
+            {
+                GoToConnectionHome();
+                return true;
+            }
+
             if (ctrl && alt && key == Key.Pause && WindowState == WindowState.FullScreen)
             {
                 SetFullScreenMode(false, LocalizationProvider.Get(LocalizationKeys.Hint_CtrlAltBreak_FullscreenModeOff));
@@ -592,6 +612,15 @@ namespace GuacClient
             _web.Focus();
             if (!string.IsNullOrWhiteSpace(hint))
                 ShowTransientHint(hint);
+        }
+
+        private void GoToConnectionHome()
+        {
+            if (_store.Load() is not string url || !UrlInputDialog.IsValidUrl(url))
+                return;
+
+            _web.Address = url;
+            _web.Focus();
         }
 
         private async Task CloseApplicationWithHintAsync()

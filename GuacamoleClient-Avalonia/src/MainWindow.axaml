@@ -8,6 +8,7 @@
   <DockPanel>
     <Menu DockPanel.Dock="Top">
       <MenuItem x:Name="ConnectionMenuItem">
+        <MenuItem x:Name="ConnectionHomeMenuItem" />
         <MenuItem x:Name="ResetUrlMenuItem" />
         <Separator />
         <MenuItem x:Name="QuitMenuItem" />
