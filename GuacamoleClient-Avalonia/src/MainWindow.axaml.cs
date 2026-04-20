@@ -570,7 +570,10 @@ namespace GuacClient
             => Close();
 
         private void EnterFullScreenMenuItem_Click(object? sender, RoutedEventArgs e)
-            => SetFullScreenMode(true, LocalizationProvider.Get(LocalizationKeys.Hint_CtrlAltIns_FullscreenModeOn));
+            => SetFullScreenMode(WindowState != WindowState.FullScreen,
+                WindowState == WindowState.FullScreen
+                    ? LocalizationProvider.Get(LocalizationKeys.Hint_CtrlAltIns_FullscreenModeOff)
+                    : LocalizationProvider.Get(LocalizationKeys.Hint_CtrlAltIns_FullscreenModeOn));
 
         private void ExitFullScreenMenuItem_Click(object? sender, RoutedEventArgs e)
             => SetFullScreenMode(false, LocalizationProvider.Get(LocalizationKeys.Hint_CtrlAltBreak_FullscreenModeOff));
