@@ -123,6 +123,8 @@ namespace GuacamoleClient.Common.Localization
         /// Cancel button text used in various dialogs.
         /// </summary>
         Common_Button_Cancel,
+        Common_Button_No,
+        Common_Button_Yes,
         /// <summary>
         /// Suffix appended to default server profile names to indicate that they are the default choice.
         /// </summary>

@@ -2,16 +2,40 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:wv="clr-namespace:WebViewControl;assembly=WebViewControl.Avalonia"
         x:Class="GuacClient.MainWindow"
+        x:Name="MainWindowRoot"
         Width="1280" Height="800"
         Title="GuacamoleClient">
+  <Window.Styles>
+    <Style Selector="Menu">
+      <Setter Property="Background" Value="{DynamicResource ProfileMenuBackgroundBrush}" />
+      <Setter Property="Foreground" Value="{DynamicResource ProfileMenuForegroundBrush}" />
+    </Style>
+    <Style Selector="MenuItem">
+      <Setter Property="Background" Value="{DynamicResource ProfileMenuBackgroundBrush}" />
+      <Setter Property="Foreground" Value="{DynamicResource ProfileMenuForegroundBrush}" />
+    </Style>
+    <Style Selector="MenuItem:pointerover">
+      <Setter Property="Background" Value="{DynamicResource ProfileMenuHoverBackgroundBrush}" />
+      <Setter Property="Foreground" Value="{DynamicResource ProfileMenuHoverForegroundBrush}" />
+    </Style>
+    <Style Selector="MenuItem:selected">
+      <Setter Property="Background" Value="{DynamicResource ProfileMenuSelectedBackgroundBrush}" />
+      <Setter Property="Foreground" Value="{DynamicResource ProfileMenuSelectedForegroundBrush}" />
+    </Style>
+  </Window.Styles>
 
   <DockPanel>
-    <Menu DockPanel.Dock="Top">
+    <Menu x:Name="MainMenu"
+          DockPanel.Dock="Top">
       <MenuItem x:Name="ConnectionMenuItem">
         <MenuItem x:Name="ConnectionHomeMenuItem" />
         <MenuItem x:Name="NewWindowMenuItem" />
-        <MenuItem x:Name="ResetUrlMenuItem" />
-        <Separator />
+        <Separator x:Name="ConnectionSeparatorTop" />
+        <MenuItem x:Name="GuacamoleUserSettingsMenuItem" />
+        <MenuItem x:Name="GuacamoleConnectionConfigurationsMenuItem" />
+        <Separator x:Name="ConnectionSeparatorMiddle" />
+        <MenuItem x:Name="ManageServersMenuItem" />
+        <Separator x:Name="ConnectionSeparatorBottom" />
         <MenuItem x:Name="QuitMenuItem" />
       </MenuItem>
       <MenuItem x:Name="ViewMenuItem">

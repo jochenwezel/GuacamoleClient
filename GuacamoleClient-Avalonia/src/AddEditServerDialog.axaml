@@ -1,0 +1,44 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="GuacClient.AddEditServerDialog"
+        Width="560" Height="420"
+        MinWidth="520" MinHeight="390"
+        CanResize="False"
+        WindowStartupLocation="CenterOwner"
+        Title="Server profile">
+  <Grid Margin="16"
+        RowDefinitions="Auto,Auto,Auto,Auto,Auto,*,Auto"
+        ColumnDefinitions="Auto,*"
+        RowSpacing="10"
+        ColumnSpacing="12">
+    <TextBlock Grid.Row="0" Grid.Column="0" VerticalAlignment="Center" Text="Server URL" />
+    <TextBox x:Name="UrlTextBox" Grid.Row="0" Grid.Column="1" Watermark="https://remote.example.com/guacamole/" />
+
+    <TextBlock Grid.Row="1" Grid.Column="0" VerticalAlignment="Center" Text="Display name" />
+    <TextBox x:Name="DisplayNameTextBox" Grid.Row="1" Grid.Column="1" Watermark="Optional" />
+
+    <TextBlock Grid.Row="2" Grid.Column="0" VerticalAlignment="Center" Text="Color scheme" />
+    <ComboBox x:Name="ColorComboBox" Grid.Row="2" Grid.Column="1" />
+
+    <TextBlock x:Name="CustomColorLabel" Grid.Row="3" Grid.Column="0" VerticalAlignment="Center" Text="Custom color" />
+    <TextBox x:Name="CustomColorTextBox" Grid.Row="3" Grid.Column="1" Watermark="#A1B2C3" />
+
+    <TextBlock Grid.Row="4" Grid.Column="0" VerticalAlignment="Center" Text="Preview" />
+    <Border x:Name="ColorPreviewBorder" Grid.Row="4" Grid.Column="1" Height="38" CornerRadius="6" Padding="10,6">
+      <TextBlock x:Name="ColorPreviewTextBlock" VerticalAlignment="Center" Text="Preview" />
+    </Border>
+
+    <CheckBox x:Name="IgnoreCertificateErrorsCheckBox"
+              Grid.Row="5" Grid.Column="1"
+              VerticalAlignment="Top"
+              Content="Ignore certificate errors (unsafe)" />
+
+    <StackPanel Grid.Row="6" Grid.ColumnSpan="2"
+                Orientation="Horizontal"
+                HorizontalAlignment="Right"
+                Spacing="8">
+      <Button x:Name="CancelButton" Content="Cancel" IsCancel="True" Click="CancelButton_Click" />
+      <Button x:Name="SaveButton" Content="Save" IsDefault="True" Click="SaveButton_Click" />
+    </StackPanel>
+  </Grid>
+</Window>

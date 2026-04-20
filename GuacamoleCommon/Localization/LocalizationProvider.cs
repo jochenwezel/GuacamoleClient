@@ -160,6 +160,10 @@ namespace GuacamoleClient.Common.Localization
                         return "Verbinden";
                     case LocalizationKeys.Common_Button_Cancel:
                         return "Abbrechen";
+                    case LocalizationKeys.Common_Button_No:
+                        return "Nein";
+                    case LocalizationKeys.Common_Button_Yes:
+                        return "Ja";
                     case LocalizationKeys.ChooseServer_Title:
                         return "Guacamole-Server auswählen";
                     case LocalizationKeys.ChooseServer_Button_Add:
@@ -175,7 +179,7 @@ namespace GuacamoleClient.Common.Localization
                     case LocalizationKeys.ChooseServer_ConfirmRemove_Title:
                         return "Bestätigen";
                     case LocalizationKeys.ChooseServer_ConfirmRemove_Text:
-                        return "Ausgewähltes Serverprofil entfernen?";
+                        return "Serverprofil \"{0}\" entfernen?";
 
                     // Add/Edit dialog
                     case LocalizationKeys.AddEdit_ModeAddServer_Title:
@@ -365,6 +369,10 @@ namespace GuacamoleClient.Common.Localization
                     return "Connect";
                 case LocalizationKeys.Common_Button_Cancel:
                     return "Cancel";
+                case LocalizationKeys.Common_Button_No:
+                    return "No";
+                case LocalizationKeys.Common_Button_Yes:
+                    return "Yes";
                 case LocalizationKeys.ChooseServer_Title:
                     return "Choose Guacamole servers";
                 case LocalizationKeys.ChooseServer_Button_Add:
@@ -380,7 +388,7 @@ namespace GuacamoleClient.Common.Localization
                 case LocalizationKeys.ChooseServer_ConfirmRemove_Title:
                     return "Confirm";
                 case LocalizationKeys.ChooseServer_ConfirmRemove_Text:
-                    return "Remove selected server profile?";
+                    return "Remove server profile \"{0}\"?";
 
                 // Add/Edit dialog
                 case LocalizationKeys.AddEdit_ModeAddServer_Title:
