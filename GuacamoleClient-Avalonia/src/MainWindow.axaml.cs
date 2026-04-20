@@ -114,6 +114,9 @@ namespace GuacClient
             _keyboardCaptureStatusMenuItem = this.FindControl<MenuItem>("KeyboardCaptureStatusMenuItem")!;
             _keyboardHintMenuItem = this.FindControl<MenuItem>("KeyboardHintMenuItem")!;
 
+            _web.TitleChanged += UpdateWindowTitleFromWebView;
+            _web.Navigated += Web_Navigated;
+
             InitializeLocalization();
 
             _hintTimer.Tick += (_, __) => HideTransientHint();
@@ -483,7 +486,7 @@ namespace GuacClient
             try
             {
                 _web.Address = url!;
-                UpdateWindowTitle(url!);
+                UpdateWindowTitle(url!, _web.Title);
             }
             catch (Exception ex)
             {
@@ -706,7 +709,7 @@ namespace GuacClient
                 return;
 
             _web.Address = url;
-            UpdateWindowTitle(url!);
+            UpdateWindowTitle(url!, _web.Title);
             _web.Focus();
         }
 
@@ -742,6 +745,7 @@ namespace GuacClient
                 return;
 
             _web.Address = new Uri(new Uri(url!), "#/settings/preferences").ToString();
+            UpdateWindowTitle(_web.Address, _web.Title);
             _web.Focus();
         }
 
@@ -752,6 +756,7 @@ namespace GuacClient
                 return;
 
             _web.Address = new Uri(new Uri(url!), "#/settings/connections").ToString();
+            UpdateWindowTitle(_web.Address, _web.Title);
             _web.Focus();
         }
 
@@ -775,10 +780,29 @@ namespace GuacClient
             UpdateConnectionMenuState();
         }
 
-        private void UpdateWindowTitle(string currentUrl)
+        private void UpdateWindowTitle(string currentUrl, string? documentTitle)
         {
-            string profileText = _activeProfile?.GetDisplayText() ?? currentUrl;
-            Title = $"{profileText} - {currentUrl} - GuacamoleClient v{VersionUtil.InformationalVersion()}";
+            if (string.IsNullOrWhiteSpace(documentTitle))
+                Title = $"{currentUrl} - GuacamoleClient v{VersionUtil.InformationalVersion()}";
+            else
+                Title = $"{documentTitle} - {currentUrl} - GuacamoleClient v{VersionUtil.InformationalVersion()}";
+        }
+
+        private void UpdateWindowTitleFromWebView()
+        {
+            Dispatcher.UIThread.Post(() =>
+            {
+                string currentUrl = string.IsNullOrWhiteSpace(_web.Address)
+                    ? GetConfiguredHomeUrl() ?? string.Empty
+                    : _web.Address;
+                if (!string.IsNullOrWhiteSpace(currentUrl))
+                    UpdateWindowTitle(currentUrl, _web.Title);
+            });
+        }
+
+        private void Web_Navigated(string url, string frameName)
+        {
+            Dispatcher.UIThread.Post(() => UpdateWindowTitle(url, _web.Title));
         }
 
         private async Task CloseApplicationWithHintAsync()
