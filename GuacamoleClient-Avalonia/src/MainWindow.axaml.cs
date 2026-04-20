@@ -144,10 +144,13 @@ namespace GuacClient
             };
             this.Activated += (_, __) =>
             {
-                RefreshTrackedModifierStateFromPhysicalKeyboard();
-                UpdateKeyboardHookState();
-                if (_keyboardCaptureEnabled)
-                    Dispatcher.UIThread.Post(() => _web.Focus(), DispatcherPriority.Background);
+                Dispatcher.UIThread.Post(() =>
+                {
+                    RefreshTrackedModifierStateFromPhysicalKeyboard();
+                    UpdateKeyboardHookState();
+                    if (_keyboardCaptureEnabled)
+                        FocusKeyboardCaptureTarget();
+                }, DispatcherPriority.Input);
             };
             this.PropertyChanged += (_, e) =>
             {
