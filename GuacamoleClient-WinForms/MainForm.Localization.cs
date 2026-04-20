@@ -14,6 +14,7 @@ namespace GuacamoleClient.WinForms
             this.viewToolStripMenuItem.Text = LocalizationProvider.Get(LocalizationKeys.Menu_View);
             this.sendKeyCombinationToolStripMenuItem.Text = LocalizationProvider.Get(LocalizationKeys.Menu_SendKeyCombination);
             this.fullScreenToolStripMenuItem.Text = LocalizationProvider.Get(LocalizationKeys.Menu_ViewFullScreen);
+            this.stopFullScreenModeToolStripMenuItem.Text = LocalizationProvider.Get(LocalizationKeys.Menu_ViewWindowMode);
             this.quitToolStripMenuItem.Text = LocalizationProvider.Get(LocalizationKeys.Menu_Quit);
             this.newWindowToolStripMenuItem.Text = LocalizationProvider.Get(LocalizationKeys.Menu_NewWindow);
             this.connectionHomeToolStripMenuItem.Text = LocalizationProvider.Get(LocalizationKeys.Menu_ConnectionHome);
