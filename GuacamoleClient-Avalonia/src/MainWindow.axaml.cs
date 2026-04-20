@@ -2,8 +2,10 @@ using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Markup.Xaml;
+using Avalonia.Media;
 using Avalonia.Threading;
 using GuacamoleClient.Common.Localization;
+using GuacamoleClient.Common.Settings;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -28,7 +30,6 @@ namespace GuacClient
             AltF4,
         }
 
-        private readonly IStartUrlStore _store = StartUrlStoreFactory.Create();
         private readonly HashSet<string> _trustedHosts = new(StringComparer.OrdinalIgnoreCase);
         private readonly HashSet<Key> _activeModifierKeys = new();
         private readonly HashSet<Key> _heldRemoteModifiers = new();
@@ -40,14 +41,20 @@ namespace GuacClient
         private NativeKeyboardMethods.LowLevelKeyboardProc? _keyboardHookProc;
 
         private WebView _web = default!;
+        private Menu _mainMenu = default!;
         private Border _hintOverlay = default!;
         private TextBlock _hintOverlayText = default!;
         private MenuItem _connectionMenuItem = default!;
+        private MenuItem _manageServersMenuItem = default!;
         private MenuItem _connectionHomeMenuItem = default!;
+        private MenuItem _guacamoleUserSettingsMenuItem = default!;
+        private MenuItem _guacamoleConnectionConfigurationsMenuItem = default!;
+        private Separator _connectionSeparatorTop = default!;
+        private Separator _connectionSeparatorMiddle = default!;
+        private Separator _connectionSeparatorBottom = default!;
         private MenuItem _newWindowMenuItem = default!;
         private MenuItem _viewMenuItem = default!;
         private MenuItem _sendKeyCombinationMenuItem = default!;
-        private MenuItem _resetUrlMenuItem = default!;
         private MenuItem _quitMenuItem = default!;
         private MenuItem _enterFullScreenMenuItem = default!;
         private MenuItem _exitFullScreenMenuItem = default!;
@@ -66,27 +73,37 @@ namespace GuacClient
         private bool _modifierOnlyChordHandledLocally;
         private bool _guacamoleMenuShortcutActive;
         private bool _closeRequested;
+        private GuacamoleSettingsManager _settingsManager = default!;
+        private GuacamoleServerProfile? _activeProfile;
+        private readonly Guid? _initialProfileId;
         private readonly string? _initialUrlOverride;
 
         public MainWindow()
-            : this(null)
+            : this(null, null)
         {
         }
 
-        public MainWindow(string? initialUrlOverride)
+        public MainWindow(Guid? initialProfileId, string? initialUrlOverride = null)
         {
+            _initialProfileId = initialProfileId;
             _initialUrlOverride = initialUrlOverride;
             InitializeComponent();
 
             _web = this.FindControl<WebView>("Web")!;
+            _mainMenu = this.FindControl<Menu>("MainMenu")!;
             _hintOverlay = this.FindControl<Border>("HintOverlay")!;
             _hintOverlayText = this.FindControl<TextBlock>("HintOverlayText")!;
             _connectionMenuItem = this.FindControl<MenuItem>("ConnectionMenuItem")!;
+            _manageServersMenuItem = this.FindControl<MenuItem>("ManageServersMenuItem")!;
             _connectionHomeMenuItem = this.FindControl<MenuItem>("ConnectionHomeMenuItem")!;
+            _guacamoleUserSettingsMenuItem = this.FindControl<MenuItem>("GuacamoleUserSettingsMenuItem")!;
+            _guacamoleConnectionConfigurationsMenuItem = this.FindControl<MenuItem>("GuacamoleConnectionConfigurationsMenuItem")!;
+            _connectionSeparatorTop = this.FindControl<Separator>("ConnectionSeparatorTop")!;
+            _connectionSeparatorMiddle = this.FindControl<Separator>("ConnectionSeparatorMiddle")!;
+            _connectionSeparatorBottom = this.FindControl<Separator>("ConnectionSeparatorBottom")!;
             _newWindowMenuItem = this.FindControl<MenuItem>("NewWindowMenuItem")!;
             _viewMenuItem = this.FindControl<MenuItem>("ViewMenuItem")!;
             _sendKeyCombinationMenuItem = this.FindControl<MenuItem>("SendKeyCombinationMenuItem")!;
-            _resetUrlMenuItem = this.FindControl<MenuItem>("ResetUrlMenuItem")!;
             _quitMenuItem = this.FindControl<MenuItem>("QuitMenuItem")!;
             _enterFullScreenMenuItem = this.FindControl<MenuItem>("EnterFullScreenMenuItem")!;
             _exitFullScreenMenuItem = this.FindControl<MenuItem>("ExitFullScreenMenuItem")!;
@@ -101,9 +118,11 @@ namespace GuacClient
 
             _hintTimer.Tick += (_, __) => HideTransientHint();
 
+            _manageServersMenuItem.Click += ManageServersMenuItem_Click;
             _connectionHomeMenuItem.Click += ConnectionHomeMenuItem_Click;
+            _guacamoleUserSettingsMenuItem.Click += GuacamoleUserSettingsMenuItem_Click;
+            _guacamoleConnectionConfigurationsMenuItem.Click += GuacamoleConnectionConfigurationsMenuItem_Click;
             _newWindowMenuItem.Click += NewWindowMenuItem_Click;
-            _resetUrlMenuItem.Click += ResetUrlMenuItem_Click;
             _quitMenuItem.Click += QuitMenuItem_Click;
             _enterFullScreenMenuItem.Click += EnterFullScreenMenuItem_Click;
             _exitFullScreenMenuItem.Click += ExitFullScreenMenuItem_Click;
@@ -114,6 +133,7 @@ namespace GuacClient
             _keyboardCaptureStatusMenuItem.Click += KeyboardCaptureStatusMenuItem_Click;
             this.Opened += async (_, __) =>
             {
+                _settingsManager = await AvaloniaSettingsManagerFactory.LoadAsync().ConfigureAwait(true);
                 await EnsureAndLoadUrlAsync();
                 UpdateKeyboardHookState();
                 UpdateViewMenuState();
@@ -148,13 +168,15 @@ namespace GuacClient
         private void InitializeLocalization()
         {
             _connectionMenuItem.Header = LocalizationProvider.Get(LocalizationKeys.Menu_Connection);
+            _manageServersMenuItem.Header = LocalizationProvider.Get(LocalizationKeys.Menu_OpenAnotherGuacamoleServer);
             _connectionHomeMenuItem.Header = LocalizationProvider.Get(LocalizationKeys.Menu_ConnectionHome);
             _connectionHomeMenuItem.InputGesture = new KeyGesture(Key.Home, KeyModifiers.Control | KeyModifiers.Alt);
+            _guacamoleUserSettingsMenuItem.Header = LocalizationProvider.Get(LocalizationKeys.Menu_GuacamoleUserSettings);
+            _guacamoleConnectionConfigurationsMenuItem.Header = LocalizationProvider.Get(LocalizationKeys.Menu_GuacamoleConnectionConfigurations);
             _newWindowMenuItem.Header = LocalizationProvider.Get(LocalizationKeys.Menu_NewWindow);
             _newWindowMenuItem.InputGesture = new KeyGesture(Key.N, KeyModifiers.Control | KeyModifiers.Alt);
             _viewMenuItem.Header = LocalizationProvider.Get(LocalizationKeys.Menu_View);
             _sendKeyCombinationMenuItem.Header = LocalizationProvider.Get(LocalizationKeys.Menu_SendKeyCombination);
-            _resetUrlMenuItem.Header = LocalizationProvider.Get(LocalizationKeys.Menu_OpenAnotherGuacamoleServer);
             _quitMenuItem.Header = LocalizationProvider.Get(LocalizationKeys.Menu_Quit);
             _enterFullScreenMenuItem.Header = LocalizationProvider.Get(LocalizationKeys.Menu_ViewFullScreen);
             _enterFullScreenMenuItem.InputGesture = new KeyGesture(Key.Insert, KeyModifiers.Control | KeyModifiers.Alt);
@@ -171,6 +193,7 @@ namespace GuacClient
             _keyboardHintMenuItem.IsEnabled = false;
             UpdateKeyboardCaptureStatusUi();
             UpdateViewMenuState();
+            UpdateConnectionMenuState();
         }
 
         private void UpdateKeyboardCaptureStatusUi()
@@ -192,6 +215,16 @@ namespace GuacClient
             bool isFullScreen = WindowState == WindowState.FullScreen;
             _enterFullScreenMenuItem.IsEnabled = !isFullScreen;
             _exitFullScreenMenuItem.IsEnabled = isFullScreen;
+        }
+
+        private void UpdateConnectionMenuState()
+        {
+            // WinForms toggles these entries based on login state and available admin URL.
+            // Avalonia does not yet capture the login context from the embedded browser,
+            // so we keep the items visible for now and only maintain the separator layout.
+            _connectionSeparatorTop.IsVisible = _newWindowMenuItem.IsVisible;
+            _connectionSeparatorMiddle.IsVisible = _guacamoleUserSettingsMenuItem.IsVisible || _guacamoleConnectionConfigurationsMenuItem.IsVisible;
+            _connectionSeparatorBottom.IsVisible = _manageServersMenuItem.IsVisible;
         }
 
         private void UpdateKeyboardHookState()
@@ -420,12 +453,13 @@ namespace GuacClient
 
         private async Task EnsureAndLoadUrlAsync()
         {
-            var url = _initialUrlOverride ?? GetConfiguredHomeUrl();
-            if (!UrlInputDialog.IsValidUrl(url))
+            var initialProfile = AvaloniaSettingsManagerFactory.FindById(_settingsManager, _initialProfileId);
+            var profile = initialProfile ?? _settingsManager.GetDefaultOrFirstOrNull();
+
+            if (profile == null && !UrlInputDialog.IsValidUrl(_initialUrlOverride))
             {
-                var dlg = new UrlInputDialog { Icon = this.Icon };
-                url = await dlg.ShowDialog<string?>(this);
-                if (!UrlInputDialog.IsValidUrl(url))
+                var selected = await ShowChooseServerDialogAsync().ConfigureAwait(true);
+                if (selected == null)
                 {
                     await MessageBoxSimple.Show(
                         this,
@@ -434,16 +468,22 @@ namespace GuacClient
                     Close();
                     return;
                 }
-                _store.Save(url!);
+                profile = selected;
             }
 
+            var url = _initialUrlOverride ?? profile?.Url;
+            if (!UrlInputDialog.IsValidUrl(url))
+                return;
+
+            _activeProfile = profile;
             _trustedHosts.Clear();
             _trustedHosts.Add(new Uri(url!).Host);
+            ApplyProfileAppearance();
 
             try
             {
                 _web.Address = url!;
-                Title = $"GuacamoleClient v{VersionUtil.InformationalVersion()} - {url}";
+                UpdateWindowTitle(url!);
             }
             catch (Exception ex)
             {
@@ -455,17 +495,27 @@ namespace GuacClient
             }
         }
 
-        private async Task ResetUrlAndReloadAsync()
+        private async void ManageServersMenuItem_Click(object? sender, RoutedEventArgs e)
         {
-            _store.Delete();
-            await EnsureAndLoadUrlAsync();
-        }
+            var selected = await ShowChooseServerDialogAsync().ConfigureAwait(true);
+            if (selected == null)
+                return;
 
-        private async void ResetUrlMenuItem_Click(object? sender, RoutedEventArgs e)
-            => await ResetUrlAndReloadAsync();
+            var window = new MainWindow(selected.Id, selected.Url)
+            {
+                Icon = this.Icon
+            };
+            window.Show();
+        }
 
         private void ConnectionHomeMenuItem_Click(object? sender, RoutedEventArgs e)
             => GoToConnectionHome();
+
+        private void GuacamoleUserSettingsMenuItem_Click(object? sender, RoutedEventArgs e)
+            => OpenGuacamoleUserSettings();
+
+        private void GuacamoleConnectionConfigurationsMenuItem_Click(object? sender, RoutedEventArgs e)
+            => OpenGuacamoleConnectionConfigurations();
 
         private void NewWindowMenuItem_Click(object? sender, RoutedEventArgs e)
             => OpenNewWindow();
@@ -579,12 +629,6 @@ namespace GuacClient
                 return true;
             }
 
-            if (!_keyboardCaptureEnabled && ctrl && !alt && key == Key.U)
-            {
-                _ = ResetUrlAndReloadAsync();
-                return true;
-            }
-
             if (!_keyboardCaptureEnabled && ctrl && !alt && key == Key.Q)
             {
                 Close();
@@ -662,6 +706,7 @@ namespace GuacClient
                 return;
 
             _web.Address = url;
+            UpdateWindowTitle(url!);
             _web.Focus();
         }
 
@@ -671,7 +716,7 @@ namespace GuacClient
             if (!UrlInputDialog.IsValidUrl(homeUrl))
                 return;
 
-            var window = new MainWindow(homeUrl)
+            var window = new MainWindow(_activeProfile?.Id, homeUrl)
             {
                 Icon = this.Icon
             };
@@ -679,7 +724,62 @@ namespace GuacClient
         }
 
         private string? GetConfiguredHomeUrl()
-            => _store.Load();
+            => _activeProfile?.Url ?? _initialUrlOverride;
+
+        private async Task<GuacamoleServerProfile?> ShowChooseServerDialogAsync()
+        {
+            var dialog = new ChooseServerDialog(_settingsManager)
+            {
+                Icon = Icon
+            };
+            return await dialog.ShowDialog<GuacamoleServerProfile?>(this).ConfigureAwait(true);
+        }
+
+        private void OpenGuacamoleUserSettings()
+        {
+            var url = GetConfiguredHomeUrl();
+            if (!UrlInputDialog.IsValidUrl(url))
+                return;
+
+            _web.Address = new Uri(new Uri(url!), "#/settings/preferences").ToString();
+            _web.Focus();
+        }
+
+        private void OpenGuacamoleConnectionConfigurations()
+        {
+            var url = GetConfiguredHomeUrl();
+            if (!UrlInputDialog.IsValidUrl(url))
+                return;
+
+            _web.Address = new Uri(new Uri(url!), "#/settings/connections").ToString();
+            _web.Focus();
+        }
+
+        private void ApplyProfileAppearance()
+        {
+            if (_activeProfile == null)
+                return;
+
+            var scheme = _activeProfile.LookupColorScheme();
+            Background = Brush.Parse(scheme.PrimaryColorHexValue);
+            Foreground = Brush.Parse(scheme.TextColorHexValue);
+            _mainMenu.Background = Brush.Parse(scheme.PrimaryColorHexValue);
+            _mainMenu.Foreground = Brush.Parse(scheme.TextColorHexValue);
+            Resources["ProfileMenuBackgroundBrush"] = Brush.Parse(scheme.PrimaryColorHexValue);
+            Resources["ProfileMenuForegroundBrush"] = Brush.Parse(scheme.TextColorHexValue);
+            Resources["ProfileMenuHoverBackgroundBrush"] = Brush.Parse(scheme.HoverBackgroundColorHexValue);
+            Resources["ProfileMenuHoverForegroundBrush"] = Brush.Parse(scheme.HoverTextColorHexValue);
+            Resources["ProfileMenuSelectedBackgroundBrush"] = Brush.Parse(scheme.SelectedItemBackgroundColorHexValue);
+            Resources["ProfileMenuSelectedForegroundBrush"] = Brush.Parse(scheme.SelectedItemTextColorHexValue);
+            TitleBarHelper.ApplyTitleBarColors(this, scheme);
+            UpdateConnectionMenuState();
+        }
+
+        private void UpdateWindowTitle(string currentUrl)
+        {
+            string profileText = _activeProfile?.GetDisplayText() ?? currentUrl;
+            Title = $"{profileText} - {currentUrl} - GuacamoleClient v{VersionUtil.InformationalVersion()}";
+        }
 
         private async Task CloseApplicationWithHintAsync()
         {
