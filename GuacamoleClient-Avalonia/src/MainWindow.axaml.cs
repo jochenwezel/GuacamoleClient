@@ -3,6 +3,7 @@ using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Markup.Xaml;
 using Avalonia.Media;
+using Avalonia;
 using Avalonia.Threading;
 using GuacamoleClient.Common.Localization;
 using GuacamoleClient.Common.Settings;
@@ -172,31 +173,71 @@ namespace GuacClient
         {
             _connectionMenuItem.Header = LocalizationProvider.Get(LocalizationKeys.Menu_Connection);
             _manageServersMenuItem.Header = LocalizationProvider.Get(LocalizationKeys.Menu_OpenAnotherGuacamoleServer);
-            _connectionHomeMenuItem.Header = LocalizationProvider.Get(LocalizationKeys.Menu_ConnectionHome);
-            _connectionHomeMenuItem.InputGesture = new KeyGesture(Key.Home, KeyModifiers.Control | KeyModifiers.Alt);
+            _connectionHomeMenuItem.Header = BuildMenuHeaderWithShortcut(
+                LocalizationProvider.Get(LocalizationKeys.Menu_ConnectionHome),
+                LocalizationProvider.Get(LocalizationKeys.ShortcutKeystroke_ConnectionHome));
+            _connectionHomeMenuItem.InputGesture = null;
             _guacamoleUserSettingsMenuItem.Header = LocalizationProvider.Get(LocalizationKeys.Menu_GuacamoleUserSettings);
             _guacamoleConnectionConfigurationsMenuItem.Header = LocalizationProvider.Get(LocalizationKeys.Menu_GuacamoleConnectionConfigurations);
-            _newWindowMenuItem.Header = LocalizationProvider.Get(LocalizationKeys.Menu_NewWindow);
-            _newWindowMenuItem.InputGesture = new KeyGesture(Key.N, KeyModifiers.Control | KeyModifiers.Alt);
+            _newWindowMenuItem.Header = BuildMenuHeaderWithShortcut(
+                LocalizationProvider.Get(LocalizationKeys.Menu_NewWindow),
+                LocalizationProvider.Get(LocalizationKeys.ShortcutKeystroke_NewWindowToolStripMenuItem));
+            _newWindowMenuItem.InputGesture = null;
             _viewMenuItem.Header = LocalizationProvider.Get(LocalizationKeys.Menu_View);
             _sendKeyCombinationMenuItem.Header = LocalizationProvider.Get(LocalizationKeys.Menu_SendKeyCombination);
-            _quitMenuItem.Header = LocalizationProvider.Get(LocalizationKeys.Menu_Quit);
-            _enterFullScreenMenuItem.Header = LocalizationProvider.Get(LocalizationKeys.Menu_ViewFullScreen);
-            _enterFullScreenMenuItem.InputGesture = new KeyGesture(Key.Insert, KeyModifiers.Control | KeyModifiers.Alt);
-            _exitFullScreenMenuItem.Header = LocalizationProvider.Get(LocalizationKeys.Menu_ViewWindowMode);
-            _exitFullScreenMenuItem.InputGesture = new KeyGesture(Key.Pause, KeyModifiers.Control | KeyModifiers.Alt);
+            _quitMenuItem.Header = BuildMenuHeaderWithShortcut(
+                LocalizationProvider.Get(LocalizationKeys.Menu_Quit),
+                LocalizationProvider.Get(LocalizationKeys.ShortcutKeystroke_QuitToolStripMenuItem));
+            _quitMenuItem.InputGesture = null;
+            _enterFullScreenMenuItem.Header = BuildMenuHeaderWithShortcut(
+                LocalizationProvider.Get(LocalizationKeys.Menu_ViewFullScreen),
+                LocalizationProvider.Get(LocalizationKeys.ShortcutKeystroke_FullScreenToolStripMenuItem));
+            _enterFullScreenMenuItem.InputGesture = null;
+            _enterFullScreenMenuItem.ToggleType = MenuItemToggleType.CheckBox;
+            _exitFullScreenMenuItem.Header = BuildMenuHeaderWithShortcut(
+                LocalizationProvider.Get(LocalizationKeys.Menu_ViewWindowMode),
+                LocalizationProvider.Get(LocalizationKeys.ShortcutKeystroke_StopFullScreenModeToolStripMenuItem));
+            _exitFullScreenMenuItem.InputGesture = null;
 
-            _sendRemoteCtrlAltDelMenuItem.Header = LocalizationProvider.Get(LocalizationKeys.Menu_SendCtrlAltDel);
-            _sendRemoteCtrlAltDelMenuItem.InputGesture = new KeyGesture(Key.End, KeyModifiers.Control | KeyModifiers.Alt);
+            _sendRemoteCtrlAltDelMenuItem.Header = BuildMenuHeaderWithShortcut(
+                LocalizationProvider.Get(LocalizationKeys.Menu_SendCtrlAltDel),
+                LocalizationProvider.Get(LocalizationKeys.ShortcutKeystroke_SendCtrlAltDelToolStripMenuItem));
+            _sendRemoteCtrlAltDelMenuItem.InputGesture = null;
             _sendRemoteCtrlAltEndMenuItem.Header = LocalizationProvider.Get(LocalizationKeys.Menu_SendCtrlAltEnd);
             _sendRemoteCtrlAltBackspaceMenuItem.Header = LocalizationProvider.Get(LocalizationKeys.Menu_SendCtrlAltBackspace);
-            _openGuacamoleMenuMenuItem.Header = LocalizationProvider.Get(LocalizationKeys.Menu_OpenGuacamoleMenu);
-            _openGuacamoleMenuMenuItem.InputGesture = new KeyGesture(Key.LeftShift, KeyModifiers.Control | KeyModifiers.Alt);
+            _openGuacamoleMenuMenuItem.Header = BuildMenuHeaderWithShortcut(
+                LocalizationProvider.Get(LocalizationKeys.Menu_OpenGuacamoleMenu),
+                LocalizationProvider.Get(LocalizationKeys.ShortcutKeystroke_OpenGuacamoleMenuToolStripMenuItem));
+            _openGuacamoleMenuMenuItem.InputGesture = null;
             _keyboardHintMenuItem.Header = string.Empty;
             _keyboardHintMenuItem.IsEnabled = false;
             UpdateKeyboardCaptureStatusUi();
             UpdateViewMenuState();
             UpdateConnectionMenuState();
+        }
+
+        private static object BuildMenuHeaderWithShortcut(string text, string shortcutText)
+        {
+            return new Grid
+            {
+                ColumnDefinitions = new ColumnDefinitions("*,150"),
+                Children =
+                {
+                    new TextBlock
+                    {
+                        Text = text,
+                        VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center
+                    },
+                    new TextBlock
+                    {
+                        Text = shortcutText,
+                        Opacity = 0.85,
+                        HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Right,
+                        VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center,
+                        [Grid.ColumnProperty] = 1
+                    }
+                }
+            };
         }
 
         private void UpdateKeyboardCaptureStatusUi()
@@ -216,7 +257,9 @@ namespace GuacClient
         private void UpdateViewMenuState()
         {
             bool isFullScreen = WindowState == WindowState.FullScreen;
-            _enterFullScreenMenuItem.IsEnabled = !isFullScreen;
+            _enterFullScreenMenuItem.IsEnabled = true;
+            _enterFullScreenMenuItem.IsChecked = isFullScreen;
+            _exitFullScreenMenuItem.IsVisible = isFullScreen;
             _exitFullScreenMenuItem.IsEnabled = isFullScreen;
         }
 
