@@ -696,6 +696,11 @@ namespace GuacamoleClient.WinForms
             UITools.OpenUrlInDefaultBrowser(SetupGuideUrl);
         }
 
+        private void projectWebsiteHelpToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            UITools.OpenUrlInDefaultBrowser(ProjectWebsiteUrl);
+        }
+
         private void aboutToolStripMenuItem_Click(object sender, EventArgs e)
         {
             var text = LocalizationProvider.Get(

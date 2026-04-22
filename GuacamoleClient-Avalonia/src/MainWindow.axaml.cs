@@ -71,6 +71,7 @@ namespace GuacClient
         private MenuItem _helpMenuItem = default!;
         private MenuItem _setupGuideHelpMenuItem = default!;
         private MenuItem _rdpSessionResizeHelpMenuItem = default!;
+        private MenuItem _projectWebsiteHelpMenuItem = default!;
         private MenuItem _aboutMenuItem = default!;
         private MenuItem _keyboardCaptureStatusMenuItem = default!;
         private MenuItem _keyboardHintMenuItem = default!;
@@ -127,6 +128,7 @@ namespace GuacClient
             _helpMenuItem = this.FindControl<MenuItem>("HelpMenuItem")!;
             _setupGuideHelpMenuItem = this.FindControl<MenuItem>("SetupGuideHelpMenuItem")!;
             _rdpSessionResizeHelpMenuItem = this.FindControl<MenuItem>("RdpSessionResizeHelpMenuItem")!;
+            _projectWebsiteHelpMenuItem = this.FindControl<MenuItem>("ProjectWebsiteHelpMenuItem")!;
             _aboutMenuItem = this.FindControl<MenuItem>("AboutMenuItem")!;
             _keyboardCaptureStatusMenuItem = this.FindControl<MenuItem>("KeyboardCaptureStatusMenuItem")!;
             _keyboardHintMenuItem = this.FindControl<MenuItem>("KeyboardHintMenuItem")!;
@@ -152,6 +154,7 @@ namespace GuacClient
             _openGuacamoleMenuMenuItem.Click += OpenGuacamoleMenuMenuItem_Click;
             _setupGuideHelpMenuItem.Click += SetupGuideHelpMenuItem_Click;
             _rdpSessionResizeHelpMenuItem.Click += RdpSessionResizeHelpMenuItem_Click;
+            _projectWebsiteHelpMenuItem.Click += ProjectWebsiteHelpMenuItem_Click;
             _aboutMenuItem.Click += AboutMenuItem_Click;
             _keyboardCaptureStatusMenuItem.Click += KeyboardCaptureStatusMenuItem_Click;
             this.Opened += async (_, __) =>
@@ -239,6 +242,7 @@ namespace GuacClient
             _helpMenuItem.Header = LocalizationProvider.Get(LocalizationKeys.Menu_Help);
             _setupGuideHelpMenuItem.Header = LocalizationProvider.Get(LocalizationKeys.AddEdit_Link_SetupGuideGuacamoleTestServer);
             _rdpSessionResizeHelpMenuItem.Header = LocalizationProvider.Get(LocalizationKeys.Menu_HelpRdpResize);
+            _projectWebsiteHelpMenuItem.Header = LocalizationProvider.Get(LocalizationKeys.Help_ProjectWebsite_Link);
             _aboutMenuItem.Header = LocalizationProvider.Get(LocalizationKeys.Menu_About);
             _keyboardHintMenuItem.Header = string.Empty;
             _keyboardHintMenuItem.IsEnabled = false;
@@ -682,6 +686,12 @@ namespace GuacClient
         private async void SetupGuideHelpMenuItem_Click(object? sender, RoutedEventArgs e)
         {
             if (Uri.TryCreate(SetupGuideUrl, UriKind.Absolute, out var uri))
+                await Launcher.LaunchUriAsync(uri);
+        }
+
+        private async void ProjectWebsiteHelpMenuItem_Click(object? sender, RoutedEventArgs e)
+        {
+            if (Uri.TryCreate(ProjectWebsiteUrl, UriKind.Absolute, out var uri))
                 await Launcher.LaunchUriAsync(uri);
         }
 

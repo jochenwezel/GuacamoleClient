@@ -53,6 +53,7 @@
         <MenuItem x:Name="SetupGuideHelpMenuItem" />
         <MenuItem x:Name="RdpSessionResizeHelpMenuItem" />
         <Separator />
+        <MenuItem x:Name="ProjectWebsiteHelpMenuItem" />
         <MenuItem x:Name="AboutMenuItem" />
       </MenuItem>
       <MenuItem x:Name="KeyboardCaptureStatusMenuItem" />

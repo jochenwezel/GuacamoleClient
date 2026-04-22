@@ -32,6 +32,7 @@ namespace GuacamoleClient.WinForms
         private ToolStripMenuItem setupGuideHelpToolStripMenuItem;
         private ToolStripMenuItem rdpSessionResizeHelpToolStripMenuItem;
         private ToolStripSeparator helpToolStripSeparator;
+        private ToolStripMenuItem projectWebsiteHelpToolStripMenuItem;
         private ToolStripMenuItem aboutToolStripMenuItem;
 
         /// <summary>
@@ -84,6 +85,7 @@ namespace GuacamoleClient.WinForms
             setupGuideHelpToolStripMenuItem = new ToolStripMenuItem();
             rdpSessionResizeHelpToolStripMenuItem = new ToolStripMenuItem();
             helpToolStripSeparator = new ToolStripSeparator();
+            projectWebsiteHelpToolStripMenuItem = new ToolStripMenuItem();
             aboutToolStripMenuItem = new ToolStripMenuItem();
             connectionNameInFullScreenModeToolStripMenuItem = new ToolStripMenuItem();
             HintStopWebcontrol2FocusShortcut = new ToolStripMenuItem();
@@ -258,7 +260,7 @@ namespace GuacamoleClient.WinForms
             // 
             // helpToolStripMenuItem
             // 
-            helpToolStripMenuItem.DropDownItems.AddRange(new ToolStripItem[] { setupGuideHelpToolStripMenuItem, rdpSessionResizeHelpToolStripMenuItem, helpToolStripSeparator, aboutToolStripMenuItem });
+            helpToolStripMenuItem.DropDownItems.AddRange(new ToolStripItem[] { setupGuideHelpToolStripMenuItem, rdpSessionResizeHelpToolStripMenuItem, helpToolStripSeparator, projectWebsiteHelpToolStripMenuItem, aboutToolStripMenuItem });
             helpToolStripMenuItem.Name = "helpToolStripMenuItem";
             helpToolStripMenuItem.Size = new Size(44, 20);
             helpToolStripMenuItem.Text = "Help";
@@ -281,6 +283,13 @@ namespace GuacamoleClient.WinForms
             // 
             helpToolStripSeparator.Name = "helpToolStripSeparator";
             helpToolStripSeparator.Size = new Size(217, 6);
+            // 
+            // projectWebsiteHelpToolStripMenuItem
+            // 
+            projectWebsiteHelpToolStripMenuItem.Name = "projectWebsiteHelpToolStripMenuItem";
+            projectWebsiteHelpToolStripMenuItem.Size = new Size(220, 22);
+            projectWebsiteHelpToolStripMenuItem.Text = "Project website";
+            projectWebsiteHelpToolStripMenuItem.Click += projectWebsiteHelpToolStripMenuItem_Click;
             // 
             // aboutToolStripMenuItem
             // 
