@@ -1,4 +1,4 @@
-using GuacamoleClient.Common.Settings;
+﻿using GuacamoleClient.Common.Settings;
 using System.Linq;
 using System.Threading.Tasks;
 

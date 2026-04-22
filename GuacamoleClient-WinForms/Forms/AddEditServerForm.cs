@@ -1,4 +1,4 @@
-using GuacamoleClient.Common;
+﻿using GuacamoleClient.Common;
 using GuacamoleClient.Common.Localization;
 using GuacamoleClient.Common.Settings;
 using System;

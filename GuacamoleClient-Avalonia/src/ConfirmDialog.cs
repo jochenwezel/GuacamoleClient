@@ -1,4 +1,4 @@
-using Avalonia.Controls;
+﻿using Avalonia.Controls;
 using Avalonia.Layout;
 using GuacamoleClient.Common.Localization;
 using System.Threading.Tasks;

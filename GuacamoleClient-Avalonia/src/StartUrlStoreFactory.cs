@@ -1,4 +1,4 @@
-namespace GuacClient;
+﻿namespace GuacClient;
 public static class StartUrlStoreFactory
 {
     public static IStartUrlStore Create()

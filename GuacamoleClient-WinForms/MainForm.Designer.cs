@@ -1,4 +1,4 @@
-using GuacamoleClient.Common;
+﻿using GuacamoleClient.Common;
 using System.ComponentModel;
 using System.Drawing;
 using System.Windows.Forms;

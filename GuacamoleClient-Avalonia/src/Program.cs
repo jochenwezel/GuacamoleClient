@@ -1,4 +1,4 @@
-using Avalonia;
+﻿using Avalonia;
 using GuacamoleClient.Common.Localization;
 using GuacamoleClient.Common.Settings;
 using System;

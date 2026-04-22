@@ -1,4 +1,4 @@
-
+﻿
 namespace GuacamoleClient.Common.Settings
 {
     public class GuacamoleColorScheme

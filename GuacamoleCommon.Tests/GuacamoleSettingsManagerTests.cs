@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using GuacamoleClient.Common.Settings;
 using GuacamoleCommon.Tests.TestDoubles;
 using NUnit.Framework;

@@ -1,4 +1,4 @@
-using Avalonia.Controls;
+﻿using Avalonia.Controls;
 using Avalonia.Platform;
 using GuacamoleClient.Common.Settings;
 using System;

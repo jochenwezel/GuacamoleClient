@@ -1,4 +1,4 @@
-using System.Threading.Tasks;
+﻿using System.Threading.Tasks;
 using GuacamoleClient.Common.Settings;
 
 namespace GuacamoleCommon.Tests.TestDoubles;

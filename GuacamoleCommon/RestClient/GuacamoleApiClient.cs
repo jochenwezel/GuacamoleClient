@@ -1,4 +1,4 @@
-using System;
+ï»¿using System;
 using System.Data.Common;
 using System.Net;
 using System.Reflection.Metadata;
@@ -276,11 +276,11 @@ public sealed class GuacamoleApiClient
                     ? resp.Headers.Location
                     : new Uri(current, resp.Headers.Location);
 
-                // Bei 303 wird i. d. R. auf GET gewechselt; für Diagnose reicht Logging meist schon.
+                // Bei 303 wird i. d. R. auf GET gewechselt; fï¿½r Diagnose reicht Logging meist schon.
                 continue;
             }
 
-            // Fehlerbody für alle Nicht-Erfolge lesen (bevor EnsureSuccessStatusCode wirft)
+            // Fehlerbody fï¿½r alle Nicht-Erfolge lesen (bevor EnsureSuccessStatusCode wirft)
             if (!resp.IsSuccessStatusCode)
             {
                 var apiErr = await TryReadApiErrorAsync(resp, ct).ConfigureAwait(false);

@@ -1,4 +1,4 @@
-using GuacamoleClient.Common.Settings;
+﻿using GuacamoleClient.Common.Settings;
 using System;
 using System.Diagnostics;
 using System.Drawing;

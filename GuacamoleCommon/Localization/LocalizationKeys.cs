@@ -1,4 +1,4 @@
-namespace GuacamoleClient.Common.Localization
+﻿namespace GuacamoleClient.Common.Localization
 {
     /// <summary>
     /// Specifies the keys used to identify localized strings for user interface hints, tips, and warnings.

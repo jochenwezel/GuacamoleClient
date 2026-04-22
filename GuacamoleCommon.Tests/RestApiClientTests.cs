@@ -1,4 +1,4 @@
-using GuacamoleClient.RestClient;
+﻿using GuacamoleClient.RestClient;
 using NUnit.Framework;
 using static System.Net.WebRequestMethods;
 

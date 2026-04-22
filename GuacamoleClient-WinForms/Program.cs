@@ -1,4 +1,4 @@
-using Microsoft.VisualBasic.ApplicationServices;
+﻿using Microsoft.VisualBasic.ApplicationServices;
 using System;
 using System.Windows.Forms;
 using GuacamoleClient.Common.Localization;

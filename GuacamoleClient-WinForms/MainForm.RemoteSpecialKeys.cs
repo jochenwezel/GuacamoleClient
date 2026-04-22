@@ -1,4 +1,4 @@
-using InfoBox;
+﻿using InfoBox;
 using GuacamoleClient.Common.Localization;
 using Microsoft.Web.WebView2.Core;
 using System;

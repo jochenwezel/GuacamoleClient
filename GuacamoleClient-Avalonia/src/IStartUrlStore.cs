@@ -1,4 +1,4 @@
-namespace GuacClient;
+﻿namespace GuacClient;
 public interface IStartUrlStore
 {
     string? Load();
