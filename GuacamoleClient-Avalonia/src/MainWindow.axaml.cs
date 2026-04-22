@@ -25,6 +25,7 @@ namespace GuacClient
         private const string ProjectWebsiteUrl = "https://github.com/jochenwezel/GuacamoleClient";
         private const string ProjectIssuesUrl = "https://github.com/jochenwezel/GuacamoleClient/issues";
         private const string RdpResizeDetailsUrl = "https://github.com/jochenwezel/GuacamoleClient/blob/main/README.md#faq-known-issues-typical-trouble-shooting";
+        private const string SetupGuideUrl = "https://github.com/jochenwezel/GuacamoleClient/blob/main/docs/SetupTestGuacamoleServer.md";
 
         private enum RemoteSpecialKeyCommand
         {
@@ -68,6 +69,7 @@ namespace GuacClient
         private MenuItem _sendRemoteCtrlAltBackspaceMenuItem = default!;
         private MenuItem _openGuacamoleMenuMenuItem = default!;
         private MenuItem _helpMenuItem = default!;
+        private MenuItem _setupGuideHelpMenuItem = default!;
         private MenuItem _rdpSessionResizeHelpMenuItem = default!;
         private MenuItem _aboutMenuItem = default!;
         private MenuItem _keyboardCaptureStatusMenuItem = default!;
@@ -123,6 +125,7 @@ namespace GuacClient
             _sendRemoteCtrlAltBackspaceMenuItem = this.FindControl<MenuItem>("SendRemoteCtrlAltBackspaceMenuItem")!;
             _openGuacamoleMenuMenuItem = this.FindControl<MenuItem>("OpenGuacamoleMenuMenuItem")!;
             _helpMenuItem = this.FindControl<MenuItem>("HelpMenuItem")!;
+            _setupGuideHelpMenuItem = this.FindControl<MenuItem>("SetupGuideHelpMenuItem")!;
             _rdpSessionResizeHelpMenuItem = this.FindControl<MenuItem>("RdpSessionResizeHelpMenuItem")!;
             _aboutMenuItem = this.FindControl<MenuItem>("AboutMenuItem")!;
             _keyboardCaptureStatusMenuItem = this.FindControl<MenuItem>("KeyboardCaptureStatusMenuItem")!;
@@ -147,6 +150,7 @@ namespace GuacClient
             _sendRemoteCtrlAltEndMenuItem.Click += SendRemoteCtrlAltEndMenuItem_Click;
             _sendRemoteCtrlAltBackspaceMenuItem.Click += SendRemoteCtrlAltBackspaceMenuItem_Click;
             _openGuacamoleMenuMenuItem.Click += OpenGuacamoleMenuMenuItem_Click;
+            _setupGuideHelpMenuItem.Click += SetupGuideHelpMenuItem_Click;
             _rdpSessionResizeHelpMenuItem.Click += RdpSessionResizeHelpMenuItem_Click;
             _aboutMenuItem.Click += AboutMenuItem_Click;
             _keyboardCaptureStatusMenuItem.Click += KeyboardCaptureStatusMenuItem_Click;
@@ -233,6 +237,7 @@ namespace GuacClient
                 LocalizationProvider.Get(LocalizationKeys.ShortcutKeystroke_OpenGuacamoleMenuToolStripMenuItem));
             _openGuacamoleMenuMenuItem.InputGesture = null;
             _helpMenuItem.Header = LocalizationProvider.Get(LocalizationKeys.Menu_Help);
+            _setupGuideHelpMenuItem.Header = LocalizationProvider.Get(LocalizationKeys.AddEdit_Link_SetupGuideGuacamoleTestServer);
             _rdpSessionResizeHelpMenuItem.Header = LocalizationProvider.Get(LocalizationKeys.Menu_HelpRdpResize);
             _aboutMenuItem.Header = LocalizationProvider.Get(LocalizationKeys.Menu_About);
             _keyboardHintMenuItem.Header = string.Empty;
@@ -672,6 +677,12 @@ namespace GuacClient
                 LocalizationProvider.Get(LocalizationKeys.Help_RdpResize_Title),
                 LocalizationProvider.Get(LocalizationKeys.Help_RdpResize_Text),
                 (LocalizationProvider.Get(LocalizationKeys.Help_RdpResize_Link), RdpResizeDetailsUrl));
+        }
+
+        private async void SetupGuideHelpMenuItem_Click(object? sender, RoutedEventArgs e)
+        {
+            if (Uri.TryCreate(SetupGuideUrl, UriKind.Absolute, out var uri))
+                await Launcher.LaunchUriAsync(uri);
         }
 
         private async void AboutMenuItem_Click(object? sender, RoutedEventArgs e)

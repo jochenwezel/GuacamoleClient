@@ -7,7 +7,7 @@
         WindowStartupLocation="CenterOwner"
         Title="Server profile">
   <Grid Margin="16"
-        RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,*,Auto"
+        RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,*,Auto,Auto"
         ColumnDefinitions="Auto,*"
         RowSpacing="10"
         ColumnSpacing="12">
@@ -50,7 +50,13 @@
                  Foreground="{DynamicResource ThemeForegroundBrush}" />
     </StackPanel>
 
-    <StackPanel Grid.Row="7" Grid.ColumnSpan="2"
+    <Button x:Name="SetupGuideButton"
+            Grid.Row="7" Grid.ColumnSpan="2"
+            HorizontalAlignment="Left"
+            Content="Setup guide for Guacamole Test Server with Docker"
+            Click="SetupGuideButton_Click" />
+
+    <StackPanel Grid.Row="8" Grid.ColumnSpan="2"
                 Orientation="Horizontal"
                 HorizontalAlignment="Right"
                 Spacing="8">

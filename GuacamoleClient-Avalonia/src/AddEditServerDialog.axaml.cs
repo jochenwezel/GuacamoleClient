@@ -12,6 +12,8 @@ namespace GuacClient;
 
 public partial class AddEditServerDialog : Window
 {
+    private const string SetupGuideUrl = "https://github.com/jochenwezel/GuacamoleClient/blob/main/docs/SetupTestGuacamoleServer.md";
+
     private readonly GuacamoleSettingsManager? _manager;
     private readonly GuacamoleServerProfile? _editing;
     private readonly bool _isFirstProfile;
@@ -28,6 +30,7 @@ public partial class AddEditServerDialog : Window
     private RadioButton _disableLocalCacheRadioButton = default!;
     private RadioButton _enableLocalCacheRadioButton = default!;
     private TextBlock _localCacheInfoTextBlock = default!;
+    private Button _setupGuideButton = default!;
     private Button _saveButton = default!;
     private Button _cancelButton = default!;
 
@@ -65,6 +68,7 @@ public partial class AddEditServerDialog : Window
         _disableLocalCacheRadioButton = this.FindControl<RadioButton>("DisableLocalCacheRadioButton")!;
         _enableLocalCacheRadioButton = this.FindControl<RadioButton>("EnableLocalCacheRadioButton")!;
         _localCacheInfoTextBlock = this.FindControl<TextBlock>("LocalCacheInfoTextBlock")!;
+        _setupGuideButton = this.FindControl<Button>("SetupGuideButton")!;
         _saveButton = this.FindControl<Button>("SaveButton")!;
         _cancelButton = this.FindControl<Button>("CancelButton")!;
 
@@ -88,6 +92,7 @@ public partial class AddEditServerDialog : Window
         _localCacheLabel.Text = LocalizationProvider.Get(LocalizationKeys.AddEdit_Label_LocalWebViewCache);
         _disableLocalCacheRadioButton.Content = LocalizationProvider.Get(LocalizationKeys.AddEdit_Radio_DisableLocalCacheRecommended);
         _enableLocalCacheRadioButton.Content = LocalizationProvider.Get(LocalizationKeys.AddEdit_Radio_EnableLocalCache);
+        _setupGuideButton.Content = LocalizationProvider.Get(LocalizationKeys.AddEdit_Link_SetupGuideGuacamoleTestServer);
         _cancelButton.Content = LocalizationProvider.Get(LocalizationKeys.Common_Button_Cancel);
         _saveButton.Content = LocalizationProvider.Get(LocalizationKeys.AddEdit_Button_Save);
     }
@@ -174,6 +179,12 @@ public partial class AddEditServerDialog : Window
 
     private void CancelButton_Click(object? sender, RoutedEventArgs e)
         => Close(null);
+
+    private async void SetupGuideButton_Click(object? sender, RoutedEventArgs e)
+    {
+        if (Uri.TryCreate(SetupGuideUrl, UriKind.Absolute, out var uri))
+            await Launcher.LaunchUriAsync(uri);
+    }
 
     private async Task SaveAsync()
     {

@@ -26,6 +26,7 @@ namespace GuacamoleClient.WinForms
         private const string ProjectWebsiteUrl = "https://github.com/jochenwezel/GuacamoleClient";
         private const string ProjectIssuesUrl = "https://github.com/jochenwezel/GuacamoleClient/issues";
         private const string RdpResizeDetailsUrl = "https://github.com/jochenwezel/GuacamoleClient/blob/main/README.md#faq-known-issues-typical-trouble-shooting";
+        private const string SetupGuideUrl = "https://github.com/jochenwezel/GuacamoleClient/blob/main/docs/SetupTestGuacamoleServer.md";
 
 
         [Obsolete("For designer support only", true)]
@@ -688,6 +689,11 @@ namespace GuacamoleClient.WinForms
                 LocalizationProvider.Get(LocalizationKeys.Help_RdpResize_Title),
                 LocalizationProvider.Get(LocalizationKeys.Help_RdpResize_Text),
                 (LocalizationProvider.Get(LocalizationKeys.Help_RdpResize_Link), RdpResizeDetailsUrl));
+        }
+
+        private void setupGuideHelpToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            UITools.OpenUrlInDefaultBrowser(SetupGuideUrl);
         }
 
         private void aboutToolStripMenuItem_Click(object sender, EventArgs e)

@@ -50,6 +50,7 @@
         <MenuItem x:Name="OpenGuacamoleMenuMenuItem" />
       </MenuItem>
       <MenuItem x:Name="HelpMenuItem">
+        <MenuItem x:Name="SetupGuideHelpMenuItem" />
         <MenuItem x:Name="RdpSessionResizeHelpMenuItem" />
         <Separator />
         <MenuItem x:Name="AboutMenuItem" />

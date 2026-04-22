@@ -29,6 +29,7 @@ namespace GuacamoleClient.WinForms
         private ToolStripSeparator toolStripSeparator4;
         private ToolStripMenuItem openGuacamoleMenuToolStripMenuItem;
         private ToolStripMenuItem helpToolStripMenuItem;
+        private ToolStripMenuItem setupGuideHelpToolStripMenuItem;
         private ToolStripMenuItem rdpSessionResizeHelpToolStripMenuItem;
         private ToolStripSeparator helpToolStripSeparator;
         private ToolStripMenuItem aboutToolStripMenuItem;
@@ -80,6 +81,7 @@ namespace GuacamoleClient.WinForms
             toolStripSeparator4 = new ToolStripSeparator();
             openGuacamoleMenuToolStripMenuItem = new ToolStripMenuItem();
             helpToolStripMenuItem = new ToolStripMenuItem();
+            setupGuideHelpToolStripMenuItem = new ToolStripMenuItem();
             rdpSessionResizeHelpToolStripMenuItem = new ToolStripMenuItem();
             helpToolStripSeparator = new ToolStripSeparator();
             aboutToolStripMenuItem = new ToolStripMenuItem();
@@ -256,10 +258,17 @@ namespace GuacamoleClient.WinForms
             // 
             // helpToolStripMenuItem
             // 
-            helpToolStripMenuItem.DropDownItems.AddRange(new ToolStripItem[] { rdpSessionResizeHelpToolStripMenuItem, helpToolStripSeparator, aboutToolStripMenuItem });
+            helpToolStripMenuItem.DropDownItems.AddRange(new ToolStripItem[] { setupGuideHelpToolStripMenuItem, rdpSessionResizeHelpToolStripMenuItem, helpToolStripSeparator, aboutToolStripMenuItem });
             helpToolStripMenuItem.Name = "helpToolStripMenuItem";
             helpToolStripMenuItem.Size = new Size(44, 20);
             helpToolStripMenuItem.Text = "Help";
+            // 
+            // setupGuideHelpToolStripMenuItem
+            // 
+            setupGuideHelpToolStripMenuItem.Name = "setupGuideHelpToolStripMenuItem";
+            setupGuideHelpToolStripMenuItem.Size = new Size(220, 22);
+            setupGuideHelpToolStripMenuItem.Text = "Setup guide for Guacamole Test Server with Docker";
+            setupGuideHelpToolStripMenuItem.Click += setupGuideHelpToolStripMenuItem_Click;
             // 
             // rdpSessionResizeHelpToolStripMenuItem
             // 
