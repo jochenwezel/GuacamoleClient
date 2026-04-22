@@ -949,7 +949,7 @@ namespace GuacamoleClient.WinForms
                 {
                     lastLoginContext = await _guacamoleApiRestClient.AuthenticateAndLookupExtendedDataAsync(baseUri, token);
                 }
-                catch (Exception ex)
+                catch (Exception)
                 {
                     lastLoginContext = new UserLoginContextWithPrimaryConnectionDataSource() { AuthToken = token };
                 }

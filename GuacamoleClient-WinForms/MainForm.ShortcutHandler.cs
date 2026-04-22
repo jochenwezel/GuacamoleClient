@@ -177,7 +177,6 @@ namespace GuacamoleClient.WinForms
             const Keys VK_END = Keys.End;
             const Keys VK_ESC = Keys.Escape;
             const Keys VK_R = Keys.R;
-            const Keys VK_N = Keys.N;
             const Keys VK_BACKSPACE = Keys.Back;
             //const int VK_F4 = 0x73;
             //const int VK_END = 0x23;

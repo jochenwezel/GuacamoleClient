@@ -6,7 +6,7 @@ namespace GuacamoleClient.WinForms
 {
     internal sealed partial class ChooseServerForm
     {
-        private System.ComponentModel.IContainer? components;
+        private System.ComponentModel.IContainer components = new System.ComponentModel.Container();
 
         private ListView _list;
         private Button _btnAdd;
@@ -22,7 +22,7 @@ namespace GuacamoleClient.WinForms
         {
             if (disposing)
             {
-                components?.Dispose();
+                components.Dispose();
             }
             base.Dispose(disposing);
         }

@@ -6,7 +6,7 @@ namespace GuacamoleClient.WinForms
 {
     internal sealed partial class AddEditServerForm
     {
-        private System.ComponentModel.IContainer? components;
+        private System.ComponentModel.IContainer components = new System.ComponentModel.Container();
 
         private TextBox _txtUrl;
         private TextBox _txtName;
@@ -29,7 +29,7 @@ namespace GuacamoleClient.WinForms
         {
             if (disposing)
             {
-                components?.Dispose();
+                components.Dispose();
             }
             base.Dispose(disposing);
         }
