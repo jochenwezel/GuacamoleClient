@@ -85,6 +85,10 @@ jobs:
           -p:AssemblyVersion=${{ env.VERSION }}
           -p:InformationalVersion=${{ env.VERSION }}
 
+      - name: Clean Avalonia before macOS Intel x64 publish
+        if: runner.os == 'macOS'
+        run: dotnet clean GuacamoleClient-Avalonia/GuacamoleClient-Avalonia.csproj -c ${{ env.BUILD_CONFIGURATION }}
+
       - name: Publish Avalonia (macOS Intel x64)
         if: runner.os == 'macOS'
         run: >

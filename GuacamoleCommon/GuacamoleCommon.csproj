@@ -5,10 +5,13 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <RootNamespace>GuacamoleClient.Common</RootNamespace>
+    <Company>CompuMaster GmbH</Company>
+    <Product>GuacamoleClient</Product>
+    <Copyright>2025-2026 CompuMaster GmbH</Copyright>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="SharpHook" Version="7.0.3" />
+    <PackageReference Include="SharpHook" Version="7.1.1" />
   </ItemGroup>
 
 </Project>

@@ -1,4 +1,9 @@
 ﻿using GuacamoleClient.Common;
+using GuacamoleClient.Common.Localization;
+using GuacamoleClient.Common.Settings;
+using GuacamoleClient.RestClient;
+using InfoBox;
+using Microsoft.VisualBasic.ApplicationServices;
 using Microsoft.Web.WebView2.Core;
 using System;
 using System.Collections.Generic;
@@ -6,6 +11,9 @@ using System.ComponentModel;
 using System.Diagnostics;
 using System.Drawing;
 using System.IO;
+using System.Runtime.InteropServices;
+using System.Security.Policy;
+using System.Text.Json;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
@@ -15,29 +23,58 @@ namespace GuacamoleClient.WinForms
     {
         private const bool TEST_MENU_ENABLED = false;
         private const bool TEST_CONTROL_FOCUS_INFO_IN_FORM_TITLE = false; // effective only when enabled and with Debugger attached
+        private const string ProjectWebsiteUrl = "https://github.com/jochenwezel/GuacamoleClient";
+        private const string ProjectIssuesUrl = "https://github.com/jochenwezel/GuacamoleClient/issues";
+        private const string RdpResizeDetailsUrl = "https://github.com/jochenwezel/GuacamoleClient/blob/main/README.md#faq-known-issues-typical-trouble-shooting";
+        private const string SetupGuideUrl = "https://github.com/jochenwezel/GuacamoleClient/blob/main/docs/SetupTestGuacamoleServer.md";
 
 
         [Obsolete("For designer support only", true)]
         [System.ComponentModel.EditorBrowsable(System.ComponentModel.EditorBrowsableState.Never)]
-        public MainForm() : this(new Uri("https://guacamole.apache.org/"), new Uri("https://guacamole.apache.org/")) { }
+        public MainForm() : this(
+            new GuacamoleClient.Common.Settings.GuacamoleSettingsManager(
+                new GuacamoleClient.Common.Settings.JsonFileGuacamoleSettingsStore(GuacamoleClient.Common.Settings.GuacamoleSettingsPaths.GetSettingsFilePath("GuacamoleClient-Designer")),
+                new GuacamoleClient.Common.Settings.GuacamoleSettingsDocument()),
+            new GuacamoleClient.Common.Settings.GuacamoleServerProfile("https://guacamole.apache.org/", null!, "Gray", false, false),
+            new Uri("https://guacamole.apache.org/"))
+        { }
 
-        public MainForm(Uri homeUrl, Uri startUrl)
+        private readonly GuacamoleClient.Common.Settings.GuacamoleSettingsManager _settings;
+        public GuacamoleClient.Common.Settings.GuacamoleServerProfile ServerProfile { get; }
+        private string? _temporaryCacheDirectory;
+
+        public MainForm(GuacamoleClient.Common.Settings.GuacamoleSettingsManager settings, GuacamoleClient.Common.Settings.GuacamoleServerProfile serverProfile) : this(settings, serverProfile, new Uri(serverProfile.Url))
+        { }
+
+        public MainForm(GuacamoleClient.Common.Settings.GuacamoleSettingsManager settings, GuacamoleClient.Common.Settings.GuacamoleServerProfile serverProfile, Uri startUrl)
         {
-            this.HomeUrl = homeUrl;
+            _settings = settings ?? throw new ArgumentNullException(nameof(settings));
+            ServerProfile = serverProfile ?? throw new ArgumentNullException(nameof(serverProfile));
+            this.HomeUrl = new Uri(serverProfile.Url);
             this.StartUrl = startUrl;
-            _trustedHosts.Add(homeUrl.Host);
+            _trustedHosts.Add(this.HomeUrl.Host);
+            _guacamoleApiRestClient = new GuacamoleApiClient(ignoreCertificateErrors: this.ServerProfile.IgnoreCertificateErrors, new TimeSpan(0, 0, 15));
+            GuacamoleClient.RestClient.GuacamoleApiClient.LoggingEnabled = TEST_MENU_ENABLED;
 
             InitializeComponent();
             InitializeControlFocusManagementWithKeyboardCapturingHandler();
+            InitializeLocalization();
 
             //Form title + menu customization
             this.UpdateFormTitle(startUrl);
             KeyPreview = true;
-            mainMenuStrip!.SetMenuStripColorsRecursive(Color.OrangeRed, Color.OrangeRed, Color.DarkRed, Color.Black, Color.DarkGray);
-            testToolStripMenuItem.Available = TEST_MENU_ENABLED;
+            ApplyProfileColors();
+            UITools.SwitchToolStripVisibility(testToolStripMenuItem, TEST_MENU_ENABLED, false);
 
             //Assign commands to close timer
             _closeTimer.Tick += (_, __) => { _closeTimer.Stop(); Close(); };
+            this.FormClosed += (_, __) =>
+            {
+                RemoveKeyboardHook();
+                GuacamoleBrowserCache.DeleteDirectoryIfExists(_temporaryCacheDirectory);
+                if (!ServerProfile.LocalCacheEnabled)
+                    GuacamoleBrowserCache.DeleteProfileCacheDirectory("GuacamoleClient", ServerProfile.Id);
+            };
 
             //Tooltip
             _tip = new ToolTip
@@ -91,7 +128,13 @@ namespace GuacamoleClient.WinForms
         protected override void OnHandleCreated(EventArgs e)
         {
             base.OnHandleCreated(e);
-            TitleBarHelper.ApplyTitleBarColors(this, Color.OrangeRed, Color.Black);
+            TitleBarHelper.ApplyTitleBarColors(this, this.ServerProfile.LookupColorScheme());
+        }
+
+        private void ApplyProfileColors()
+        {
+            // existing implementation supports all relevant color assignments - now driven by profile
+            mainMenuStrip!.SetMenuStripColorsRecursive(this.ServerProfile.LookupColorScheme());
         }
 
         /// <summary>
@@ -104,7 +147,7 @@ namespace GuacamoleClient.WinForms
         private void NewWindowRequested(object? sender, CoreWebView2NewWindowRequestedEventArgs e)
         {
             // Öffne neuen MainForm mit der Ziel-URL
-            var form = new MainForm(this.HomeUrl, new Uri(e.Uri));
+            var form = new MainForm(_settings, this.ServerProfile, new Uri(e.Uri));
             form.Show();
             // Verhindere das Öffnen im aktuellen WebView
             e.Handled = true;
@@ -115,7 +158,7 @@ namespace GuacamoleClient.WinForms
         /// </summary>
         /// <param name="currentUrl">The current URL used to determine the new form title.</param>
         public void UpdateFormTitle(Uri currentUrl) => this.UpdateFormTitle(currentUrl, String.Empty);
-        
+
         /// <summary>
         /// Updates the form's title and the full screen mode menu item to reflect the current document and URL.
         /// </summary>
@@ -157,12 +200,14 @@ namespace GuacamoleClient.WinForms
         /// <summary>
         /// The URL for the connections configuation page of guacamole
         /// </summary>
-        public Uri GuacamoleConnectionConfigurationsUrl
+        /// <remarks>This URL might be available for guacamole admin users only.</remarks>
+        public async Task<Uri?> GetGuacamoleConnectionsConfigurationUrlAsync()
         {
-            get
-            {
-                return new Uri(this.HomeUrl, "#/settings/mysql/connections");
-            }
+            var ctx = await this.GetLoginContextAsync().ConfigureAwait(false);
+            var result = ctx?.ConnectionsConfigUri;
+            if (string.IsNullOrEmpty(result))
+                return null;
+            return new Uri(result.ToString());
         }
 
         private void MainForm_ResizeEnd(object? sender, EventArgs e)
@@ -189,6 +234,28 @@ namespace GuacamoleClient.WinForms
             _webview2_core!.NavigationCompleted += NavigationCompleted;
             _webview2_core!.NewWindowRequested += NewWindowRequested;
             _webview2_core!.FaviconChanged += (_, __) => RefreshFaviconAsync();
+            _webview2_core!.ContextMenuRequested += async (s, e) =>
+            {
+                // solves issue https://github.com/jochenwezel/GuacamoleClient/issues/21
+                // set focus to webview and wait a tick for allowing clipboard sync before right-click event is fully handled
+                // this prevents pasting of stale clipboard data in remote sessions when right-click immediately pastes clipboard content (e.g. linux terminal)
+                // => default menu stays untouched, e.Handled WON'T be set to true!
+                var deferral = e.GetDeferral();
+                try
+                {
+                    // 1) activate this window
+                    if (!this.Focused) this.Activate();
+                    // 2) focus WebView 
+                    this.SetFocusToWebview2Control();
+                    // 3) wait a tick
+                    await Task.Yield();
+                }
+                finally
+                {
+                    deferral.Complete();
+                }
+            };
+
             RefreshFaviconAsync();
         }
 
@@ -199,6 +266,9 @@ namespace GuacamoleClient.WinForms
         /// <param name="e"></param>
         private async void NavigationCompleted(object? sender, CoreWebView2NavigationCompletedEventArgs e)
         {
+            string? authToken = await this.GetGuacamoleAuthTokenAsync();
+            if (string.IsNullOrEmpty(authToken) || this._lastUserLoginContext == null || this._lastUserLoginContext.AuthToken != authToken)
+                this._lastUserLoginContext = await this.GetLoginContextAsync();
             //configure timer to short timeout to refresh form controls ASAP
             this.formTitleRefreshTimer.Enabled = true;
             this.formTitleRefreshTimer.Interval = 100;
@@ -224,7 +294,7 @@ namespace GuacamoleClient.WinForms
                 else if (SwitchMenuItemsBasedOnShownContent_Ex == null)
                 {
                     SwitchMenuItemsBasedOnShownContent_Ex = ex;
-                    MessageBox.Show(this, $"Unexpected exception:\n{ex.ToString()}", "Unexpected error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    ShowMessageBoxNonModal($"Unexpected exception:\n{ex.ToString()}", "Unexpected error", InformationBoxButtons.OK, InformationBoxIcon.Error);
                 }
                 else
                 {
@@ -234,18 +304,20 @@ namespace GuacamoleClient.WinForms
             }
 
             //Check for login form and show menu items accordingly
-            if (GuacamoleUrlAndContentChecks.ContentIsGuacamoleLoginForm(currentHtml))
+            if (GuacamoleUrlAndContentChecks.ContentIsGuacamoleLoginForm(currentHtml)) // could also be solved by checking var ctx = await this.GetLoginContextAsync().ConfigureAwait(false);
+
             {
-                guacamoleUserSettingsToolStripMenuItem!.Available = false;
-                guacamoleConnectionConfigurationsToolStripMenuItem!.Available = false;
-                newWindowToolStripMenuItem!.Available = false;
+                UITools.SwitchToolStripVisibility(guacamoleUserSettingsToolStripMenuItem, false, false);
+                UITools.SwitchToolStripVisibility(guacamoleConnectionConfigurationsToolStripMenuItem, false, false);
+                UITools.SwitchToolStripVisibility(newWindowToolStripMenuItem, false, false);
             }
             else
             {
-                guacamoleUserSettingsToolStripMenuItem!.Available = true;
-                guacamoleConnectionConfigurationsToolStripMenuItem!.Available = true;
-                newWindowToolStripMenuItem!.Available = true;
+                UITools.SwitchToolStripVisibility(guacamoleUserSettingsToolStripMenuItem, true, false);
+                UITools.SwitchToolStripVisibility(guacamoleConnectionConfigurationsToolStripMenuItem, !string.IsNullOrEmpty(_lastUserLoginContext?.ConnectionsConfigUri), false);
+                UITools.SwitchToolStripVisibility(newWindowToolStripMenuItem, true, false);
             }
+            UITools.SwitchSeparatorLinesVisibility(fileToolStripMenuItem.DropDownItems);
         }
 
         /// <summary>
@@ -273,52 +345,6 @@ namespace GuacamoleClient.WinForms
         }
 
         /// <summary>
-        /// Create a windows icon from a PNG file (website favicon)
-        /// </summary>
-        /// <param name="pngStream"></param>
-        /// <returns></returns>
-        private Icon? CreateIconFromPngStream(Stream pngStream)
-        {
-            try
-            {
-                // PNG vollständig in Bytearray kopieren
-                using var msPng = new MemoryStream();
-                pngStream.CopyTo(msPng);
-                byte[] pngBytes = msPng.ToArray();
-
-                using var pngBitmap = new Bitmap(msPng);
-
-                using var icoStream = new MemoryStream();
-
-                // ICO HEADER (6 bytes)
-                icoStream.Write(new byte[] { 0, 0, 1, 0, 1, 0 }, 0, 6);
-
-                // ICON DIRECTORY ENTRY (16 bytes)
-                byte width = (byte)(pngBitmap.Width >= 256 ? 0 : pngBitmap.Width);
-                byte height = (byte)(pngBitmap.Height >= 256 ? 0 : pngBitmap.Height);
-
-                icoStream.WriteByte(width);        // width
-                icoStream.WriteByte(height);       // height
-                icoStream.WriteByte(0);            // colors
-                icoStream.WriteByte(0);            // reserved
-                icoStream.Write(BitConverter.GetBytes((short)1), 0, 2);   // planes = 1
-                icoStream.Write(BitConverter.GetBytes((short)32), 0, 2);  // bit depth = 32
-                icoStream.Write(BitConverter.GetBytes(pngBytes.Length), 0, 4); // bytes in PNG
-                icoStream.Write(BitConverter.GetBytes(22), 0, 4); // offset to PNG data
-
-                // PNG-Daten anhängen
-                icoStream.Write(pngBytes, 0, pngBytes.Length);
-
-                icoStream.Position = 0;
-                return new Icon(icoStream);
-            }
-            catch
-            {
-                return null;
-            }
-        }
-
-        /// <summary>
         /// Assign document favicon to form
         /// </summary>
         private async void RefreshFaviconAsync()
@@ -328,7 +354,7 @@ namespace GuacamoleClient.WinForms
                 Stream iconStream = await _webview2_core!.GetFaviconAsync(CoreWebView2FaviconImageFormat.Png);
                 if (iconStream != null && iconStream.Length > 0)
                 {
-                    Icon? icon = CreateIconFromPngStream(iconStream);
+                    Icon? icon = IconTools.CreateIconFromPngStream(iconStream);
                     if (icon != null)
                         this.Icon = icon;
                 }
@@ -345,7 +371,8 @@ namespace GuacamoleClient.WinForms
         /// <returns></returns>
         private async Task InitWebView2Async()
         {
-            _webview2_env = await CoreWebView2Environment.CreateAsync();
+            string userDataFolder = GetWebView2UserDataFolder();
+            _webview2_env = await CoreWebView2Environment.CreateAsync(null, userDataFolder);
             _webview2_controller = await _webview2_env.CreateCoreWebView2ControllerAsync(this.WebBrowserHostPanel!.Handle);
             _webview2_controller.IsVisible = true;
             UpdateControllerBounds();
@@ -353,12 +380,109 @@ namespace GuacamoleClient.WinForms
             _webview2_controller.AcceleratorKeyPressed += Controller_AcceleratorKeyPressed;
 
             _webview2_core = _webview2_controller.CoreWebView2;
+            // Certificate errors handling (per server profile)
+            _webview2_core.ServerCertificateErrorDetected += (s, e) =>
+            {
+                try
+                {
+                    if (ServerProfile.IgnoreCertificateErrors)
+                    {
+                        // Scope: this profile only. Restrict to same host as profile base URL.
+                        var requested = new Uri(e.RequestUri);
+                        if (string.Equals(requested.Host, this.HomeUrl.Host, StringComparison.OrdinalIgnoreCase))
+                        {
+                            e.Action = CoreWebView2ServerCertificateErrorAction.AlwaysAllow;
+                            return;
+                        }
+                    }
+                }
+                catch
+                {
+                    // fallback to default
+                }
+                e.Action = CoreWebView2ServerCertificateErrorAction.Cancel;
+            };
             _webview2_core.Settings.IsStatusBarEnabled = false;
             _webview2_core.Settings.AreDefaultContextMenusEnabled = true;
             _webview2_core.Settings.AreDevToolsEnabled = false;
 
-            _webview2_core.Navigate(StartUrl.ToString());            
+            InitializeLoginRequestCapture();
+
+            _webview2_core.Navigate(StartUrl.ToString());
             SetFocusToWebview2Control();
+        }
+
+        private string GetWebView2UserDataFolder()
+        {
+            if (ServerProfile.LocalCacheEnabled)
+            {
+                GuacamoleBrowserCache.EnsureProfileCacheDirectory("GuacamoleClient", ServerProfile.Id);
+                return GuacamoleBrowserCache.GetProfileCacheDirectory("GuacamoleClient", ServerProfile.Id);
+            }
+
+            _temporaryCacheDirectory = GuacamoleBrowserCache.CreateTemporaryCacheDirectory("GuacamoleClient", ServerProfile.Id);
+            return _temporaryCacheDirectory;
+        }
+
+        /// <summary>
+        /// Captured details from the last successful login/token request (if observed)
+        /// </summary>
+        private GuacamoleClient.RestClient.UserLoginContextWithPrimaryConnectionDataSource? _lastUserLoginContext;
+
+        /// <summary>
+        /// Guard to avoid duplicate event handler registration
+        /// </summary>
+        private int _loginCaptureInitialized = 0;
+
+        /// <summary>
+        /// Capture login/token response JSON to extract auth token + additional metadata (e.g. availableDataSources)
+        /// </summary>
+        private void InitializeLoginRequestCapture()
+        {
+            if (_webview2_core == null) return;
+            if (System.Threading.Interlocked.Exchange(ref _loginCaptureInitialized, 1) != 0) return;
+
+            try
+            {
+                // Guacamole token endpoints vary by version / deployment
+                // - /api/tokens
+                // - /api/session/tokens
+                // We capture both.
+                var origin = this.HomeUrl.GetLeftPart(UriPartial.Authority);
+                _webview2_core.AddWebResourceRequestedFilter($"{origin}/api/tokens*", CoreWebView2WebResourceContext.All);
+                _webview2_core.AddWebResourceRequestedFilter($"{origin}/api/session/tokens*", CoreWebView2WebResourceContext.All);
+
+                _webview2_core.WebResourceResponseReceived += WebView2_WebResourceResponseReceived;
+            }
+            catch
+            {
+                // ignore (SDK differences / failing filters should not break app)
+            }
+        }
+
+        private async void WebView2_WebResourceResponseReceived(object? sender, CoreWebView2WebResourceResponseReceivedEventArgs e)
+        {
+            try
+            {
+                // only POST requests to known token endpoints
+                if (!string.Equals(e.Request.Method, "POST", StringComparison.OrdinalIgnoreCase)) return;
+                if (!Uri.TryCreate(e.Request.Uri, UriKind.Absolute, out var uri)) return;
+                if (!string.Equals(uri.Host, this.HomeUrl.Host, StringComparison.OrdinalIgnoreCase)) return;
+
+                var path = uri.AbsolutePath;
+                if (!path.EndsWith("/api/tokens", StringComparison.OrdinalIgnoreCase)
+                    && !path.EndsWith("/api/session/tokens", StringComparison.OrdinalIgnoreCase))
+                    return;
+
+                var resp = e.Response;
+                if (resp == null) return;
+
+                _lastUserLoginContext = null; // reset previous context on new login attempt
+            }
+            catch
+            {
+                // ignore
+            }
         }
 
         /// <summary>
@@ -421,7 +545,7 @@ namespace GuacamoleClient.WinForms
             if (_webview2_controller == null) return;
             var r = this.WebBrowserHostPanel!.ClientRectangle;
             _webview2_controller.Bounds = new Rectangle(r.X, r.Y, r.Width, r.Height);
-        }       
+        }
 
         /// <summary>
         /// Close window
@@ -489,12 +613,12 @@ namespace GuacamoleClient.WinForms
                 //Screen screen = Screen.FromControl(this);
                 //Rectangle r = screen.Bounds;
             }
-            this.stopFullScreenModeToolStripMenuItem.Available = fullScreen;
-            this.connectionNameInFullScreenModeToolStripMenuItem.Available = fullScreen;
+            UITools.SwitchToolStripVisibility(stopFullScreenModeToolStripMenuItem, fullScreen, false);
+            UITools.SwitchToolStripVisibility(connectionNameInFullScreenModeToolStripMenuItem, fullScreen, false);
             this.connectionNameInFullScreenModeToolStripMenuItem.Enabled = false;
             this.connectionNameInFullScreenModeToolStripMenuItem.ForeColor = Color.Black;
             this.connectionNameInFullScreenModeToolStripMenuItem.Font = new Font(this.connectionNameInFullScreenModeToolStripMenuItem.Font, FontStyle.Bold);
-        } 
+        }
 
         /// <summary>
         /// Stop full screen mode
@@ -511,9 +635,13 @@ namespace GuacamoleClient.WinForms
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void guacamoleConnectionConfigurationsToolStripMenuItem_Click(object sender, EventArgs e)
+        private async void guacamoleConnectionConfigurationsToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            var form = new MainForm(this.HomeUrl, new Uri(this.GuacamoleConnectionConfigurationsUrl.ToString()));
+            var urlTask = GetGuacamoleConnectionsConfigurationUrlAsync();
+            Uri? url = await urlTask;
+            if (url == null)
+                return;
+            var form = new MainForm(_settings, this.ServerProfile, new Uri(url.ToString()));
             form.Show();
         }
 
@@ -524,7 +652,7 @@ namespace GuacamoleClient.WinForms
         /// <param name="e"></param>
         private void guacamoleUserSettingsToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            var form = new MainForm(this.HomeUrl, new Uri(this.GuacamoleSettingsUrl.ToString()));
+            var form = new MainForm(_settings, this.ServerProfile, new Uri(this.GuacamoleSettingsUrl.ToString()));
             form.Show();
         }
 
@@ -535,8 +663,117 @@ namespace GuacamoleClient.WinForms
         /// <param name="e"></param>
         private void newWindowToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            var form = new MainForm(this.HomeUrl, this.StartUrl);
+            var form = new MainForm(_settings, this.ServerProfile, this.StartUrl);
             form.Show();
+        }
+
+        /// <summary>
+        /// Open an additional window connected to another configured Guacamole server profile.
+        /// Current window remains on its server.
+        /// </summary>
+        private void openAnotherGuacamoleServerToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            using var dlg = new ChooseServerForm(_settings);
+            if (dlg.ShowDialog(this) != DialogResult.OK || dlg.SelectedProfile == null)
+                return;
+
+            var profile = dlg.SelectedProfile;
+            var home = new Uri(profile.Url);
+            var form = new MainForm(_settings, profile, home);
+            form.Show();
+        }
+
+        private void rdpSessionResizeHelpToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            ShowInfoDialogWithLinks(
+                LocalizationProvider.Get(LocalizationKeys.Help_RdpResize_Title),
+                LocalizationProvider.Get(LocalizationKeys.Help_RdpResize_Text),
+                (LocalizationProvider.Get(LocalizationKeys.Help_RdpResize_Link), RdpResizeDetailsUrl));
+        }
+
+        private void setupGuideHelpToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            UITools.OpenUrlInDefaultBrowser(SetupGuideUrl);
+        }
+
+        private void aboutToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            var text = LocalizationProvider.Get(
+                LocalizationKeys.Help_About_Text,
+                "WinForms",
+                Application.ProductVersion,
+                RuntimeInformation.FrameworkDescription,
+                RuntimeInformation.OSDescription,
+                RuntimeInformation.ProcessArchitecture.ToString());
+
+            ShowInfoDialogWithLinks(
+                LocalizationProvider.Get(LocalizationKeys.Help_About_Title),
+                text,
+                (LocalizationProvider.Get(LocalizationKeys.Help_ProjectWebsite_Link), ProjectWebsiteUrl),
+                (LocalizationProvider.Get(LocalizationKeys.Help_ReportBug_Link), ProjectIssuesUrl));
+        }
+
+        private void ShowInfoDialogWithLinks(string title, string message, params (string Text, string Url)[] links)
+        {
+            using var dialog = new Form
+            {
+                Text = title,
+                StartPosition = FormStartPosition.CenterParent,
+                MinimizeBox = false,
+                MaximizeBox = false,
+                ShowIcon = true,
+                Icon = this.Icon,
+                FormBorderStyle = FormBorderStyle.FixedDialog,
+                ClientSize = new Size(560, 260)
+            };
+
+            var messageLabel = new Label
+            {
+                Text = message,
+                AutoSize = false,
+                Dock = DockStyle.Fill,
+                Padding = new Padding(12),
+                TextAlign = ContentAlignment.TopLeft
+            };
+
+            var buttonPanel = new FlowLayoutPanel
+            {
+                Dock = DockStyle.Bottom,
+                FlowDirection = FlowDirection.RightToLeft,
+                AutoSize = true,
+                Padding = new Padding(12, 0, 12, 12),
+                WrapContents = false
+            };
+
+            var okButton = new Button
+            {
+                Text = "OK",
+                DialogResult = DialogResult.OK,
+                AutoSize = true
+            };
+            buttonPanel.Controls.Add(okButton);
+
+            foreach (var link in links)
+            {
+                var linkButton = new Button
+                {
+                    Text = link.Text,
+                    AutoSize = true,
+                    Tag = link.Url
+                };
+                linkButton.Click += (_, __) =>
+                {
+                    if (linkButton.Tag is string url)
+                        UITools.OpenUrlInDefaultBrowser(url);
+                };
+                buttonPanel.Controls.Add(linkButton);
+            }
+
+            dialog.Controls.Add(messageLabel);
+            dialog.Controls.Add(buttonPanel);
+            dialog.AcceptButton = okButton;
+            dialog.CancelButton = okButton;
+            dialog.ShowDialog(this);
         }
 
         /// <summary>
@@ -573,14 +810,23 @@ namespace GuacamoleClient.WinForms
                 if (formTitleRefreshTimer_Tick_Ex == null)
                 {
                     formTitleRefreshTimer_Tick_Ex = ex;
-                    MessageBox.Show(this, $"Unexpected exception:\n{ex.ToString()}", "Unexpected error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    ShowMessageBoxNonModal($"Unexpected exception:\n{ex.ToString()}", "Unexpected error", InformationBoxButtons.OK, InformationBoxIcon.Error);
                 }
                 else // => formTitleRefreshTimer_Tick_Ex != null
                 {
                     //ignore repeated exceptions
                 }
             }
-        }         
+        }
+
+        public InformationBoxResult ShowMessageBoxNonModal(string text, string caption, InformationBoxButtons buttons, InformationBoxIcon icon)
+        {
+            return InformationBox.Show(
+                text, title: caption, buttons: buttons, icon: icon,
+                style: InformationBoxStyle.Standard,
+                behavior: InformationBoxBehavior.Modeless, initialization: InformationBoxInitialization.FromScopeAndParameters, 
+                titleIcon: new InfoBox.InformationBoxTitleIcon(this.Icon), titleStyle: InformationBoxTitleIconStyle.Custom);
+        }
 
         /// <summary>
         /// Immediately update form title on mouse click
@@ -609,78 +855,291 @@ namespace GuacamoleClient.WinForms
                 return c.Name;
         }
 
+        private async void testToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+        }
+
+        private async Task<string> DispatchSyntheticKeyboardSequenceAsync(params string[] eventDefinitionsJson)
+        {
+            if (_webview2_core == null)
+                throw new InvalidOperationException("WebView2 Core not initialized.");
+
+            string serializedDefinitions = string.Join("," + Environment.NewLine, eventDefinitionsJson);
+            string script = $$"""
+                (() => {
+                    const target = document.activeElement || document.body || document.documentElement;
+                    const events = [{{serializedDefinitions}}];
+                    const summary = [];
+                    for (const def of events) {
+                        const event = new KeyboardEvent(def.type, {
+                            key: def.key,
+                            code: def.code,
+                            location: def.location ?? 0,
+                            repeat: false,
+                            ctrlKey: !!def.ctrlKey,
+                            altKey: !!def.altKey,
+                            shiftKey: !!def.shiftKey,
+                            metaKey: !!def.metaKey,
+                            bubbles: true,
+                            cancelable: true,
+                            composed: true
+                        });
+                        const dispatchTarget = target || document;
+                        dispatchTarget.dispatchEvent(event);
+                        summary.push({
+                            type: def.type,
+                            key: def.key,
+                            code: def.code,
+                            targetTag: dispatchTarget.tagName || '#document',
+                            isTrusted: event.isTrusted,
+                            defaultPrevented: event.defaultPrevented
+                        });
+                    }
+                    return JSON.stringify({
+                        activeElement: target?.tagName || null,
+                        events: summary
+                    });
+                })();
+                """;
+
+            return await _webview2_core.ExecuteScriptAsync(script).ConfigureAwait(false);
+        }
+
+        private async Task<(bool toggled, string? reason)> TryToggleGuacamoleMenuAsync()
+        {
+            if (_webview2_core == null)
+                return (false, "webview-not-initialized");
+
+            string script = """
+                (() => {
+                    const ng = window.angular;
+                    if (!ng || typeof ng.element !== 'function')
+                        return JSON.stringify({ toggled: false, reason: 'angular-unavailable' });
+
+                    const candidates = [];
+                    const pushCandidate = (node) => {
+                        if (node && !candidates.includes(node))
+                            candidates.push(node);
+                    };
+
+                    pushCandidate(document.querySelector('[ng-controller="clientController"]'));
+                    pushCandidate(document.querySelector('.client'));
+                    pushCandidate(document.querySelector('[ng-view]'));
+                    pushCandidate(document.querySelector('.client-view'));
+                    pushCandidate(document.activeElement);
+                    pushCandidate(document.body);
+                    pushCandidate(document.documentElement);
+
+                    let scope = null;
+                    const tryGetScope = (node) => {
+                        let current = node;
+                        while (current) {
+                            const wrapped = ng.element(current);
+                            const localScope = (typeof wrapped.scope === 'function' && wrapped.scope())
+                                || (typeof wrapped.isolateScope === 'function' && wrapped.isolateScope());
+                            if (localScope && localScope.menu) {
+                                return localScope;
+                            }
+                            current = current.parentElement || current.parentNode;
+                        }
+                        return null;
+                    };
+
+                    for (const candidate of candidates) {
+                        scope = tryGetScope(candidate);
+                        if (scope)
+                            break;
+                    }
+
+                    if (!scope || !scope.menu)
+                        return JSON.stringify({
+                            toggled: false,
+                            reason: 'menu-scope-unavailable',
+                            candidates: candidates.map(node => node?.tagName || node?.nodeName || 'unknown')
+                        });
+
+                    const toggle = () => {
+                        scope.menu.shown = !scope.menu.shown;
+                    };
+
+                    if (typeof scope.$evalAsync === 'function') {
+                        scope.$evalAsync(toggle);
+                    }
+                    else {
+                        toggle();
+                        if (typeof scope.$applyAsync === 'function')
+                            scope.$applyAsync();
+                        else if (typeof scope.$apply === 'function')
+                            scope.$apply();
+                    }
+
+                    return JSON.stringify({ toggled: true });
+                })();
+                """;
+
+            string resultJson = await _webview2_core.ExecuteScriptAsync(script).ConfigureAwait(false);
+            string? unescapedJson = JsonSerializer.Deserialize<string>(resultJson);
+            if (string.IsNullOrWhiteSpace(unescapedJson))
+                return (false, "empty-webview-response");
+
+            using JsonDocument doc = JsonDocument.Parse(unescapedJson);
+            bool toggled = doc.RootElement.TryGetProperty("toggled", out JsonElement toggledElement)
+                && toggledElement.ValueKind == JsonValueKind.True;
+
+            string? reason = null;
+            if (doc.RootElement.TryGetProperty("reason", out JsonElement reasonElement) && reasonElement.ValueKind == JsonValueKind.String)
+                reason = reasonElement.GetString();
+
+            return (toggled, reason);
+        }
+
+        private async Task ToggleGuacamoleMenuSafeAsync()
+        {
+            await ToggleGuacamoleMenuSafeAsync(ignoreUnavailableMenuScope: false).ConfigureAwait(true);
+        }
+
+        private static bool IsUnavailableGuacamoleMenuScope(string? reason)
+            => string.Equals(reason, "menu-scope-unavailable", StringComparison.Ordinal);
+
+        private async Task<bool> ToggleGuacamoleMenuSafeAsync(bool ignoreUnavailableMenuScope)
+        {
+            var result = await TryToggleGuacamoleMenuAsync().ConfigureAwait(true);
+            if (result.toggled)
+            {
+                ShowHint(LocalizationKeys.Hint_GuacamoleMenu_Toggled);
+                return true;
+            }
+
+            if (ignoreUnavailableMenuScope && IsUnavailableGuacamoleMenuScope(result.reason))
+                return false;
+
+            throw new InvalidOperationException($"Unable to toggle the Guacamole menu in the embedded client. Reason: {result.reason ?? "unknown"}");
+        }
+
+        private async void openGuacamoleMenuToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                await ToggleGuacamoleMenuSafeAsync().ConfigureAwait(true);
+            }
+            catch (Exception ex)
+            {
+                ShowMessageBoxNonModal(ex.ToString(), "Guacamole menu", InformationBoxButtons.OK, InformationBoxIcon.Error);
+            }
+        }
+
         /// <summary>
         /// Show cached login session details or other valuable keys to analyse how to check of is-logged-on-state
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private async void testToolStripMenuItem_Click(object sender, EventArgs e)
+        private async void authorizationUserContextToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            string json = await CaptureGuacamoleSessionAndStorageKeysAsync();
-            MessageBox.Show(this, $"Guacamole Auth Token - chance 1:\n{json}", "Test", MessageBoxButtons.OK, MessageBoxIcon.Information);
-            var token = await GetGuacamoleAuthTokenAsync();
-            MessageBox.Show(this, $"Guacamole Auth Token - chance 2:\n{token}", "Test", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            var loginContext = await GetLoginContextAsync();
+            if (loginContext == null)
+            {
+                ShowMessageBoxNonModal($"No Guacamole Auth Token/Login context", "Authorization @ " + this.ServerProfile.DisplayName, InformationBoxButtons.OK, InformationBoxIcon.Information);
+            }
+            else
+            {
+                ShowMessageBoxNonModal($"Guacamole Auth Token/Login context:\n\n{loginContext.ToString()}", "Authorization @ " + this.ServerProfile.DisplayName, InformationBoxButtons.OK, InformationBoxIcon.Information);
+            }
         }
 
-        /// <summary>
-        /// Capture cached login session details or other valuable keys to analyse how to check of is-logged-on-state
-        /// </summary>
-        /// <returns></returns>
-        private async Task<string> CaptureGuacamoleSessionAndStorageKeysAsync()
+        private async void restApiClientRequestsLogToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            var json = await _webview2_core!.ExecuteScriptAsync(@"
-(() => JSON.stringify({
-  keys: Object.keys(localStorage),
-  guac_auth: localStorage.getItem('GUAC_AUTH') || null
-}))()");
-            //            MessageBox.Show(this, $"Guacamole Auth Token:\n{json}", "Test", MessageBoxButtons.OK, MessageBoxIcon.Information);
-
-            // Dump aller Keys + GUAC_AUTH anzeigen
-            var script = @"
-(() => {
-  const ls = (typeof localStorage !== 'undefined') ? localStorage : null;
-  const ss = (typeof sessionStorage !== 'undefined') ? sessionStorage : null;
-  const res = {
-    origin: location.origin,
-    path: location.pathname,
-    localKeys: ls ? Object.keys(ls) : [],
-    sessionKeys: ss ? Object.keys(ss) : [],
-    guacLocal: ls ? ls.getItem('GUAC_AUTH') : null,
-    guacSession: ss ? ss.getItem('GUAC_AUTH') : null
-  };
-  return JSON.stringify(res);
-})()";
-            var json2 = await _webview2_core!.ExecuteScriptAsync(script);
-            // json ist ein C#-String mit Anführungszeichen – ggf. unescapen/parsen:
-            var payload = System.Text.Json.JsonDocument.Parse(json2.Trim('"').Replace("\\\"", "\""));
-            // -> payload.RootElement.GetProperty("guacLocal").GetString()
-            //            MessageBox.Show(this, $"Guacamole Auth Token:\n{json2}", "Test", MessageBoxButtons.OK, MessageBoxIcon.Information);
-
-            return json2;
+            ShowMessageBoxNonModal("Last requests via REST API Client:\n\n" + GuacamoleApiClient.GetLastRequestsList(), "All connections", InformationBoxButtons.OK, InformationBoxIcon.Information);
         }
 
+        #endregion
+
+        GuacamoleApiClient _guacamoleApiRestClient;
+
+        public async Task<GuacamoleClient.RestClient.UserLoginContextWithPrimaryConnectionDataSource?> GetLoginContextAsync()
+        {
+            string? token = await GetGuacamoleAuthTokenAsync().ConfigureAwait(false);
+            if (token == null)
+                return null;
+            var lastLoginContext = _lastUserLoginContext;
+            if (lastLoginContext == null || lastLoginContext.AuthToken != token)
+            {
+                Uri baseUri = GuacamoleApiClient.NormalizeBaseUri(this.ServerProfile.Url);
+                try
+                {
+                    lastLoginContext = await _guacamoleApiRestClient.AuthenticateAndLookupExtendedDataAsync(baseUri, token);
+                }
+                catch (Exception)
+                {
+                    lastLoginContext = new UserLoginContextWithPrimaryConnectionDataSource() { AuthToken = token };
+                }
+                _lastUserLoginContext = lastLoginContext;
+            }
+            return lastLoginContext;
+        }
         /// <summary>
         /// Capture the auth token of guacamole session to analyse how to check of is-logged-on-state
         /// </summary>
         /// <returns></returns>
         public async Task<string?> GetGuacamoleAuthTokenAsync()
         {
-            var cookieManager = _webview2_core!.CookieManager;
-            var cookies = await cookieManager.GetCookiesAsync(this.StartUrl.ToString()).ConfigureAwait(false);
-            foreach (var c in cookies)
+            var js = await _webview2_core!.ExecuteScriptAsync(@"
+                (() => JSON.stringify({
+                  guac_auth_token_local: localStorage.getItem('GUAC_AUTH_TOKEN')
+                }))()");
+
+            // 1) äußere JS-String-Escapes entfernen
+            var unescaped = System.Text.Json.JsonSerializer.Deserialize<string>(js);
+            if (string.IsNullOrWhiteSpace(unescaped)) return null; // e.g. on browser error pages
+
+            using var doc = System.Text.Json.JsonDocument.Parse(unescaped);
+
+            // 2) Token auslesen
+            var raw = doc.RootElement.GetProperty("guac_auth_token_local").GetString();
+
+            // 3) falls der Token selbst nochmal JSON-string-escaped ist: ein zweites Mal deserialisieren
+            string? token = raw;
+            if (!string.IsNullOrEmpty(token) && token.Length >= 2 && token[0] == '"' && token[^1] == '"')
             {
-                Console.WriteLine($"{c.Name} = {c.Value} ; HttpOnly={c.IsHttpOnly} ; Secure={c.IsSecure} ; SameSite={c.SameSite}");
-                if (c.Name == "GUAC_AUTH" || c.Name == "guac.token")
-                {
-                    string token = c.Value;
-                    // token verwenden
-                    return token;
-                }
+                token = System.Text.Json.JsonSerializer.Deserialize<string>(token);
             }
-            return null;
+
+            // token ist jetzt ohne Zusatzquotes
+            return token;
         }
 
+        //var localStorage = await GetLocalStorageAsync();
+        //localStorage.TryGetValue("GUAC_AUTH_TOKEN", out var authToken);
+        /// <summary>
+        /// Reads all localStorage key/value pairs from the WebView2 context.
+        /// </summary>
+        public async Task<IReadOnlyDictionary<string, string?>> GetLocalStorageAsync()
+        {
+            if (_webview2_core == null)
+                throw new InvalidOperationException("WebView2 Core not initialized.");
 
-        #endregion
+            var jsResult = await _webview2_core.ExecuteScriptAsync(@"
+                (() => {
+                    const result = {};
+                    for (let i = 0; i < localStorage.length; i++) {
+                        const key = localStorage.key(i);
+                        result[key] = localStorage.getItem(key);
+                    }
+                    return JSON.stringify(result);
+                })()
+            ").ConfigureAwait(false);
+
+            // WebView2 liefert immer einen JSON-string-escaped string zurück
+            var unescapedJson = System.Text.Json.JsonSerializer.Deserialize<string>(jsResult)
+                                ?? "{}";
+
+            var dict = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, string?>>(
+                unescapedJson,
+                new System.Text.Json.JsonSerializerOptions
+                {
+                    PropertyNameCaseInsensitive = false
+                });
+
+            return dict ?? new Dictionary<string, string?>();
+        }
     }
 }

@@ -2,8 +2,78 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:wv="clr-namespace:WebViewControl;assembly=WebViewControl.Avalonia"
         x:Class="GuacClient.MainWindow"
+        x:Name="MainWindowRoot"
         Width="1280" Height="800"
         Title="GuacamoleClient">
+  <Window.Styles>
+    <Style Selector="Menu">
+      <Setter Property="Background" Value="{DynamicResource ProfileMenuBackgroundBrush}" />
+      <Setter Property="Foreground" Value="{DynamicResource ProfileMenuForegroundBrush}" />
+    </Style>
+    <Style Selector="MenuItem">
+      <Setter Property="Background" Value="{DynamicResource ProfileMenuBackgroundBrush}" />
+      <Setter Property="Foreground" Value="{DynamicResource ProfileMenuForegroundBrush}" />
+    </Style>
+    <Style Selector="MenuItem:pointerover">
+      <Setter Property="Background" Value="{DynamicResource ProfileMenuHoverBackgroundBrush}" />
+      <Setter Property="Foreground" Value="{DynamicResource ProfileMenuHoverForegroundBrush}" />
+    </Style>
+    <Style Selector="MenuItem:selected">
+      <Setter Property="Background" Value="{DynamicResource ProfileMenuSelectedBackgroundBrush}" />
+      <Setter Property="Foreground" Value="{DynamicResource ProfileMenuSelectedForegroundBrush}" />
+    </Style>
+  </Window.Styles>
 
-  <wv:WebView x:Name="Web" />
+  <DockPanel>
+    <Menu x:Name="MainMenu"
+          DockPanel.Dock="Top">
+      <MenuItem x:Name="ConnectionMenuItem">
+        <MenuItem x:Name="ConnectionHomeMenuItem" />
+        <MenuItem x:Name="NewWindowMenuItem" />
+        <Separator x:Name="ConnectionSeparatorTop" />
+        <MenuItem x:Name="GuacamoleUserSettingsMenuItem" />
+        <MenuItem x:Name="GuacamoleConnectionConfigurationsMenuItem" />
+        <Separator x:Name="ConnectionSeparatorMiddle" />
+        <MenuItem x:Name="ManageServersMenuItem" />
+        <Separator x:Name="ConnectionSeparatorBottom" />
+        <MenuItem x:Name="QuitMenuItem" />
+      </MenuItem>
+      <MenuItem x:Name="ViewMenuItem">
+        <MenuItem x:Name="EnterFullScreenMenuItem" />
+        <MenuItem x:Name="ExitFullScreenMenuItem" />
+      </MenuItem>
+      <MenuItem x:Name="SendKeyCombinationMenuItem">
+        <MenuItem x:Name="SendRemoteCtrlAltDelMenuItem" />
+        <MenuItem x:Name="SendRemoteCtrlAltEndMenuItem" />
+        <MenuItem x:Name="SendRemoteCtrlAltBackspaceMenuItem" />
+        <Separator />
+        <MenuItem x:Name="OpenGuacamoleMenuMenuItem" />
+      </MenuItem>
+      <MenuItem x:Name="HelpMenuItem">
+        <MenuItem x:Name="SetupGuideHelpMenuItem" />
+        <MenuItem x:Name="RdpSessionResizeHelpMenuItem" />
+        <Separator />
+        <MenuItem x:Name="AboutMenuItem" />
+      </MenuItem>
+      <MenuItem x:Name="KeyboardCaptureStatusMenuItem" />
+      <MenuItem x:Name="KeyboardHintMenuItem" />
+    </Menu>
+
+    <Grid>
+      <wv:WebView x:Name="Web" />
+
+      <Border x:Name="HintOverlay"
+              IsVisible="False"
+              HorizontalAlignment="Left"
+              VerticalAlignment="Top"
+              Margin="16"
+              Padding="10,6"
+              CornerRadius="6"
+              Background="#CC1F2937">
+        <TextBlock x:Name="HintOverlayText"
+                   Foreground="White"
+                   TextWrapping="Wrap" />
+      </Border>
+    </Grid>
+  </DockPanel>
 </Window>

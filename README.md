@@ -40,3 +40,14 @@ The Avalonia version is a cross-platform application that can run on Windows, Li
 It is based on Avalonia UI framework and uses the WebViewControl-Avalonia control and the embedded CefGlue browser to embed the Guacamole web interface. 
 
 However, please note that this version is still experimental, feature-incomplete and may not be as stable as the Windows Forms version.
+
+## Create a test environment for Guacamole Server with docker-compose
+
+If you need a Guacamole Server for testing purposes, you can easily set up a test environment using Docker Compose.
+For a quick guide, please refer to the documentation: [SetupTestGuacamoleServer.md](./docs/SetupTestGuacamoleServer.md)
+
+## FAQ, known issues, typical trouble shooting
+
+* issue: on window resize, remote screen resolution doesn't refresh dynamically at some RDP host connections
+  * please note: this issue belongs to guacamole server and it's defaults when connecting to a RDP target machine
+  * solution: edit connection settings in guacamole (as guacadmin or authorized user), go to section "Screen" and update property "Resize method" to "display-update". Then re-connect to the host.

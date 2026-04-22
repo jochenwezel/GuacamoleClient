@@ -1,4 +1,5 @@
-﻿using System;
+﻿using GuacamoleClient.Common.Settings;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Drawing;
@@ -63,7 +64,16 @@ namespace GuacamoleClient.WinForms
 
         private sealed class ColoredMenuItemRenderer : ToolStripProfessionalRenderer
         {
-            public ColoredMenuItemRenderer(Color newBackgroundColor, Color newBackgroundHoverColor, Color newTextColor, Color newSeparatorLineForeColor) : base(new CustomMenuStripColorTable(newBackgroundColor, newBackgroundHoverColor, newTextColor))
+            public ColoredMenuItemRenderer(GuacamoleColorScheme colorScheme) : this(
+                UITools.ParseHexColor(colorScheme.PrimaryColorHexValue), 
+                UITools.ParseHexColor(colorScheme.HoverBackgroundColorHexValue), 
+                UITools.ParseHexColor(colorScheme.TextColorHexValue), 
+                UITools.ParseHexColor(colorScheme.InactiveTextColorHexValue)
+                )
+            {
+            }
+
+            private ColoredMenuItemRenderer(Color newBackgroundColor, Color newBackgroundHoverColor, Color newTextColor, Color newSeparatorLineForeColor) : base(new CustomMenuStripColorTable(newBackgroundColor, newBackgroundHoverColor, newTextColor))
             {
                 this._newBackgroundColor = newBackgroundColor;
                 this._newBackgroundHoverColor = newBackgroundHoverColor;
@@ -302,34 +312,64 @@ namespace GuacamoleClient.WinForms
             }
         }
 
-        public void SetMenuStripColorsRecursive(Color newStripColor, Color newBackgroundColor, Color newBackgroundHoverColor, Color newTextColor, Color newSeparatorLineForeColor)
+        public void SetMenuStripColorsRecursive(GuacamoleColorScheme colorScheme)
         {
-            SetMenuStripColorsRecursive(this, newStripColor, newBackgroundColor, newBackgroundHoverColor, newTextColor, newSeparatorLineForeColor);
+            SetMenuStripColorsRecursive(this, colorScheme);
         }
+        //public void SetMenuStripColorsRecursive(Color newStripColor, Color newBackgroundColor, Color newBackgroundHoverColor, Color newTextColor, Color newSeparatorLineForeColor)
+        //{
+        //    SetMenuStripColorsRecursive(this, newStripColor, newBackgroundColor, newBackgroundHoverColor, newTextColor, newSeparatorLineForeColor);
+        //}
 
-        private static void SetMenuStripColorsRecursive(MenuStrip item, Color newStripColor, Color newBackgroundColor, Color newBackgroundHoverColor, Color newTextColor, Color newSeparatorLineForeColor)
+        private static void SetMenuStripColorsRecursive(MenuStrip item, GuacamoleColorScheme colorScheme)
         {
-            //item.Renderer = new ColoredMenuItemRenderer2(newBackgroundColor, newBackgroundHoverColor, newTextColor);
-            item.BackColor = newStripColor;
-            //item.BackColor = Color.DarkGreen;
-            item.ForeColor = newTextColor;
-            //item.Renderer = new FlatMenuRenderer(Color.DarkGreen, Color.DarkRed, newTextColor);
-            item.Renderer = new ToolStripProfessionalRenderer(new CustomMenuStripColorTable(newBackgroundColor, newBackgroundHoverColor, newTextColor));
-            item.Renderer = new ColoredMenuItemRenderer(newBackgroundColor, newBackgroundHoverColor, newTextColor, newSeparatorLineForeColor);
-
-            //item.Renderer = new ColoredSeparatorRenderer(SystemColors.ButtonShadow, Color.Red);
+            item.BackColor = UITools.ParseHexColor(colorScheme.PrimaryColorHexValue);
+            item.ForeColor = UITools.ParseHexColor(colorScheme.TextColorHexValue);
+            item.Renderer = new GuacamoleToolStripProfessionalRenderer(new CustomMenuStripColorTable(
+                UITools.ParseHexColor(colorScheme.PrimaryColorHexValue), 
+                UITools.ParseHexColor(colorScheme.HoverBackgroundColorHexValue), 
+                UITools.ParseHexColor(colorScheme.TextColorHexValue)
+                ));
+            item.Renderer = new ColoredMenuItemRenderer(colorScheme);
 
             foreach (ToolStripItem child in item.Items)
             {
                 if (child is ToolStripMenuItem m2)
-                    SetMenuStripBackgroundColorRecursive(m2, newBackgroundColor, newBackgroundHoverColor,newTextColor);
+                    SetMenuStripBackgroundColorRecursive(m2,
+                        UITools.ParseHexColor(colorScheme.PrimaryColorHexValue),
+                        UITools.ParseHexColor(colorScheme.HoverBackgroundColorHexValue),
+                        UITools.ParseHexColor(colorScheme.TextColorHexValue)
+                        );
                 else
                 {
-                    child.BackColor = newBackgroundColor;
-                    child.ForeColor = newTextColor;
+                    child.BackColor = UITools.ParseHexColor(colorScheme.PrimaryColorHexValue);
+                    child.ForeColor = UITools.ParseHexColor(colorScheme.TextColorHexValue);
                 }
             }
         }
+        //private static void SetMenuStripColorsRecursive(MenuStrip item, Color newStripColor, Color newBackgroundColor, Color newBackgroundHoverColor, Color newTextColor, Color newSeparatorLineForeColor)
+        //{
+        //    //item.Renderer = new ColoredMenuItemRenderer2(newBackgroundColor, newBackgroundHoverColor, newTextColor);
+        //    item.BackColor = newStripColor;
+        //    //item.BackColor = Color.DarkGreen;
+        //    item.ForeColor = newTextColor;
+        //    //item.Renderer = new FlatMenuRenderer(Color.DarkGreen, Color.DarkRed, newTextColor);
+        //    item.Renderer = new ToolStripProfessionalRenderer(new CustomMenuStripColorTable(newBackgroundColor, newBackgroundHoverColor, newTextColor));
+        //    item.Renderer = new ColoredMenuItemRenderer(newBackgroundColor, newBackgroundHoverColor, newTextColor, newSeparatorLineForeColor);
+        //
+        //    //item.Renderer = new ColoredSeparatorRenderer(SystemColors.ButtonShadow, Color.Red);
+        //
+        //    foreach (ToolStripItem child in item.Items)
+        //    {
+        //        if (child is ToolStripMenuItem m2)
+        //            SetMenuStripBackgroundColorRecursive(m2, newBackgroundColor, newBackgroundHoverColor,newTextColor);
+        //        else
+        //        {
+        //            child.BackColor = newBackgroundColor;
+        //            child.ForeColor = newTextColor;
+        //        }
+        //    }
+        //}
 
         private static void SetMenuStripBackgroundColorRecursive(ToolStripMenuItem item, Color newBackgroundColor, Color newBackgroundHoverColor, Color newTextColor)
         {
@@ -337,12 +377,25 @@ namespace GuacamoleClient.WinForms
             item.ForeColor = newTextColor;
             foreach (ToolStripItem child in item.DropDownItems)
                 if (child is ToolStripMenuItem m2)
-                    SetMenuStripBackgroundColorRecursive(m2, newBackgroundColor, newBackgroundHoverColor,newTextColor);
+                    SetMenuStripBackgroundColorRecursive(m2, newBackgroundColor, newBackgroundHoverColor, newTextColor);
                 else
                 {
                     child.BackColor = newBackgroundColor;
                     child.ForeColor = newTextColor;
                 }
         }
+        //private static void SetMenuStripBackgroundColorRecursive(ToolStripMenuItem item, Color newBackgroundColor, Color newBackgroundHoverColor, Color newTextColor)
+        //{
+        //    item.BackColor = newBackgroundColor;
+        //    item.ForeColor = newTextColor;
+        //    foreach (ToolStripItem child in item.DropDownItems)
+        //        if (child is ToolStripMenuItem m2)
+        //            SetMenuStripBackgroundColorRecursive(m2, newBackgroundColor, newBackgroundHoverColor,newTextColor);
+        //        else
+        //        {
+        //            child.BackColor = newBackgroundColor;
+        //            child.ForeColor = newTextColor;
+        //        }
+        //}
     }
 }

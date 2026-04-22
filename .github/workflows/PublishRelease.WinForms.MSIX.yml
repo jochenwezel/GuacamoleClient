@@ -16,6 +16,9 @@ permissions:
 
 env:
   BUILD_CONFIGURATION: Release
+  MSIX_PLATFORM: x64
+  MSIX_RUNTIME_IDENTIFIER: win-x64
+  MSIX_BUNDLE_PLATFORMS: x64
 
 jobs:
   winforms-msix:
@@ -33,6 +36,8 @@ jobs:
       # MSIX / Desktop Bridge benötigt Visual Studio MSBuild
       - name: Setup MSBuild (Visual Studio)
         uses: microsoft/setup-msbuild@v2
+        with:
+          msbuild-architecture: x64
 
       - name: Resolve version
         shell: bash
@@ -48,13 +53,14 @@ jobs:
           echo "Resolved VERSION=$VER"
 
       - name: Restore WinForms project
-        run: dotnet restore GuacamoleClient-WinForms/GuacamoleClient-WinForms.csproj
+        run: dotnet restore GuacamoleClient-WinForms/GuacamoleClient-WinForms.csproj -r ${{ env.MSIX_RUNTIME_IDENTIFIER }}
 
       - name: Build WinForms (prerequisite)
         run: >
           dotnet build GuacamoleClient-WinForms/GuacamoleClient-WinForms.csproj
           --configuration ${{ env.BUILD_CONFIGURATION }}
           --no-restore
+          -r ${{ env.MSIX_RUNTIME_IDENTIFIER }}
           -p:Version=${{ env.VERSION }}
           -p:FileVersion=${{ env.VERSION }}
           -p:AssemblyVersion=${{ env.VERSION }}
@@ -68,6 +74,13 @@ jobs:
 
           msbuild $wapproj `
             /p:Configuration=${{ env.BUILD_CONFIGURATION }} `
+            /p:Platform=${{ env.MSIX_PLATFORM }} `
+            /p:PlatformTarget=${{ env.MSIX_PLATFORM }} `
+            /p:RuntimeIdentifier=${{ env.MSIX_RUNTIME_IDENTIFIER }} `
+            /p:AppxBundlePlatforms=${{ env.MSIX_BUNDLE_PLATFORMS }} `
+            /p:AppxPackageSigningEnabled=false `
+            /p:GenerateTemporaryStoreCertificate=false `
+            /p:GenerateTestArtifacts=false `
             /p:Version=${{ env.VERSION }} `
             /p:FileVersion=${{ env.VERSION }} `
             /p:AssemblyVersion=${{ env.VERSION }} `

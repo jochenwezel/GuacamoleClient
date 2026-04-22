@@ -1,14 +1,33 @@
-﻿using GuacamoleClient.Common;
+﻿using GuacamoleClient.Common.Localization;
 using Microsoft.Web.WebView2.Core;
 using System;
-using System.ComponentModel;
-using System.Drawing;
 using System.Windows.Forms;
 
 namespace GuacamoleClient.WinForms
 {
     public partial class MainForm
     {
+        /// <summary>
+        /// Switch keyboard capturing mode when clicking the hint label
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void HintStopWebcontrol2FocusShortcut_Click(object sender, EventArgs e)
+        {
+            switch (this.IsKeyboardFocusBoundToWebview2Control)
+            {
+                case KeyboardCaptureMode.GrabbingEnabled_ShowKeyboardShortcutInfo:
+                    DetachWebViewFocus(false);
+                    break;
+                case KeyboardCaptureMode.GrabbingDisabled_ShowKeyboardShortcutInfo:
+                case KeyboardCaptureMode.GrabbingDisabled_HideKeyboardShortcutInfo:
+                    SetFocusToWebview2Control();
+                    break;
+                default:
+                    throw new NotImplementedException();
+            }
+        }
+
         /// <summary>
         /// Initialize everything to correctly handle all control focus and all (enabled/disabled) keyboard capturing
         /// </summary>
@@ -18,7 +37,7 @@ namespace GuacamoleClient.WinForms
             this.Activated += (_, __) => SetFocusToWebview2Control();
             this.Deactivate += (_, __) => DetachWebViewFocus(true);
             this.mainMenuStrip.Leave += (_, __) => SetFocusToWebview2Control();
-            this.HintStopWebcontrol2FocusShortcut!.Visible = false;
+            this.HintStopWebcontrol2FocusShortcut.Visible = false;
         }
 
         /// <summary>
@@ -88,6 +107,7 @@ namespace GuacamoleClient.WinForms
             WebBrowserHostPanel.Focus();
             _webview2_controller?.MoveFocus(CoreWebView2MoveFocusReason.Programmatic);
             IsKeyboardFocusBoundToWebview2Control = KeyboardCaptureMode.GrabbingEnabled_ShowKeyboardShortcutInfo;
+            UpdateKeyboardHookState();
         }
 
         /// <summary>
@@ -106,6 +126,7 @@ namespace GuacamoleClient.WinForms
                 IsKeyboardFocusBoundToWebview2Control = KeyboardCaptureMode.GrabbingDisabled_HideKeyboardShortcutInfo;
             else
                 IsKeyboardFocusBoundToWebview2Control = KeyboardCaptureMode.GrabbingDisabled_ShowKeyboardShortcutInfo;
+            UpdateKeyboardHookState();
         }
 
         /// <summary>
@@ -129,21 +150,21 @@ namespace GuacamoleClient.WinForms
         public KeyboardCaptureMode IsKeyboardFocusBoundToWebview2Control
         {
             get { return _IsKeyboardFocusBoundToWebview2Control; }
-            set
+            private set
             {
                 _IsKeyboardFocusBoundToWebview2Control = value;
                 switch (value)
                 {
                     case KeyboardCaptureMode.GrabbingEnabled_ShowKeyboardShortcutInfo:
-                        this.HintStopWebcontrol2FocusShortcut!.Text = LocalizedString(LocalizationKeys.Tip_CtrlAltScroll_StopKeyboardGrabbingOfGuacamoleWindow);
-                        this.HintStopWebcontrol2FocusShortcut!.Visible = true;
+                        this.HintStopWebcontrol2FocusShortcut.Text = LocalizedString(LocalizationKeys.Tip_CtrlAltBackspace_StopKeyboardGrabbingOfGuacamoleWindow);
+                        this.HintStopWebcontrol2FocusShortcut.Visible = true;
                         break;
                     case KeyboardCaptureMode.GrabbingDisabled_ShowKeyboardShortcutInfo:
-                        this.HintStopWebcontrol2FocusShortcut!.Text = LocalizedString(LocalizationKeys.Tip_CtrlAltScroll_StartKeyboardGrabbingOfGuacamoleWindow);
-                        this.HintStopWebcontrol2FocusShortcut!.Visible = true;
+                        this.HintStopWebcontrol2FocusShortcut.Text = LocalizedString(LocalizationKeys.Tip_CtrlAltBackspace_StartKeyboardGrabbingOfGuacamoleWindow);
+                        this.HintStopWebcontrol2FocusShortcut.Visible = true;
                         break;
                     case KeyboardCaptureMode.GrabbingDisabled_HideKeyboardShortcutInfo:
-                        this.HintStopWebcontrol2FocusShortcut!.Visible = false;
+                        this.HintStopWebcontrol2FocusShortcut.Visible = false;
                         break;
                     default:
                         throw new NotImplementedException();
