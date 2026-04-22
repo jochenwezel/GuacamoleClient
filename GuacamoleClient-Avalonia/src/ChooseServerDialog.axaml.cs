@@ -181,10 +181,11 @@ public partial class ChooseServerDialog : Window
             Close(SelectedProfile);
     }
 
-    private sealed record ProfileListItem(
-        GuacamoleServerProfile Profile,
-        string Title,
-        string Url,
-        IBrush BackgroundBrush,
-        IBrush ForegroundBrush);
 }
+
+public sealed record ProfileListItem(
+    GuacamoleServerProfile Profile,
+    string Title,
+    string Url,
+    IBrush BackgroundBrush,
+    IBrush ForegroundBrush);

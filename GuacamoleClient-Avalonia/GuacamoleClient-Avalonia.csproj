@@ -45,11 +45,15 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <None Remove="NOTICE" />
-  </ItemGroup>
-
-  <ItemGroup>
     <Content Include="guac.ico" />
+    <Content Include="NOTICE">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+    </Content>
+    <Content Include="LICENSE.chromium">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+    </Content>
   </ItemGroup>
 
   <ItemGroup>
@@ -64,20 +68,18 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Avalonia" Version="11.3.8" />
-    <PackageReference Include="Avalonia.Desktop" Version="11.3.8" />
-    <PackageReference Include="Avalonia.Themes.Fluent" Version="11.3.8" />
-    <PackageReference Include="System.Text.Json" Version="10.0.6" />
+    <PackageReference Include="Avalonia" Version="12.0.1" />
+    <PackageReference Include="Avalonia.Desktop" Version="12.0.1" />
+    <PackageReference Include="Avalonia.Themes.Fluent" Version="12.0.1" />
+    <PackageReference Include="System.Text.Json" Version="10.0.7" />
 
     <!-- Optional: Tools für XAML Previewer -->
-    <PackageReference Include="Avalonia.Diagnostics" Version="11.3.8" Condition="'$(Configuration)' == 'Debug'" />
+    <PackageReference Include="Avalonia.Diagnostics" Version="11.3.14" Condition="'$(Configuration)' == 'Debug'" />
   </ItemGroup>
 
   <ItemGroup>
     <!-- Wrapper -->
-    <PackageReference Include="WebViewControl-Avalonia" Version="3.120.10" />
-    <PackageReference Include="CefGlue.Avalonia" Version="120.6099.211" />
-    <PackageReference Include="CefGlue.Common" Version="120.6099.211" />
+    <PackageReference Include="WebViewControl-Avalonia" Version="3.120.11" />
 
     <!-- Redists (pro RID) -->
     <!--
@@ -89,11 +91,40 @@
   </ItemGroup>
 
   <ItemGroup Condition="'$(RuntimeIdentifier)'=='osx-arm64'">
+    <PackageReference Include="CefGlue.Avalonia.ARM64" Version="120.6099.211" />
+    <PackageReference Include="CefGlue.Common.ARM64" Version="120.6099.211" />
     <PackageReference Include="cef.redist.osx.arm64" Version="120.1.8" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(RuntimeIdentifier)'!='osx-arm64'">
+    <PackageReference Include="CefGlue.Avalonia" Version="120.6099.211" />
+    <PackageReference Include="CefGlue.Common" Version="120.6099.211" />
   </ItemGroup>
   <ItemGroup Condition="'$(RuntimeIdentifier)'=='osx-x64'">
     <PackageReference Include="cef.redist.osx64" Version="120.1.8" />
   </ItemGroup>
+
+  <ItemGroup Condition="'$(RuntimeIdentifier)'=='osx-arm64'">
+    <Arm64CefGlueRootAssemblies Include="$(NuGetPackageRoot)cefglue.avalonia.arm64\120.6099.211\lib\net8.0\Xilium.CefGlue.Avalonia.dll" />
+    <Arm64CefGlueRootAssemblies Include="$(NuGetPackageRoot)cefglue.common.arm64\120.6099.211\lib\net8.0\Xilium.CefGlue.Common.dll" />
+    <Arm64CefGlueRootAssemblies Include="$(NuGetPackageRoot)cefglue.common.arm64\120.6099.211\lib\net8.0\Xilium.CefGlue.Common.Shared.dll" />
+    <Arm64CefGlueRootAssemblies Include="$(NuGetPackageRoot)cefglue.common.arm64\120.6099.211\lib\net8.0\Xilium.CefGlue.dll" />
+  </ItemGroup>
+
+  <Target Name="CopyArm64CefGlueRootAssembliesToOutput"
+          Condition="'$(RuntimeIdentifier)'=='osx-arm64'"
+          AfterTargets="CopyFilesToOutputDirectory">
+    <Copy SourceFiles="@(Arm64CefGlueRootAssemblies)"
+          DestinationFolder="$(OutDir)"
+          SkipUnchangedFiles="true" />
+  </Target>
+
+  <Target Name="CopyArm64CefGlueRootAssembliesToPublish"
+          Condition="'$(RuntimeIdentifier)'=='osx-arm64' and '$(PublishDir)'!=''"
+          AfterTargets="Publish">
+    <Copy SourceFiles="@(Arm64CefGlueRootAssemblies)"
+          DestinationFolder="$(PublishDir)"
+          SkipUnchangedFiles="true" />
+  </Target>
 
   <ItemGroup>
     <ProjectReference Include="..\GuacamoleCommon\GuacamoleCommon.csproj" />
