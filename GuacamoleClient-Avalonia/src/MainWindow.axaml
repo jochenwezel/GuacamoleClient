@@ -49,6 +49,11 @@
         <Separator />
         <MenuItem x:Name="OpenGuacamoleMenuMenuItem" />
       </MenuItem>
+      <MenuItem x:Name="HelpMenuItem">
+        <MenuItem x:Name="RdpSessionResizeHelpMenuItem" />
+        <Separator />
+        <MenuItem x:Name="AboutMenuItem" />
+      </MenuItem>
       <MenuItem x:Name="KeyboardCaptureStatusMenuItem" />
       <MenuItem x:Name="KeyboardHintMenuItem" />
     </Menu>

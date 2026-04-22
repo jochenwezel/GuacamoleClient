@@ -24,6 +24,9 @@ namespace GuacamoleClient.WinForms
             this.sendRemoteCtrlAltEndToolStripMenuItem.Text = LocalizationProvider.Get(LocalizationKeys.Menu_SendCtrlAltEnd);
             this.sendRemoteCtrlAltBackspaceToolStripMenuItem.Text = LocalizationProvider.Get(LocalizationKeys.Menu_SendCtrlAltBackspace);
             this.openGuacamoleMenuToolStripMenuItem.Text = LocalizationProvider.Get(LocalizationKeys.Menu_OpenGuacamoleMenu);
+            this.helpToolStripMenuItem.Text = LocalizationProvider.Get(LocalizationKeys.Menu_Help);
+            this.rdpSessionResizeHelpToolStripMenuItem.Text = LocalizationProvider.Get(LocalizationKeys.Menu_HelpRdpResize);
+            this.aboutToolStripMenuItem.Text = LocalizationProvider.Get(LocalizationKeys.Menu_About);
             this.sendRemoteCtrlAltDelToolStripMenuItem.ShortcutKeyDisplayString = LocalizationProvider.Get(LocalizationKeys.ShortcutKeystroke_SendCtrlAltDelToolStripMenuItem);
             this.openGuacamoleMenuToolStripMenuItem.ShortcutKeyDisplayString = LocalizationProvider.Get(LocalizationKeys.ShortcutKeystroke_OpenGuacamoleMenuToolStripMenuItem);
             this.connectionHomeToolStripMenuItem.ShortcutKeyDisplayString = LocalizationProvider.Get(LocalizationKeys.ShortcutKeystroke_ConnectionHome);

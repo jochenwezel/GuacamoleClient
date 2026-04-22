@@ -10,6 +10,7 @@ using System.ComponentModel;
 using System.Diagnostics;
 using System.Drawing;
 using System.IO;
+using System.Runtime.InteropServices;
 using System.Security.Policy;
 using System.Text.Json;
 using System.Threading.Tasks;
@@ -21,6 +22,9 @@ namespace GuacamoleClient.WinForms
     {
         private const bool TEST_MENU_ENABLED = false;
         private const bool TEST_CONTROL_FOCUS_INFO_IN_FORM_TITLE = false; // effective only when enabled and with Debugger attached
+        private const string ProjectWebsiteUrl = "https://github.com/jochenwezel/GuacamoleClient";
+        private const string ProjectIssuesUrl = "https://github.com/jochenwezel/GuacamoleClient/issues";
+        private const string RdpResizeDetailsUrl = "https://github.com/jochenwezel/GuacamoleClient/blob/main/README.md#faq-known-issues-typical-trouble-shooting";
 
 
         [Obsolete("For designer support only", true)]
@@ -655,6 +659,94 @@ namespace GuacamoleClient.WinForms
             var home = new Uri(profile.Url);
             var form = new MainForm(_settings, profile, home);
             form.Show();
+        }
+
+        private void rdpSessionResizeHelpToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            ShowInfoDialogWithLinks(
+                LocalizationProvider.Get(LocalizationKeys.Help_RdpResize_Title),
+                LocalizationProvider.Get(LocalizationKeys.Help_RdpResize_Text),
+                (LocalizationProvider.Get(LocalizationKeys.Help_RdpResize_Link), RdpResizeDetailsUrl));
+        }
+
+        private void aboutToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            var text = LocalizationProvider.Get(
+                LocalizationKeys.Help_About_Text,
+                "WinForms",
+                Application.ProductVersion,
+                RuntimeInformation.FrameworkDescription,
+                RuntimeInformation.OSDescription,
+                RuntimeInformation.ProcessArchitecture.ToString());
+
+            ShowInfoDialogWithLinks(
+                LocalizationProvider.Get(LocalizationKeys.Help_About_Title),
+                text,
+                (LocalizationProvider.Get(LocalizationKeys.Help_ProjectWebsite_Link), ProjectWebsiteUrl),
+                (LocalizationProvider.Get(LocalizationKeys.Help_ReportBug_Link), ProjectIssuesUrl));
+        }
+
+        private void ShowInfoDialogWithLinks(string title, string message, params (string Text, string Url)[] links)
+        {
+            using var dialog = new Form
+            {
+                Text = title,
+                StartPosition = FormStartPosition.CenterParent,
+                MinimizeBox = false,
+                MaximizeBox = false,
+                ShowIcon = true,
+                Icon = this.Icon,
+                FormBorderStyle = FormBorderStyle.FixedDialog,
+                ClientSize = new Size(560, 260)
+            };
+
+            var messageLabel = new Label
+            {
+                Text = message,
+                AutoSize = false,
+                Dock = DockStyle.Fill,
+                Padding = new Padding(12),
+                TextAlign = ContentAlignment.TopLeft
+            };
+
+            var buttonPanel = new FlowLayoutPanel
+            {
+                Dock = DockStyle.Bottom,
+                FlowDirection = FlowDirection.RightToLeft,
+                AutoSize = true,
+                Padding = new Padding(12, 0, 12, 12),
+                WrapContents = false
+            };
+
+            var okButton = new Button
+            {
+                Text = "OK",
+                DialogResult = DialogResult.OK,
+                AutoSize = true
+            };
+            buttonPanel.Controls.Add(okButton);
+
+            foreach (var link in links)
+            {
+                var linkButton = new Button
+                {
+                    Text = link.Text,
+                    AutoSize = true,
+                    Tag = link.Url
+                };
+                linkButton.Click += (_, __) =>
+                {
+                    if (linkButton.Tag is string url)
+                        UITools.OpenUrlInDefaultBrowser(url);
+                };
+                buttonPanel.Controls.Add(linkButton);
+            }
+
+            dialog.Controls.Add(messageLabel);
+            dialog.Controls.Add(buttonPanel);
+            dialog.AcceptButton = okButton;
+            dialog.CancelButton = okButton;
+            dialog.ShowDialog(this);
         }
 
         /// <summary>

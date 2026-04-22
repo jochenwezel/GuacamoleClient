@@ -21,6 +21,9 @@ namespace GuacClient
     public partial class MainWindow : Window
     {
         private const int RemoteShortcutHintDurationMs = 3000;
+        private const string ProjectWebsiteUrl = "https://github.com/jochenwezel/GuacamoleClient";
+        private const string ProjectIssuesUrl = "https://github.com/jochenwezel/GuacamoleClient/issues";
+        private const string RdpResizeDetailsUrl = "https://github.com/jochenwezel/GuacamoleClient/blob/main/README.md#faq-known-issues-typical-trouble-shooting";
 
         private enum RemoteSpecialKeyCommand
         {
@@ -63,6 +66,9 @@ namespace GuacClient
         private MenuItem _sendRemoteCtrlAltEndMenuItem = default!;
         private MenuItem _sendRemoteCtrlAltBackspaceMenuItem = default!;
         private MenuItem _openGuacamoleMenuMenuItem = default!;
+        private MenuItem _helpMenuItem = default!;
+        private MenuItem _rdpSessionResizeHelpMenuItem = default!;
+        private MenuItem _aboutMenuItem = default!;
         private MenuItem _keyboardCaptureStatusMenuItem = default!;
         private MenuItem _keyboardHintMenuItem = default!;
 
@@ -112,6 +118,9 @@ namespace GuacClient
             _sendRemoteCtrlAltEndMenuItem = this.FindControl<MenuItem>("SendRemoteCtrlAltEndMenuItem")!;
             _sendRemoteCtrlAltBackspaceMenuItem = this.FindControl<MenuItem>("SendRemoteCtrlAltBackspaceMenuItem")!;
             _openGuacamoleMenuMenuItem = this.FindControl<MenuItem>("OpenGuacamoleMenuMenuItem")!;
+            _helpMenuItem = this.FindControl<MenuItem>("HelpMenuItem")!;
+            _rdpSessionResizeHelpMenuItem = this.FindControl<MenuItem>("RdpSessionResizeHelpMenuItem")!;
+            _aboutMenuItem = this.FindControl<MenuItem>("AboutMenuItem")!;
             _keyboardCaptureStatusMenuItem = this.FindControl<MenuItem>("KeyboardCaptureStatusMenuItem")!;
             _keyboardHintMenuItem = this.FindControl<MenuItem>("KeyboardHintMenuItem")!;
 
@@ -134,6 +143,8 @@ namespace GuacClient
             _sendRemoteCtrlAltEndMenuItem.Click += SendRemoteCtrlAltEndMenuItem_Click;
             _sendRemoteCtrlAltBackspaceMenuItem.Click += SendRemoteCtrlAltBackspaceMenuItem_Click;
             _openGuacamoleMenuMenuItem.Click += OpenGuacamoleMenuMenuItem_Click;
+            _rdpSessionResizeHelpMenuItem.Click += RdpSessionResizeHelpMenuItem_Click;
+            _aboutMenuItem.Click += AboutMenuItem_Click;
             _keyboardCaptureStatusMenuItem.Click += KeyboardCaptureStatusMenuItem_Click;
             this.Opened += async (_, __) =>
             {
@@ -212,6 +223,9 @@ namespace GuacClient
                 LocalizationProvider.Get(LocalizationKeys.Menu_OpenGuacamoleMenu),
                 LocalizationProvider.Get(LocalizationKeys.ShortcutKeystroke_OpenGuacamoleMenuToolStripMenuItem));
             _openGuacamoleMenuMenuItem.InputGesture = null;
+            _helpMenuItem.Header = LocalizationProvider.Get(LocalizationKeys.Menu_Help);
+            _rdpSessionResizeHelpMenuItem.Header = LocalizationProvider.Get(LocalizationKeys.Menu_HelpRdpResize);
+            _aboutMenuItem.Header = LocalizationProvider.Get(LocalizationKeys.Menu_About);
             _keyboardHintMenuItem.Header = string.Empty;
             _keyboardHintMenuItem.IsEnabled = false;
             UpdateKeyboardCaptureStatusUi();
@@ -610,6 +624,33 @@ namespace GuacClient
                 _web.Focus();
                 await SendOpenGuacamoleMenuChordSafeAsync().ConfigureAwait(true);
             }, DispatcherPriority.Background);
+        }
+
+        private async void RdpSessionResizeHelpMenuItem_Click(object? sender, RoutedEventArgs e)
+        {
+            await MessageBoxSimple.Show(
+                this,
+                LocalizationProvider.Get(LocalizationKeys.Help_RdpResize_Title),
+                LocalizationProvider.Get(LocalizationKeys.Help_RdpResize_Text),
+                (LocalizationProvider.Get(LocalizationKeys.Help_RdpResize_Link), RdpResizeDetailsUrl));
+        }
+
+        private async void AboutMenuItem_Click(object? sender, RoutedEventArgs e)
+        {
+            var text = LocalizationProvider.Get(
+                LocalizationKeys.Help_About_Text,
+                "Avalonia",
+                VersionUtil.InformationalVersion(),
+                RuntimeInformation.FrameworkDescription,
+                RuntimeInformation.OSDescription,
+                RuntimeInformation.ProcessArchitecture.ToString());
+
+            await MessageBoxSimple.Show(
+                this,
+                LocalizationProvider.Get(LocalizationKeys.Help_About_Title),
+                text,
+                (LocalizationProvider.Get(LocalizationKeys.Help_ProjectWebsite_Link), ProjectWebsiteUrl),
+                (LocalizationProvider.Get(LocalizationKeys.Help_ReportBug_Link), ProjectIssuesUrl));
         }
 
         private void KeyboardCaptureStatusMenuItem_Click(object? sender, RoutedEventArgs e)

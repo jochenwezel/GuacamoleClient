@@ -148,6 +148,28 @@ namespace GuacamoleClient.Common.Localization
                         return "Sende Strg+Alt+Rücktaste";
                     case LocalizationKeys.Menu_OpenGuacamoleMenu:
                         return "Guacamole-Menü öffnen";
+                    case LocalizationKeys.Menu_Help:
+                        return "Hilfe";
+                    case LocalizationKeys.Menu_HelpRdpResize:
+                        return "RDP-Sitzungsgröße aktualisieren";
+                    case LocalizationKeys.Menu_About:
+                        return "Info";
+
+                    // Help / about dialogs
+                    case LocalizationKeys.Help_RdpResize_Title:
+                        return "RDP-Sitzungsgröße aktualisieren";
+                    case LocalizationKeys.Help_RdpResize_Text:
+                        return "Wenn die Remote-Desktop-Auflösung nach dem Ändern der Fenstergröße nicht zuverlässig aktualisiert wird, muss die Guacamole-Verbindung entsprechend konfiguriert sein.\n\nÖffne in Guacamole die Verbindungs-Konfiguration, gehe zum Abschnitt \"Screen\" und setze \"Resize method\" auf \"display-update\". Danach die RDP-Sitzung neu verbinden.";
+                    case LocalizationKeys.Help_RdpResize_Link:
+                        return "Mehr Details";
+                    case LocalizationKeys.Help_About_Title:
+                        return "Info zu GuacamoleClient";
+                    case LocalizationKeys.Help_About_Text:
+                        return "GuacamoleClient\n\nVariante: {0}\nVersion: {1}\nFramework: {2}\nBetriebssystem: {3}\nArchitektur: {4}";
+                    case LocalizationKeys.Help_ProjectWebsite_Link:
+                        return "Projekt-Website";
+                    case LocalizationKeys.Help_ReportBug_Link:
+                        return "Bug melden";
 
                     // Choose server dialog
                     case LocalizationKeys.ChooseServer_Column_Name:
@@ -357,6 +379,28 @@ namespace GuacamoleClient.Common.Localization
                     return "Send Ctrl+Alt+Backspace";
                 case LocalizationKeys.Menu_OpenGuacamoleMenu:
                     return "Open Guacamole menu";
+                case LocalizationKeys.Menu_Help:
+                    return "Help";
+                case LocalizationKeys.Menu_HelpRdpResize:
+                    return "RDP session resizing";
+                case LocalizationKeys.Menu_About:
+                    return "About";
+
+                // Help / about dialogs
+                case LocalizationKeys.Help_RdpResize_Title:
+                    return "RDP session resizing";
+                case LocalizationKeys.Help_RdpResize_Text:
+                    return "If the remote desktop resolution does not refresh reliably after resizing the window, the Guacamole connection must be configured for this behavior.\n\nOpen the connection configuration in Guacamole, go to the \"Screen\" section, and set \"Resize method\" to \"display-update\". Then reconnect the RDP session.";
+                case LocalizationKeys.Help_RdpResize_Link:
+                    return "More details";
+                case LocalizationKeys.Help_About_Title:
+                    return "About GuacamoleClient";
+                case LocalizationKeys.Help_About_Text:
+                    return "GuacamoleClient\n\nVariant: {0}\nVersion: {1}\nFramework: {2}\nOperating system: {3}\nArchitecture: {4}";
+                case LocalizationKeys.Help_ProjectWebsite_Link:
+                    return "Project website";
+                case LocalizationKeys.Help_ReportBug_Link:
+                    return "Report a bug";
 
                 // Choose server dialog
                 case LocalizationKeys.ChooseServer_Column_Name:

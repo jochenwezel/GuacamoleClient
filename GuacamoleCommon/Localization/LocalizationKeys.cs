@@ -72,6 +72,18 @@
         Menu_SendCtrlAltEnd,
         Menu_SendCtrlAltBackspace,
         Menu_OpenGuacamoleMenu,
+        Menu_Help,
+        Menu_HelpRdpResize,
+        Menu_About,
+
+        // Help / about dialogs
+        Help_RdpResize_Title,
+        Help_RdpResize_Text,
+        Help_RdpResize_Link,
+        Help_About_Title,
+        Help_About_Text,
+        Help_ProjectWebsite_Link,
+        Help_ReportBug_Link,
 
         // Choose/Manage servers dialog
         ChooseServer_Column_Name,

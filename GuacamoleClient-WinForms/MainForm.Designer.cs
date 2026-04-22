@@ -28,6 +28,10 @@ namespace GuacamoleClient.WinForms
         private ToolStripMenuItem HintStopWebcontrol2FocusShortcut;
         private ToolStripSeparator toolStripSeparator4;
         private ToolStripMenuItem openGuacamoleMenuToolStripMenuItem;
+        private ToolStripMenuItem helpToolStripMenuItem;
+        private ToolStripMenuItem rdpSessionResizeHelpToolStripMenuItem;
+        private ToolStripSeparator helpToolStripSeparator;
+        private ToolStripMenuItem aboutToolStripMenuItem;
 
         /// <summary>
         /// Invisible Textbox for capturing focus and while focused capturing keyboard shortcuts
@@ -75,6 +79,10 @@ namespace GuacamoleClient.WinForms
             sendRemoteCtrlAltBackspaceToolStripMenuItem = new ToolStripMenuItem();
             toolStripSeparator4 = new ToolStripSeparator();
             openGuacamoleMenuToolStripMenuItem = new ToolStripMenuItem();
+            helpToolStripMenuItem = new ToolStripMenuItem();
+            rdpSessionResizeHelpToolStripMenuItem = new ToolStripMenuItem();
+            helpToolStripSeparator = new ToolStripSeparator();
+            aboutToolStripMenuItem = new ToolStripMenuItem();
             connectionNameInFullScreenModeToolStripMenuItem = new ToolStripMenuItem();
             HintStopWebcontrol2FocusShortcut = new ToolStripMenuItem();
             WebBrowserHostPanel = new Panel();
@@ -85,7 +93,7 @@ namespace GuacamoleClient.WinForms
             // 
             // mainMenuStrip
             // 
-            mainMenuStrip.Items.AddRange(new ToolStripItem[] { fileToolStripMenuItem, testToolStripMenuItem, viewToolStripMenuItem, sendKeyCombinationToolStripMenuItem, connectionNameInFullScreenModeToolStripMenuItem, HintStopWebcontrol2FocusShortcut });
+            mainMenuStrip.Items.AddRange(new ToolStripItem[] { fileToolStripMenuItem, testToolStripMenuItem, viewToolStripMenuItem, sendKeyCombinationToolStripMenuItem, helpToolStripMenuItem, connectionNameInFullScreenModeToolStripMenuItem, HintStopWebcontrol2FocusShortcut });
             mainMenuStrip.Location = new Point(0, 0);
             mainMenuStrip.Name = "mainMenuStrip";
             mainMenuStrip.Size = new Size(1264, 24);
@@ -245,6 +253,32 @@ namespace GuacamoleClient.WinForms
             openGuacamoleMenuToolStripMenuItem.Size = new Size(247, 22);
             openGuacamoleMenuToolStripMenuItem.Text = "Open Guacamole menu";
             openGuacamoleMenuToolStripMenuItem.Click += openGuacamoleMenuToolStripMenuItem_Click;
+            // 
+            // helpToolStripMenuItem
+            // 
+            helpToolStripMenuItem.DropDownItems.AddRange(new ToolStripItem[] { rdpSessionResizeHelpToolStripMenuItem, helpToolStripSeparator, aboutToolStripMenuItem });
+            helpToolStripMenuItem.Name = "helpToolStripMenuItem";
+            helpToolStripMenuItem.Size = new Size(44, 20);
+            helpToolStripMenuItem.Text = "Help";
+            // 
+            // rdpSessionResizeHelpToolStripMenuItem
+            // 
+            rdpSessionResizeHelpToolStripMenuItem.Name = "rdpSessionResizeHelpToolStripMenuItem";
+            rdpSessionResizeHelpToolStripMenuItem.Size = new Size(220, 22);
+            rdpSessionResizeHelpToolStripMenuItem.Text = "RDP session resizing";
+            rdpSessionResizeHelpToolStripMenuItem.Click += rdpSessionResizeHelpToolStripMenuItem_Click;
+            // 
+            // helpToolStripSeparator
+            // 
+            helpToolStripSeparator.Name = "helpToolStripSeparator";
+            helpToolStripSeparator.Size = new Size(217, 6);
+            // 
+            // aboutToolStripMenuItem
+            // 
+            aboutToolStripMenuItem.Name = "aboutToolStripMenuItem";
+            aboutToolStripMenuItem.Size = new Size(220, 22);
+            aboutToolStripMenuItem.Text = "About";
+            aboutToolStripMenuItem.Click += aboutToolStripMenuItem_Click;
             // 
             // connectionNameInFullScreenModeToolStripMenuItem
             // 
