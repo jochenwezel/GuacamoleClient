@@ -36,6 +36,8 @@ jobs:
       # MSIX / Desktop Bridge benötigt Visual Studio MSBuild
       - name: Setup MSBuild (Visual Studio)
         uses: microsoft/setup-msbuild@v2
+        with:
+          msbuild-architecture: x64
 
       - name: Resolve version
         shell: bash
@@ -72,8 +74,12 @@ jobs:
           msbuild $wapproj `
             /p:Configuration=${{ env.BUILD_CONFIGURATION }} `
             /p:Platform=${{ env.MSIX_PLATFORM }} `
+            /p:PlatformTarget=${{ env.MSIX_PLATFORM }} `
             /p:RuntimeIdentifier=${{ env.MSIX_RUNTIME_IDENTIFIER }} `
             /p:AppxBundlePlatforms=${{ env.MSIX_BUNDLE_PLATFORMS }} `
+            /p:AppxPackageSigningEnabled=false `
+            /p:GenerateTemporaryStoreCertificate=false `
+            /p:GenerateTestArtifacts=false `
             /p:Version=${{ env.VERSION }} `
             /p:FileVersion=${{ env.VERSION }} `
             /p:AssemblyVersion=${{ env.VERSION }} `
