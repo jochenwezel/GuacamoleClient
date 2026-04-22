@@ -104,6 +104,27 @@
   </ItemGroup>
 
   <ItemGroup Condition="'$(RuntimeIdentifier)'=='osx-arm64'">
+    <MacCefRootFiles Include="$(NuGetPackageRoot)cef.redist.osx.arm64/120.1.8/CEF/libEGL.dylib" />
+    <MacCefRootFiles Include="$(NuGetPackageRoot)cef.redist.osx.arm64/120.1.8/CEF/libGLESv2.dylib" />
+    <MacCefRootFiles Include="$(NuGetPackageRoot)cef.redist.osx.arm64/120.1.8/CEF/libvk_swiftshader.dylib" />
+    <MacCefRootFiles Include="$(NuGetPackageRoot)cef.redist.osx.arm64/120.1.8/CEF/vk_swiftshader_icd.json" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(RuntimeIdentifier)'=='osx-x64'">
+    <MacCefRootFiles Include="$(NuGetPackageRoot)cef.redist.osx64/120.1.8/CEF/libEGL.dylib" />
+    <MacCefRootFiles Include="$(NuGetPackageRoot)cef.redist.osx64/120.1.8/CEF/libGLESv2.dylib" />
+    <MacCefRootFiles Include="$(NuGetPackageRoot)cef.redist.osx64/120.1.8/CEF/libvk_swiftshader.dylib" />
+    <MacCefRootFiles Include="$(NuGetPackageRoot)cef.redist.osx64/120.1.8/CEF/vk_swiftshader_icd.json" />
+  </ItemGroup>
+
+  <Target Name="CopyMacCefRootFilesToOutput"
+          Condition="'@(MacCefRootFiles)'!=''"
+          BeforeTargets="CopyFilesToOutputDirectory">
+    <Copy SourceFiles="@(MacCefRootFiles)"
+          DestinationFolder="$(OutDir)"
+          SkipUnchangedFiles="true" />
+  </Target>
+
+  <ItemGroup Condition="'$(RuntimeIdentifier)'=='osx-arm64'">
     <Arm64CefGlueRootAssemblies Include="$(NuGetPackageRoot)cefglue.avalonia.arm64\120.6099.211\lib\net8.0\Xilium.CefGlue.Avalonia.dll" />
     <Arm64CefGlueRootAssemblies Include="$(NuGetPackageRoot)cefglue.common.arm64\120.6099.211\lib\net8.0\Xilium.CefGlue.Common.dll" />
     <Arm64CefGlueRootAssemblies Include="$(NuGetPackageRoot)cefglue.common.arm64\120.6099.211\lib\net8.0\Xilium.CefGlue.Common.Shared.dll" />
