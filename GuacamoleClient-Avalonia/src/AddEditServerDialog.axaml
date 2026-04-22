@@ -12,16 +12,16 @@
         RowSpacing="10"
         ColumnSpacing="12">
     <TextBlock Grid.Row="0" Grid.Column="0" VerticalAlignment="Center" Text="Server URL" />
-    <TextBox x:Name="UrlTextBox" Grid.Row="0" Grid.Column="1" Watermark="https://remote.example.com/guacamole/" />
+    <TextBox x:Name="UrlTextBox" Grid.Row="0" Grid.Column="1" PlaceholderText="https://remote.example.com/guacamole/" />
 
     <TextBlock Grid.Row="1" Grid.Column="0" VerticalAlignment="Center" Text="Display name" />
-    <TextBox x:Name="DisplayNameTextBox" Grid.Row="1" Grid.Column="1" Watermark="Optional" />
+    <TextBox x:Name="DisplayNameTextBox" Grid.Row="1" Grid.Column="1" PlaceholderText="Optional" />
 
     <TextBlock Grid.Row="2" Grid.Column="0" VerticalAlignment="Center" Text="Color scheme" />
     <ComboBox x:Name="ColorComboBox" Grid.Row="2" Grid.Column="1" />
 
     <TextBlock x:Name="CustomColorLabel" Grid.Row="3" Grid.Column="0" VerticalAlignment="Center" Text="Custom color" />
-    <TextBox x:Name="CustomColorTextBox" Grid.Row="3" Grid.Column="1" Watermark="#A1B2C3" />
+    <TextBox x:Name="CustomColorTextBox" Grid.Row="3" Grid.Column="1" PlaceholderText="#A1B2C3" />
 
     <TextBlock Grid.Row="4" Grid.Column="0" VerticalAlignment="Center" Text="Preview" />
     <Border x:Name="ColorPreviewBorder" Grid.Row="4" Grid.Column="1" Height="38" CornerRadius="6" Padding="10,6">
