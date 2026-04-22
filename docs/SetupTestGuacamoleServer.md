@@ -2,19 +2,21 @@
 
 ## Preconditions
 
-Make sure you have Docker and Docker Compose installed on your system.
-You also need a Traefik instance with a network named `traefik-test` for reverse proxying. Adjust the Traefik labels in the `docker-compose.yml` file if your setup differs.
+* Make sure you have Docker and Docker Compose installed on your system.
+* You also need a Traefik instance with a network named `traefik-test` for reverse proxying. Adjust the Traefik labels in the `docker-compose.yml` file if your setup differs.
 
 ## Access Guacamole
 After setup of Guacamole and Traefik, you can access the Guacamole web interface by navigating to: `https://my.docker.host/guacamole/`
 
 ## Please note
-This setup is intended for testing and demonstration purposes only.
-It is not recommended for production use due to security and performance considerations.
-Sandbox SSH servers are configured with weak credentials (`demo`/`guest`) and should not be exposed to untrusted networks.
-Guacamole users `guacadmin/guacadmin`, `admin/admin` and `demo/demo` are created with fixed password hashes for easy access.
-
-The PostgreSQL database is ephemeral and will reset on every start, losing all data. This is intentional for testing purposes. This means that every time you start the environment, the database will be re-initialized with the predefined schema and seed data. The SSH sandbox containers are set up to allow no real user interaction for security reasons.
+* This setup is intended for testing and demonstration purposes only.
+* It is not recommended for production use due to security and performance considerations.
+* Sandbox SSH servers are configured with weak credentials (`demo`/`guest`) and should not be exposed to untrusted networks.
+* Guacamole users `guacadmin/guacadmin`, `admin/admin` and `demo/demo` are created with fixed password hashes for easy access.
+* The PostgreSQL database is ephemeral and will reset on every start, losing all data. 
+  * This is intentional for testing purposes. 
+  * This means that every time you start the environment, the database will be re-initialized with the predefined schema and seed data. 
+* The SSH sandbox containers are set up to allow no real user interaction for security reasons.
     
 ## Create a docker-compose.yml file
 Create a file named `docker-compose.yml` with the following content:
