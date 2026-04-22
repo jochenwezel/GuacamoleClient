@@ -14,6 +14,10 @@ namespace GuacamoleClient.WinForms
         private TextBox _txtCustomHex;
         private Panel _pnlColorPreview;
         private CheckBox _chkIgnoreCert;
+        private Label _lblLocalCache;
+        private RadioButton _rbDisableLocalCache;
+        private RadioButton _rbEnableLocalCache;
+        private Label _lblLocalCacheInfo;
         private Button _btnSave;
         private Button _btnCancel;
 
@@ -43,6 +47,10 @@ namespace GuacamoleClient.WinForms
             _txtCustomHex = new TextBox();
             _pnlColorPreview = new Panel();
             _chkIgnoreCert = new CheckBox();
+            _lblLocalCache = new Label();
+            _rbDisableLocalCache = new RadioButton();
+            _rbEnableLocalCache = new RadioButton();
+            _lblLocalCacheInfo = new Label();
             _btnSave = new Button();
             _btnCancel = new Button();
             _lblUrl = new Label();
@@ -111,6 +119,49 @@ namespace GuacamoleClient.WinForms
             _chkIgnoreCert.TabIndex = 9;
             _chkIgnoreCert.Text = "_chkIgnoreCert";
             _chkIgnoreCert.UseVisualStyleBackColor = true;
+            // 
+            // _lblLocalCache
+            // 
+            _lblLocalCache.AutoSize = true;
+            _lblLocalCache.Location = new Point(15, 152);
+            _lblLocalCache.Name = "_lblLocalCache";
+            _lblLocalCache.Size = new Size(88, 15);
+            _lblLocalCache.TabIndex = 10;
+            _lblLocalCache.Text = "_lblLocalCache";
+            // 
+            // _rbDisableLocalCache
+            // 
+            _rbDisableLocalCache.AutoSize = true;
+            _layout.SetColumnSpan(_rbDisableLocalCache, 2);
+            _rbDisableLocalCache.Location = new Point(175, 155);
+            _rbDisableLocalCache.Name = "_rbDisableLocalCache";
+            _rbDisableLocalCache.Size = new Size(136, 19);
+            _rbDisableLocalCache.TabIndex = 11;
+            _rbDisableLocalCache.TabStop = true;
+            _rbDisableLocalCache.Text = "_rbDisableLocalCache";
+            _rbDisableLocalCache.UseVisualStyleBackColor = true;
+            // 
+            // _rbEnableLocalCache
+            // 
+            _rbEnableLocalCache.AutoSize = true;
+            _layout.SetColumnSpan(_rbEnableLocalCache, 2);
+            _rbEnableLocalCache.Location = new Point(175, 183);
+            _rbEnableLocalCache.Name = "_rbEnableLocalCache";
+            _rbEnableLocalCache.Size = new Size(132, 19);
+            _rbEnableLocalCache.TabIndex = 12;
+            _rbEnableLocalCache.TabStop = true;
+            _rbEnableLocalCache.Text = "_rbEnableLocalCache";
+            _rbEnableLocalCache.UseVisualStyleBackColor = true;
+            // 
+            // _lblLocalCacheInfo
+            // 
+            _lblLocalCacheInfo.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
+            _layout.SetColumnSpan(_lblLocalCacheInfo, 2);
+            _lblLocalCacheInfo.Location = new Point(175, 208);
+            _lblLocalCacheInfo.Name = "_lblLocalCacheInfo";
+            _lblLocalCacheInfo.Size = new Size(430, 45);
+            _lblLocalCacheInfo.TabIndex = 13;
+            _lblLocalCacheInfo.Text = "_lblLocalCacheInfo";
             // 
             // _btnSave
             // 
@@ -183,19 +234,26 @@ namespace GuacamoleClient.WinForms
             _layout.Controls.Add(_lblCustomHex, 0, 3);
             _layout.Controls.Add(_txtCustomHex, 1, 3);
             _layout.Controls.Add(_chkIgnoreCert, 1, 4);
-            _layout.Controls.Add(linkLabelHelpGuacamoleTestServer, 0, 5);
+            _layout.Controls.Add(_lblLocalCache, 0, 5);
+            _layout.Controls.Add(_rbDisableLocalCache, 1, 5);
+            _layout.Controls.Add(_rbEnableLocalCache, 1, 6);
+            _layout.Controls.Add(_lblLocalCacheInfo, 1, 7);
+            _layout.Controls.Add(linkLabelHelpGuacamoleTestServer, 0, 8);
             _layout.Dock = DockStyle.Fill;
             _layout.Location = new Point(0, 0);
             _layout.Name = "_layout";
             _layout.Padding = new Padding(12);
-            _layout.RowCount = 6;
+            _layout.RowCount = 9;
             _layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 28F));
             _layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 28F));
             _layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 28F));
             _layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 28F));
             _layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 28F));
+            _layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 28F));
+            _layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 28F));
+            _layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 58F));
             _layout.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
-            _layout.Size = new Size(620, 205);
+            _layout.Size = new Size(620, 315);
             _layout.TabIndex = 0;
             // 
             // linkLabelHelpGuacamoleTestServer
@@ -203,10 +261,10 @@ namespace GuacamoleClient.WinForms
             linkLabelHelpGuacamoleTestServer.Anchor = AnchorStyles.Bottom | AnchorStyles.Left;
             linkLabelHelpGuacamoleTestServer.AutoSize = true;
             _layout.SetColumnSpan(linkLabelHelpGuacamoleTestServer, 3);
-            linkLabelHelpGuacamoleTestServer.Location = new Point(15, 178);
+            linkLabelHelpGuacamoleTestServer.Location = new Point(15, 288);
             linkLabelHelpGuacamoleTestServer.Name = "linkLabelHelpGuacamoleTestServer";
             linkLabelHelpGuacamoleTestServer.Size = new Size(321, 15);
-            linkLabelHelpGuacamoleTestServer.TabIndex = 10;
+            linkLabelHelpGuacamoleTestServer.TabIndex = 14;
             linkLabelHelpGuacamoleTestServer.TabStop = true;
             linkLabelHelpGuacamoleTestServer.Text = "Help link to setup guide Guacamole Test Server with Docker";
             linkLabelHelpGuacamoleTestServer.LinkClicked += linkLabelHelpGuacamoleTestServer_LinkClicked;
@@ -217,7 +275,7 @@ namespace GuacamoleClient.WinForms
             _buttons.Controls.Add(_btnCancel);
             _buttons.Dock = DockStyle.Bottom;
             _buttons.FlowDirection = FlowDirection.RightToLeft;
-            _buttons.Location = new Point(0, 205);
+            _buttons.Location = new Point(0, 315);
             _buttons.Name = "_buttons";
             _buttons.Padding = new Padding(12);
             _buttons.Size = new Size(620, 48);
@@ -229,7 +287,7 @@ namespace GuacamoleClient.WinForms
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
             CancelButton = _btnCancel;
-            ClientSize = new Size(620, 253);
+            ClientSize = new Size(620, 363);
             Controls.Add(_layout);
             Controls.Add(_buttons);
             FormBorderStyle = FormBorderStyle.FixedDialog;

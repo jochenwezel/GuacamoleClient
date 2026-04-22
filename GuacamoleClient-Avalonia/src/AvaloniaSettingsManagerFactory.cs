@@ -24,6 +24,7 @@ internal static class AvaloniaSettingsManagerFactory
             }
         }
 
+        GuacamoleBrowserCache.DeleteDisabledProfileCaches("GuacamoleClient-Avalonia", manager.ServerProfiles);
         return manager;
     }
 

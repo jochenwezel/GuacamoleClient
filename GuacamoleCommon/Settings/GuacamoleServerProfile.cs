@@ -51,6 +51,12 @@ namespace GuacamoleClient.Common.Settings
             IsDefault = isDefaultServerProfile;
         }
 
+        public GuacamoleServerProfile(string url, string displayName, string primaryColor, bool ignoreCertificateErrors, bool localCacheEnabled, bool isDefaultServerProfile)
+            : this(url, displayName, primaryColor, ignoreCertificateErrors, isDefaultServerProfile)
+        {
+            LocalCacheEnabled = localCacheEnabled;
+        }
+
         /// <summary>
         /// Creates a copy of the current server profile with updated connection details and display settings.
         /// </summary>
@@ -71,6 +77,13 @@ namespace GuacamoleClient.Common.Settings
             clone.DisplayName = displayName;
             clone.PrimaryColorValue = primaryColor;
             clone.IgnoreCertificateErrors = ignoreCertificateErrors;
+            return clone;
+        }
+
+        public GuacamoleServerProfile CloneAndUpdate(string url, string displayName, string primaryColor, bool ignoreCertificateErrors, bool localCacheEnabled)
+        {
+            var clone = CloneAndUpdate(url, displayName, primaryColor, ignoreCertificateErrors);
+            clone.LocalCacheEnabled = localCacheEnabled;
             return clone;
         }
 
@@ -109,6 +122,11 @@ namespace GuacamoleClient.Common.Settings
         public bool IgnoreCertificateErrors { get; set; }
 
         /// <summary>
+        /// If true, WebView cache data may be persisted locally for this profile.
+        /// </summary>
+        public bool LocalCacheEnabled { get; set; }
+
+        /// <summary>
         /// Default server profile which is used at application start.
         /// </summary>
         public bool IsDefault { get; internal set; }
@@ -144,6 +162,7 @@ namespace GuacamoleClient.Common.Settings
                 DisplayName = this.DisplayName,
                 PrimaryColorValue = this.PrimaryColorValue,
                 IgnoreCertificateErrors = this.IgnoreCertificateErrors,
+                LocalCacheEnabled = this.LocalCacheEnabled,
                 IsDefault = this.IsDefault,
                 CreatedUtc = this.CreatedUtc,
                 UpdatedUtc = this.UpdatedUtc

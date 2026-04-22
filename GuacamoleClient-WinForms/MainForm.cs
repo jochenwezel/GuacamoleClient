@@ -1,5 +1,6 @@
 ﻿using GuacamoleClient.Common;
 using GuacamoleClient.Common.Localization;
+using GuacamoleClient.Common.Settings;
 using GuacamoleClient.RestClient;
 using InfoBox;
 using Microsoft.VisualBasic.ApplicationServices;
@@ -39,6 +40,7 @@ namespace GuacamoleClient.WinForms
 
         private readonly GuacamoleClient.Common.Settings.GuacamoleSettingsManager _settings;
         public GuacamoleClient.Common.Settings.GuacamoleServerProfile ServerProfile { get; }
+        private string? _temporaryCacheDirectory;
 
         public MainForm(GuacamoleClient.Common.Settings.GuacamoleSettingsManager settings, GuacamoleClient.Common.Settings.GuacamoleServerProfile serverProfile) : this(settings, serverProfile, new Uri(serverProfile.Url))
         { }
@@ -65,7 +67,13 @@ namespace GuacamoleClient.WinForms
 
             //Assign commands to close timer
             _closeTimer.Tick += (_, __) => { _closeTimer.Stop(); Close(); };
-            this.FormClosed += (_, __) => RemoveKeyboardHook();
+            this.FormClosed += (_, __) =>
+            {
+                RemoveKeyboardHook();
+                GuacamoleBrowserCache.DeleteDirectoryIfExists(_temporaryCacheDirectory);
+                if (!ServerProfile.LocalCacheEnabled)
+                    GuacamoleBrowserCache.DeleteProfileCacheDirectory("GuacamoleClient", ServerProfile.Id);
+            };
 
             //Tooltip
             _tip = new ToolTip
@@ -362,7 +370,8 @@ namespace GuacamoleClient.WinForms
         /// <returns></returns>
         private async Task InitWebView2Async()
         {
-            _webview2_env = await CoreWebView2Environment.CreateAsync();
+            string userDataFolder = GetWebView2UserDataFolder();
+            _webview2_env = await CoreWebView2Environment.CreateAsync(null, userDataFolder);
             _webview2_controller = await _webview2_env.CreateCoreWebView2ControllerAsync(this.WebBrowserHostPanel!.Handle);
             _webview2_controller.IsVisible = true;
             UpdateControllerBounds();
@@ -400,6 +409,18 @@ namespace GuacamoleClient.WinForms
 
             _webview2_core.Navigate(StartUrl.ToString());
             SetFocusToWebview2Control();
+        }
+
+        private string GetWebView2UserDataFolder()
+        {
+            if (ServerProfile.LocalCacheEnabled)
+            {
+                GuacamoleBrowserCache.EnsureProfileCacheDirectory("GuacamoleClient", ServerProfile.Id);
+                return GuacamoleBrowserCache.GetProfileCacheDirectory("GuacamoleClient", ServerProfile.Id);
+            }
+
+            _temporaryCacheDirectory = GuacamoleBrowserCache.CreateTemporaryCacheDirectory("GuacamoleClient", ServerProfile.Id);
+            return _temporaryCacheDirectory;
         }
 
         /// <summary>

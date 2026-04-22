@@ -83,6 +83,7 @@ namespace GuacamoleClient.Common.Settings
                 existing.DisplayName = profile.DisplayName;
                 existing.PrimaryColorValue = profile.PrimaryColorValue;
                 existing.IgnoreCertificateErrors = profile.IgnoreCertificateErrors;
+                existing.LocalCacheEnabled = profile.LocalCacheEnabled;
                 existing.UpdatedUtc = profile.UpdatedUtc;
                 // IsDefault handled via SetDefault
             }

@@ -24,6 +24,10 @@ public partial class AddEditServerDialog : Window
     private Border _colorPreviewBorder = default!;
     private TextBlock _colorPreviewTextBlock = default!;
     private CheckBox _ignoreCertificateErrorsCheckBox = default!;
+    private TextBlock _localCacheLabel = default!;
+    private RadioButton _disableLocalCacheRadioButton = default!;
+    private RadioButton _enableLocalCacheRadioButton = default!;
+    private TextBlock _localCacheInfoTextBlock = default!;
     private Button _saveButton = default!;
     private Button _cancelButton = default!;
 
@@ -57,11 +61,17 @@ public partial class AddEditServerDialog : Window
         _colorPreviewBorder = this.FindControl<Border>("ColorPreviewBorder")!;
         _colorPreviewTextBlock = this.FindControl<TextBlock>("ColorPreviewTextBlock")!;
         _ignoreCertificateErrorsCheckBox = this.FindControl<CheckBox>("IgnoreCertificateErrorsCheckBox")!;
+        _localCacheLabel = this.FindControl<TextBlock>("LocalCacheLabel")!;
+        _disableLocalCacheRadioButton = this.FindControl<RadioButton>("DisableLocalCacheRadioButton")!;
+        _enableLocalCacheRadioButton = this.FindControl<RadioButton>("EnableLocalCacheRadioButton")!;
+        _localCacheInfoTextBlock = this.FindControl<TextBlock>("LocalCacheInfoTextBlock")!;
         _saveButton = this.FindControl<Button>("SaveButton")!;
         _cancelButton = this.FindControl<Button>("CancelButton")!;
 
         _colorComboBox.ItemsSource = GuacamoleColorPalette.Keys.OrderBy(k => k).Concat(new[] { "Custom" }).ToArray();
         _colorComboBox.SelectionChanged += (_, __) => UpdateColorUi();
+        _disableLocalCacheRadioButton.IsCheckedChanged += (_, __) => UpdateLocalCacheInfoUi();
+        _enableLocalCacheRadioButton.IsCheckedChanged += (_, __) => UpdateLocalCacheInfoUi();
         _customColorTextBox.PropertyChanged += (_, e) =>
         {
             if (e.Property == TextBox.TextProperty)
@@ -74,6 +84,10 @@ public partial class AddEditServerDialog : Window
         Title = _editing == null
             ? LocalizationProvider.Get(LocalizationKeys.AddEdit_ModeAddServer_Title)
             : LocalizationProvider.Get(LocalizationKeys.AddEdit_ModeEditServer_Title);
+        _ignoreCertificateErrorsCheckBox.Content = LocalizationProvider.Get(LocalizationKeys.AddEdit_Check_IgnoreCertificateErrorsUnsafe);
+        _localCacheLabel.Text = LocalizationProvider.Get(LocalizationKeys.AddEdit_Label_LocalWebViewCache);
+        _disableLocalCacheRadioButton.Content = LocalizationProvider.Get(LocalizationKeys.AddEdit_Radio_DisableLocalCacheRecommended);
+        _enableLocalCacheRadioButton.Content = LocalizationProvider.Get(LocalizationKeys.AddEdit_Radio_EnableLocalCache);
         _cancelButton.Content = LocalizationProvider.Get(LocalizationKeys.Common_Button_Cancel);
         _saveButton.Content = LocalizationProvider.Get(LocalizationKeys.AddEdit_Button_Save);
     }
@@ -85,6 +99,8 @@ public partial class AddEditServerDialog : Window
             _urlTextBox.Text = _editing.Url;
             _displayNameTextBox.Text = _editing.DisplayName ?? string.Empty;
             _ignoreCertificateErrorsCheckBox.IsChecked = _editing.IgnoreCertificateErrors;
+            _enableLocalCacheRadioButton.IsChecked = _editing.LocalCacheEnabled;
+            _disableLocalCacheRadioButton.IsChecked = !_editing.LocalCacheEnabled;
             if (GuacamoleColorPalette.Colors.ContainsKey(_editing.PrimaryColorValue))
             {
                 _colorComboBox.SelectedItem = _editing.PrimaryColorValue;
@@ -101,9 +117,12 @@ public partial class AddEditServerDialog : Window
             _displayNameTextBox.Text = string.Empty;
             _colorComboBox.SelectedItem = "Red";
             _ignoreCertificateErrorsCheckBox.IsChecked = false;
+            _disableLocalCacheRadioButton.IsChecked = true;
+            _enableLocalCacheRadioButton.IsChecked = false;
         }
 
         UpdateColorUi();
+        UpdateLocalCacheInfoUi();
     }
 
     private void UpdateColorUi()
@@ -136,6 +155,20 @@ public partial class AddEditServerDialog : Window
             : selection;
     }
 
+    private void UpdateLocalCacheInfoUi()
+    {
+        if (_enableLocalCacheRadioButton.IsChecked == true)
+        {
+            _localCacheInfoTextBlock.Text = LocalizationProvider.Get(LocalizationKeys.AddEdit_Warning_LocalCacheEnabled);
+            _localCacheInfoTextBlock.Foreground = Brush.Parse("#B45309");
+        }
+        else
+        {
+            _localCacheInfoTextBlock.Text = LocalizationProvider.Get(LocalizationKeys.AddEdit_Info_LocalCacheDisabled);
+            _localCacheInfoTextBlock.Foreground = Brushes.Black;
+        }
+    }
+
     private async void SaveButton_Click(object? sender, RoutedEventArgs e)
         => await SaveAsync();
 
@@ -153,6 +186,7 @@ public partial class AddEditServerDialog : Window
             string url = _urlTextBox.Text?.Trim() ?? string.Empty;
             string? displayName = string.IsNullOrWhiteSpace(_displayNameTextBox.Text) ? null : _displayNameTextBox.Text!.Trim();
             bool ignoreCert = _ignoreCertificateErrorsCheckBox.IsChecked == true;
+            bool localCacheEnabled = _enableLocalCacheRadioButton.IsChecked == true;
             string colorValue = GetSelectedColorValue();
 
             if (string.IsNullOrWhiteSpace(url))
@@ -201,15 +235,19 @@ public partial class AddEditServerDialog : Window
                 : _colorComboBox.SelectedItem?.ToString() ?? "Red";
 
             var profile = _editing != null
-                ? _editing.CloneAndUpdate(url, displayName!, primaryColorValue, ignoreCert)
-                : new GuacamoleServerProfile(url, displayName!, primaryColorValue, ignoreCert, false);
+                ? _editing.CloneAndUpdate(url, displayName!, primaryColorValue, ignoreCert, localCacheEnabled)
+                : new GuacamoleServerProfile(url, displayName!, primaryColorValue, ignoreCert, localCacheEnabled, false);
 
             bool creating = _editing == null;
+            bool shouldDeleteCache = _editing?.LocalCacheEnabled == true && !localCacheEnabled;
             _manager.Upsert(profile);
             if (creating && _isFirstProfile)
                 _manager.SetDefault(profile.Id);
 
             await _manager.SaveAsync().ConfigureAwait(true);
+            if (shouldDeleteCache)
+                GuacamoleBrowserCache.DeleteProfileCacheDirectory("GuacamoleClient-Avalonia", profile.Id);
+
             ResultProfile = _manager.ServerProfiles.First(p => p.Id == profile.Id);
             Close(ResultProfile);
         }

@@ -35,6 +35,8 @@ namespace GuacamoleClient.WinForms
                     return;
             }
 
+            GuacamoleBrowserCache.DeleteDisabledProfileCaches("GuacamoleClient", settings.ServerProfiles);
+
             var defaultProfile = settings.GetDefaultOrFirstOrNull();
             if (defaultProfile == null) return;
 

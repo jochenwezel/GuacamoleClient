@@ -1,13 +1,13 @@
 ﻿<Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         x:Class="GuacClient.AddEditServerDialog"
-        Width="560" Height="420"
-        MinWidth="520" MinHeight="390"
+        Width="620" Height="540"
+        MinWidth="560" MinHeight="500"
         CanResize="False"
         WindowStartupLocation="CenterOwner"
         Title="Server profile">
   <Grid Margin="16"
-        RowDefinitions="Auto,Auto,Auto,Auto,Auto,*,Auto"
+        RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,*,Auto"
         ColumnDefinitions="Auto,*"
         RowSpacing="10"
         ColumnSpacing="12">
@@ -33,7 +33,24 @@
               VerticalAlignment="Top"
               Content="Ignore certificate errors (unsafe)" />
 
-    <StackPanel Grid.Row="6" Grid.ColumnSpan="2"
+    <TextBlock x:Name="LocalCacheLabel"
+               Grid.Row="6" Grid.Column="0"
+               VerticalAlignment="Top"
+               Text="Local WebView Cache" />
+    <StackPanel Grid.Row="6" Grid.Column="1" Spacing="6">
+      <RadioButton x:Name="DisableLocalCacheRadioButton"
+                   GroupName="LocalCache"
+                   Content="Disable local cache (recommended)" />
+      <RadioButton x:Name="EnableLocalCacheRadioButton"
+                   GroupName="LocalCache"
+                   Content="Enable local cache" />
+      <TextBlock x:Name="LocalCacheInfoTextBlock"
+                 Text="Increased privacy level: no session or web data is stored on this device."
+                 TextWrapping="Wrap"
+                 Foreground="{DynamicResource ThemeForegroundBrush}" />
+    </StackPanel>
+
+    <StackPanel Grid.Row="7" Grid.ColumnSpan="2"
                 Orientation="Horizontal"
                 HorizontalAlignment="Right"
                 Spacing="8">

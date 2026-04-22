@@ -218,6 +218,16 @@ namespace GuacamoleClient.Common.Localization
                         return "Benutzerdefinierte Farbe (Hex)";
                     case LocalizationKeys.AddEdit_Check_IgnoreCertificateErrorsUnsafe:
                         return "Zertifikatsfehler ignorieren (unsicher)";
+                    case LocalizationKeys.AddEdit_Label_LocalWebViewCache:
+                        return "Lokaler WebView-Cache";
+                    case LocalizationKeys.AddEdit_Radio_DisableLocalCacheRecommended:
+                        return "Lokalen Cache deaktivieren (empfohlen)";
+                    case LocalizationKeys.AddEdit_Radio_EnableLocalCache:
+                        return "Lokalen Cache aktivieren";
+                    case LocalizationKeys.AddEdit_Info_LocalCacheDisabled:
+                        return "Erhöhtes Datenschutz-Niveau: Es werden keine Sitzungs- und Webdaten auf dem Gerät gespeichert.";
+                    case LocalizationKeys.AddEdit_Warning_LocalCacheEnabled:
+                        return "Erhöhtes Datenschutzrisiko: Sitzungs- und Webdaten können lokal auf der Festplatte verbleiben. Nur auf vertrauenswürdigen Geräten aktivieren.";
                     case LocalizationKeys.AddEdit_Button_Save:
                         return "Speichern";
                     case LocalizationKeys.AddEdit_Validation_Title:
@@ -449,6 +459,16 @@ namespace GuacamoleClient.Common.Localization
                     return "Custom color (hex)";
                 case LocalizationKeys.AddEdit_Check_IgnoreCertificateErrorsUnsafe:
                     return "Ignore certificate errors (unsafe)";
+                case LocalizationKeys.AddEdit_Label_LocalWebViewCache:
+                    return "Local WebView Cache";
+                case LocalizationKeys.AddEdit_Radio_DisableLocalCacheRecommended:
+                    return "Disable local cache (recommended)";
+                case LocalizationKeys.AddEdit_Radio_EnableLocalCache:
+                    return "Enable local cache";
+                case LocalizationKeys.AddEdit_Info_LocalCacheDisabled:
+                    return "Increased privacy level: no session or web data is stored on this device.";
+                case LocalizationKeys.AddEdit_Warning_LocalCacheEnabled:
+                    return "Increased privacy risk: session and web data may remain on the local disk. Enable only on trusted devices.";
                 case LocalizationKeys.AddEdit_Button_Save:
                     return "Save";
                 case LocalizationKeys.AddEdit_Validation_Title:

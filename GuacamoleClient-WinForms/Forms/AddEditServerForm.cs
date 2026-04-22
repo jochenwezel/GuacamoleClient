@@ -32,6 +32,8 @@ namespace GuacamoleClient.WinForms
             _cmbColor.Items.Add("Custom");
             _cmbColor.SelectedIndexChanged += (_, __) => UpdateColorUi();
             _txtCustomHex.TextChanged += (_, __) => UpdateColorUi();
+            _rbDisableLocalCache.CheckedChanged += (_, __) => UpdateLocalCacheInfoUi();
+            _rbEnableLocalCache.CheckedChanged += (_, __) => UpdateLocalCacheInfoUi();
 
             _btnSave.Click += async (_, __) => await SaveAsync();
 
@@ -55,6 +57,9 @@ namespace GuacamoleClient.WinForms
             linkLabelHelpGuacamoleTestServer.Text = LocalizationProvider.Get(LocalizationKeys.AddEdit_Link_SetupGuideGuacamoleTestServer);
 
             _chkIgnoreCert.Text = LocalizationProvider.Get(LocalizationKeys.AddEdit_Check_IgnoreCertificateErrorsUnsafe);
+            _lblLocalCache.Text = LocalizationProvider.Get(LocalizationKeys.AddEdit_Label_LocalWebViewCache);
+            _rbDisableLocalCache.Text = LocalizationProvider.Get(LocalizationKeys.AddEdit_Radio_DisableLocalCacheRecommended);
+            _rbEnableLocalCache.Text = LocalizationProvider.Get(LocalizationKeys.AddEdit_Radio_EnableLocalCache);
             _btnSave.Text = LocalizationProvider.Get(LocalizationKeys.AddEdit_Button_Save);
             _btnCancel.Text = LocalizationProvider.Get(LocalizationKeys.Common_Button_Cancel);
         }
@@ -66,6 +71,8 @@ namespace GuacamoleClient.WinForms
                 _txtUrl.Text = _editing.Url;
                 _txtName.Text = _editing.DisplayName ?? string.Empty;
                 _chkIgnoreCert.Checked = _editing.IgnoreCertificateErrors;
+                _rbEnableLocalCache.Checked = _editing.LocalCacheEnabled;
+                _rbDisableLocalCache.Checked = !_editing.LocalCacheEnabled;
                 // Determine selection
                 if (GuacamoleColorPalette.Colors.ContainsKey(_editing.PrimaryColorValue))
                 {
@@ -85,9 +92,11 @@ namespace GuacamoleClient.WinForms
                 // First profile should be Red by default.
                 _cmbColor.SelectedItem = "Red";
                 _chkIgnoreCert.Checked = false;
+                _rbDisableLocalCache.Checked = true;
             }
 
             UpdateColorUi();
+            UpdateLocalCacheInfoUi();
         }
 
         private void UpdateColorUi()
@@ -107,6 +116,20 @@ namespace GuacamoleClient.WinForms
             }
         }
 
+        private void UpdateLocalCacheInfoUi()
+        {
+            if (_rbEnableLocalCache.Checked)
+            {
+                _lblLocalCacheInfo.Text = LocalizationProvider.Get(LocalizationKeys.AddEdit_Warning_LocalCacheEnabled);
+                _lblLocalCacheInfo.ForeColor = Color.DarkOrange;
+            }
+            else
+            {
+                _lblLocalCacheInfo.Text = LocalizationProvider.Get(LocalizationKeys.AddEdit_Info_LocalCacheDisabled);
+                _lblLocalCacheInfo.ForeColor = SystemColors.ControlText;
+            }
+        }
+
         private async System.Threading.Tasks.Task SaveAsync()
         {
             _btnSave.Enabled = false;
@@ -115,6 +138,7 @@ namespace GuacamoleClient.WinForms
                 var url = _txtUrl.Text?.Trim() ?? string.Empty;
                 var displayName = string.IsNullOrWhiteSpace(_txtName.Text) ? null : _txtName.Text.Trim();
                 var ignoreCert = _chkIgnoreCert.Checked;
+                var localCacheEnabled = _rbEnableLocalCache.Checked;
 
                 var sel = _cmbColor.SelectedItem?.ToString() ?? "Red";
                 var colorValue = string.Equals(sel, "Custom", StringComparison.OrdinalIgnoreCase)
@@ -196,15 +220,18 @@ namespace GuacamoleClient.WinForms
 
                 string primaryColorValue = string.Equals(sel, "Custom", StringComparison.OrdinalIgnoreCase) ? normalizedHex : sel;
                 var profile = _editing != null
-                    ? _editing.CloneAndUpdate(url, displayName!, primaryColorValue, ignoreCert)
-                    : new GuacamoleServerProfile(url, displayName!, primaryColorValue, ignoreCert, false);
+                    ? _editing.CloneAndUpdate(url, displayName!, primaryColorValue, ignoreCert, localCacheEnabled)
+                    : new GuacamoleServerProfile(url, displayName!, primaryColorValue, ignoreCert, localCacheEnabled, false);
 
                 bool creating = _editing == null;
+                bool shouldDeleteCache = _editing?.LocalCacheEnabled == true && !localCacheEnabled;
                 _manager.Upsert(profile);
                 if (creating && _isFirstProfile)
                     _manager.SetDefault(profile.Id);
 
                 await _manager.SaveAsync().ConfigureAwait(true);
+                if (shouldDeleteCache)
+                    GuacamoleBrowserCache.DeleteProfileCacheDirectory("GuacamoleClient", profile.Id);
 
                 ResultProfile = _manager.ServerProfiles.First(p => p.Id == profile.Id);
                 DialogResult = DialogResult.OK;

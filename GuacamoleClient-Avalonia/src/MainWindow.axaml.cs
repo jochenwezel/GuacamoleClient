@@ -21,6 +21,7 @@ namespace GuacClient
     public partial class MainWindow : Window
     {
         private const int RemoteShortcutHintDurationMs = 3000;
+        private static bool s_browserCacheConfigured;
         private const string ProjectWebsiteUrl = "https://github.com/jochenwezel/GuacamoleClient";
         private const string ProjectIssuesUrl = "https://github.com/jochenwezel/GuacamoleClient/issues";
         private const string RdpResizeDetailsUrl = "https://github.com/jochenwezel/GuacamoleClient/blob/main/README.md#faq-known-issues-typical-trouble-shooting";
@@ -84,6 +85,7 @@ namespace GuacClient
         private GuacamoleServerProfile? _activeProfile;
         private readonly Guid? _initialProfileId;
         private readonly string? _initialUrlOverride;
+        private string? _temporaryCacheDirectory;
 
         public MainWindow()
             : this(null, null)
@@ -94,6 +96,8 @@ namespace GuacClient
         {
             _initialProfileId = initialProfileId;
             _initialUrlOverride = initialUrlOverride;
+            _settingsManager = AvaloniaSettingsManagerFactory.LoadAsync().GetAwaiter().GetResult();
+            ConfigureBrowserCacheBeforeWebViewCreation();
             InitializeComponent();
 
             _web = this.FindControl<WebView>("Web")!;
@@ -148,7 +152,6 @@ namespace GuacClient
             _keyboardCaptureStatusMenuItem.Click += KeyboardCaptureStatusMenuItem_Click;
             this.Opened += async (_, __) =>
             {
-                _settingsManager = await AvaloniaSettingsManagerFactory.LoadAsync().ConfigureAwait(true);
                 await EnsureAndLoadUrlAsync();
                 UpdateKeyboardHookState();
                 UpdateViewMenuState();
@@ -173,7 +176,13 @@ namespace GuacClient
                 ResetTrackedKeyboardState();
                 RemoveKeyboardHook();
             };
-            this.Closed += (_, __) => RemoveKeyboardHook();
+            this.Closed += (_, __) =>
+            {
+                RemoveKeyboardHook();
+                GuacamoleBrowserCache.DeleteDirectoryIfExists(_temporaryCacheDirectory);
+                if (_activeProfile?.LocalCacheEnabled == false)
+                    GuacamoleBrowserCache.DeleteProfileCacheDirectory("GuacamoleClient-Avalonia", _activeProfile.Id);
+            };
             this.AddHandler(KeyDownEvent, OnWindowKeyDown, RoutingStrategies.Tunnel, true);
             this.AddHandler(KeyUpEvent, OnWindowKeyUp, RoutingStrategies.Tunnel, true);
         }
@@ -555,6 +564,36 @@ namespace GuacClient
                     LocalizationProvider.Get(LocalizationKeys.AppStart_WebViewError_Title),
                     ex.Message);
                 Close();
+            }
+        }
+
+        private void ConfigureBrowserCacheBeforeWebViewCreation()
+        {
+            if (s_browserCacheConfigured)
+                return;
+
+            var profile = AvaloniaSettingsManagerFactory.FindById(_settingsManager, _initialProfileId)
+                ?? _settingsManager.GetDefaultOrFirstOrNull();
+
+            ConfigureBrowserCacheForProfile(profile);
+            s_browserCacheConfigured = true;
+        }
+
+        private void ConfigureBrowserCacheForProfile(GuacamoleServerProfile? profile)
+        {
+            if (profile?.LocalCacheEnabled == true)
+            {
+                GuacamoleBrowserCache.DeleteDirectoryIfExists(_temporaryCacheDirectory);
+                _temporaryCacheDirectory = null;
+                GuacamoleBrowserCache.EnsureProfileCacheDirectory("GuacamoleClient-Avalonia", profile.Id);
+                WebView.Settings.CachePath = GuacamoleBrowserCache.GetProfileCacheDirectory("GuacamoleClient-Avalonia", profile.Id);
+                WebView.Settings.PersistCache = true;
+            }
+            else
+            {
+                _temporaryCacheDirectory ??= GuacamoleBrowserCache.CreateTemporaryCacheDirectory("GuacamoleClient-Avalonia", profile?.Id);
+                WebView.Settings.CachePath = _temporaryCacheDirectory;
+                WebView.Settings.PersistCache = false;
             }
         }
 
