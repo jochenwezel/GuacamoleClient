@@ -39,10 +39,10 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
 
       - name: Setup .NET
-        uses: actions/setup-dotnet@v4
+        uses: actions/setup-dotnet@v5
         with:
           dotnet-version: 10.0.101
 
@@ -242,7 +242,7 @@ jobs:
           Compress-Archive -Path $src -DestinationPath $dst -Force
 
       - name: Upload artifact (ClickOnce ZIP)
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: GuacamoleClient-WinForms_clickonce_${{ env.VERSION }}_anycpu
           path: bin-winforms-clickonce-${{ env.VERSION }}.zip
@@ -259,7 +259,7 @@ jobs:
       #    GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Upload artifact (ClickOnce folder for Pages)
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: clickonce-folder
           path: ${{ env.CLICKONCE_OUTDIR }}/**
@@ -276,7 +276,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
 
       - name: Configure GitHub Pages
         uses: actions/configure-pages@v5
