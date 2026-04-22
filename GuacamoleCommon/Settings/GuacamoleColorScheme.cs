@@ -11,6 +11,8 @@ namespace GuacamoleClient.Common.Settings
                 case "DeepOrange":
                 case "Red":
                 case "DeepPurple":
+                case "Pink":
+                case "Purple":
                 case "DarkRed":
                 case "Indigo":
                 case "Blue":
@@ -24,10 +26,8 @@ namespace GuacamoleClient.Common.Settings
                 case "BlueGray":
                     return PaletteBrightness.LightTextOnDarkGrayBackground;
 
-                case "Pink":
                 case "LightBlue":
                 case "Cyan":
-                case "Purple":
                 case "LightGreen":
                 case "Lime":
                 case "Yellow":
