@@ -315,6 +315,8 @@ jobs:
           # Static docs from repo
           cp -f "docs/clickonce/INSTALL.md" "public/INSTALL.md"
           cp -f "docs/clickonce/index.html" "public/index.html"
+          mkdir -p "public/assets"
+          cp -f "logos/guac-client-app_banner_1280x640.png" "public/assets/guac-client-app_banner_1280x640.png"
 
           # RELEASE.md is generated from GitHub Release text (no per-release repo edits needed)
           if [[ "${{ github.event_name }}" == "release" ]]; then

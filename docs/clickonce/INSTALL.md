@@ -1,14 +1,22 @@
-# GuacamoleClient – Installation (ClickOnce)
+# GuacamoleClient - ClickOnce Installation
 
-## Stable (empfohlen)
-- Installations-URL: https://jochenwezel.github.io/GuacamoleClient/clickonce/stable/GuacamoleClient.application
+## Stable
 
-## Dev (Preview / Test)
-- Installations-URL: https://jochenwezel.github.io/GuacamoleClient/clickonce/dev/GuacamoleClient.application
+- Installation URL: https://jochenwezel.github.io/GuacamoleClient/clickonce/stable/GuacamoleClient.application
 
-## Hinweise zu Windows-Sicherheitsabfragen
-Bei kostenfreien Open-Source-Projekten ohne (OV/EV) Code-Signing kann Windows den Herausgeber als „Unbekannt“ anzeigen.
-Die Installation ist dennoch möglich; Windows zeigt ggf. eine Warnung, die bestätigt werden muss.
+Use the stable channel for regular installations. Updates are delivered through the same ClickOnce feed.
+
+## Dev
+
+- Installation URL: https://jochenwezel.github.io/GuacamoleClient/clickonce/dev/GuacamoleClient.application
+
+Use the dev channel only for preview builds and testing.
+
+## Windows Security Prompts
+
+For self-signed open-source builds, Windows may show the publisher as unknown and display a security warning before installation.
+The installation can still continue after confirming the prompt.
 
 ## Auto-Updates
-Nach der Installation bezieht ClickOnce Updates automatisch über denselben Feed (Stable bzw. Dev).
+
+After installation, ClickOnce checks the same feed for updates. Stable installations update from the stable feed, and dev installations update from the dev feed.

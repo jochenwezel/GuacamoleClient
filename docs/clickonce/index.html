@@ -1,23 +1,212 @@
 <!doctype html>
-<html lang="de">
+<html lang="en">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>GuacamoleClient – ClickOnce</title>
+    <title>GuacamoleClient</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --ink: #172016;
+        --muted: #5d6658;
+        --line: #d9dfd5;
+        --page: #f7f8f4;
+        --panel: #ffffff;
+        --green: #337a36;
+        --green-dark: #205928;
+        --gold: #f2b84b;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        background: var(--page);
+        color: var(--ink);
+        font-family: "Segoe UI", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+        line-height: 1.55;
+      }
+
+      a {
+        color: var(--green-dark);
+      }
+
+      .hero {
+        border-bottom: 1px solid var(--line);
+        background: var(--panel);
+      }
+
+      .hero img {
+        display: block;
+        width: min(100%, 1280px);
+        height: auto;
+        margin: 0 auto;
+      }
+
+      main {
+        width: min(1040px, calc(100% - 32px));
+        margin: 0 auto;
+        padding: 36px 0 56px;
+      }
+
+      .intro {
+        display: grid;
+        grid-template-columns: minmax(0, 1.4fr) minmax(280px, 0.8fr);
+        gap: 28px;
+        align-items: start;
+      }
+
+      h1 {
+        margin: 0 0 10px;
+        font-size: clamp(2rem, 4vw, 3.7rem);
+        line-height: 1.05;
+        letter-spacing: 0;
+      }
+
+      h2 {
+        margin: 0 0 14px;
+        font-size: 1.15rem;
+      }
+
+      p {
+        margin: 0 0 16px;
+      }
+
+      .lead {
+        max-width: 68ch;
+        color: var(--muted);
+        font-size: 1.1rem;
+      }
+
+      .actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        margin-top: 12px;
+      }
+
+      .button {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 44px;
+        padding: 10px 16px;
+        border: 1px solid var(--green);
+        border-radius: 6px;
+        background: var(--green);
+        color: #fff;
+        font-weight: 650;
+        text-decoration: none;
+      }
+
+      .button.secondary {
+        background: transparent;
+        color: var(--green-dark);
+      }
+
+      .panel {
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--panel);
+        padding: 20px;
+      }
+
+      .panel p {
+        color: var(--muted);
+      }
+
+      .install {
+        margin-top: 28px;
+      }
+
+      .links {
+        display: grid;
+        gap: 10px;
+        margin-top: 18px;
+      }
+
+      .links a {
+        display: flex;
+        justify-content: space-between;
+        gap: 18px;
+        padding: 12px 0;
+        border-top: 1px solid var(--line);
+        text-decoration: none;
+      }
+
+      .links span {
+        color: var(--muted);
+      }
+
+      .note {
+        margin-top: 32px;
+        border-left: 4px solid var(--gold);
+        padding: 14px 18px;
+        background: #fff8e7;
+        color: #4e4227;
+      }
+
+      footer {
+        margin-top: 34px;
+        color: var(--muted);
+        font-size: 0.95rem;
+      }
+
+      @media (max-width: 760px) {
+        .intro {
+          grid-template-columns: 1fr;
+        }
+
+        main {
+          width: min(100% - 24px, 1040px);
+          padding-top: 24px;
+        }
+      }
+    </style>
   </head>
   <body>
-    <h1>GuacamoleClient – ClickOnce</h1>
+    <header class="hero">
+      <img src="./assets/guac-client-app_banner_1280x640.png" alt="GuacamoleClient" />
+    </header>
 
-    <h2>Stable</h2>
-    <p><a href="./clickonce/stable/GuacamoleClient.application">Installieren / Aktualisieren (Stable)</a></p>
+    <main>
+      <section class="intro" aria-labelledby="page-title">
+        <div>
+          <h1 id="page-title">GuacamoleClient</h1>
+          <p class="lead">
+            A lightweight desktop client for Apache Guacamole that keeps remote sessions in their own app window and reduces browser shortcut conflicts.
+          </p>
 
-    <h2>Dev</h2>
-    <p><a href="./clickonce/dev/GuacamoleClient.application">Installieren / Aktualisieren (Dev)</a></p>
+          <section class="install" aria-labelledby="windows-clickonce-title">
+            <h2 id="windows-clickonce-title">Windows ClickOnce Installation</h2>
+            <div class="actions" aria-label="Windows ClickOnce installation options">
+              <a class="button" href="./clickonce/stable/GuacamoleClient.application">Install Stable</a>
+              <a class="button secondary" href="./clickonce/dev/GuacamoleClient.application">Install Dev</a>
+            </div>
+          </section>
+        </div>
 
-    <h2>Dokumentation</h2>
-    <ul>
-      <li><a href="./INSTALL.md">INSTALL.md</a></li>
-      <li><a href="./RELEASE.md">RELEASE.md</a></li>
-    </ul>
+        <aside class="panel" aria-labelledby="resources-title">
+          <h2 id="resources-title">Project</h2>
+          <p>More details, screenshots, and technical notes are available in the repository.</p>
+          <div class="links">
+            <a href="https://github.com/jochenwezel/GuacamoleClient#readme">README <span>Overview</span></a>
+            <a href="https://github.com/jochenwezel/GuacamoleClient">Project site <span>GitHub</span></a>
+            <a href="./INSTALL.md">Installation <span>ClickOnce notes</span></a>
+            <a href="./RELEASE.md">Release <span>Current notes</span></a>
+          </div>
+        </aside>
+      </section>
+
+      <section class="note" aria-label="Windows security note">
+        Windows may show an unknown publisher warning for self-signed open-source builds. See the installation notes for details.
+      </section>
+
+      <footer>
+        ClickOnce artifacts are published for this project via GitHub Pages.
+      </footer>
+    </main>
   </body>
 </html>
