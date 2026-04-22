@@ -210,6 +210,20 @@ jobs:
           $pfxPath = Join-Path $env:RUNNER_TEMP "clickonce-signing.pfx"
           [IO.File]::WriteAllBytes($pfxPath, [Convert]::FromBase64String($env:CLICKONCE_SIGNING_PFX_BASE64))
 
+          try {
+            $cert = [System.Security.Cryptography.X509Certificates.X509Certificate2]::new(
+              $pfxPath,
+              $env:CLICKONCE_SIGNING_PFX_PASSWORD,
+              [System.Security.Cryptography.X509Certificates.X509KeyStorageFlags]::EphemeralKeySet
+            )
+            Write-Host "Loaded ClickOnce signing certificate: $($cert.Subject)"
+            Write-Host "Certificate thumbprint: $($cert.Thumbprint)"
+            Write-Host "Certificate expires: $($cert.NotAfter.ToString('u'))"
+          }
+          catch {
+            throw "Failed to load CLICKONCE_SIGNING_PFX_BASE64 with CLICKONCE_SIGNING_PFX_PASSWORD. Verify that the PFX secret is valid and the password matches the exported certificate. $($_.Exception.Message)"
+          }
+
           # Update + sign application manifest
           dotnet mage -Update "$appManifest" -CertFile "$pfxPath" -Password "$env:CLICKONCE_SIGNING_PFX_PASSWORD"
           if ($LASTEXITCODE -ne 0) { throw "Failed to sign application manifest: $appManifest" }
