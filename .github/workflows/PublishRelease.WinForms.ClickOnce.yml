@@ -107,27 +107,33 @@ jobs:
         shell: pwsh
         run: |
           $out = Join-Path $env:GITHUB_WORKSPACE "${{ env.CLICKONCE_OUTDIR }}"
+          $appSubdir = "${{ env.CLICKONCE_APP_NAME }}_$($env:VERSION.Replace('.', '_'))"
+          $appOut = Join-Path $out "Application Files\$appSubdir"
+          New-Item -ItemType Directory -Force -Path $appOut | Out-Null
 
           dotnet publish .\GuacamoleClient-WinForms\GuacamoleClient-WinForms.csproj `
             -c $env:BUILD_CONFIGURATION `
             --self-contained false `
-            -o $out `
+            -o $appOut `
             -p:Version=${{ env.VERSION }} `
             -p:FileVersion=${{ env.VERSION }} `
             -p:AssemblyVersion=${{ env.VERSION }} `
             -p:InformationalVersion=${{ env.VERSION }}
 
+          "CLICKONCE_APP_SUBDIR=Application Files\$appSubdir" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+
       - name: Detect main EXE
         shell: pwsh
         run: |
           $out = Join-Path $env:GITHUB_WORKSPACE "${{ env.CLICKONCE_OUTDIR }}"
+          $appOut = Join-Path $out $env:CLICKONCE_APP_SUBDIR
 
-          $exe = Get-ChildItem -Path $out -File -Filter *.exe |
+          $exe = Get-ChildItem -Path $appOut -File -Filter *.exe |
             Where-Object { $_.Name -notmatch '(?i)vshost|apphost|createdump|dotnet|host|test' } |
             Sort-Object Length -Descending |
             Select-Object -First 1
 
-          if (-not $exe) { throw "No suitable .exe found in $out" }
+          if (-not $exe) { throw "No suitable .exe found in $appOut" }
 
           "CLICKONCE_EXE_NAME=$($exe.Name)" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
           Write-Host "Detected EXE: $($exe.Name)"
@@ -136,14 +142,17 @@ jobs:
         shell: pwsh
         run: |
           $out = Join-Path $env:GITHUB_WORKSPACE "${{ env.CLICKONCE_OUTDIR }}"
+          $appOut = Join-Path $out $env:CLICKONCE_APP_SUBDIR
           $exe = $env:CLICKONCE_EXE_NAME
-          $appManifest = Join-Path $out "$exe.manifest"
+          $appManifest = Join-Path $appOut "$exe.manifest"
 
-          #dnx --y dotnetsay "Hello, World!" # example for tool usage without prior installation
+          dotnet mage -AddLauncher "$exe" -TargetDirectory "$appOut"
+          if ($LASTEXITCODE -ne 0) { throw "Failed to add ClickOnce launcher to: $appOut" }
+
           dotnet mage -New Application `
             -Name "${{ env.CLICKONCE_APP_NAME }}" `
             -Version "${{ env.VERSION }}" `
-            -FromDirectory "$out" `
+            -FromDirectory "$appOut" `
             -ToFile "$appManifest" `
             -Processor msil
 
@@ -153,12 +162,12 @@ jobs:
           }
           else {
             Write-Host "Directory listing:"
-            Get-ChildItem -Path $out -Force | Sort-Object Name | Format-Table Name,Length | Out-String | Write-Host
+            Get-ChildItem -Path $appOut -Force | Sort-Object Name | Format-Table Name,Length | Out-String | Write-Host
             throw "Application manifest creation process failed: $appManifest not created successfully"
           }
           if (-not (Test-Path $appManifest)) { throw "Application manifest not created: $appManifest" }          
 
-          "CLICKONCE_APP_MANIFEST=$exe.manifest" | Out-File -Append $env:GITHUB_ENV -Encoding utf8
+          "CLICKONCE_APP_MANIFEST=$($env:CLICKONCE_APP_SUBDIR)\$exe.manifest" | Out-File -Append $env:GITHUB_ENV -Encoding utf8
 
       - name: Create ClickOnce deployment manifest (dotnet mage)
         shell: pwsh
@@ -169,13 +178,16 @@ jobs:
 
           if (-not (Test-Path $appManifest)) { throw "App manifest not found: $appManifest" }
 
+          Push-Location $out
           dotnet mage -New Deployment `
             -Name "${{ env.CLICKONCE_APP_NAME }}" `
             -Version "${{ env.VERSION }}" `
-            -AppManifest "$appManifest" `
+            -AppManifest "$env:CLICKONCE_APP_MANIFEST" `
             -ToFile "$deployManifest" `
             -ProviderURL "${{ env.CLICKONCE_PROVIDER_URL }}" `
             -Install true
+          Pop-Location
+          if ($LASTEXITCODE -ne 0) { throw "Deployment manifest creation failed: $deployManifest" }
 
           if (-not (Test-Path $deployManifest)) { throw "Deployment manifest not created: $deployManifest" }
 
@@ -203,7 +215,9 @@ jobs:
           if ($LASTEXITCODE -ne 0) { throw "Failed to sign application manifest: $appManifest" }
 
           # Update deployment manifest with appmanifest + sign deployment manifest
-          dotnet mage -Update "$deployManifest" -AppManifest "$appManifest" -CertFile "$pfxPath" -Password "$env:CLICKONCE_SIGNING_PFX_PASSWORD"
+          Push-Location $out
+          dotnet mage -Update "$deployManifest" -AppManifest "$env:CLICKONCE_APP_MANIFEST" -CertFile "$pfxPath" -Password "$env:CLICKONCE_SIGNING_PFX_PASSWORD"
+          Pop-Location
           if ($LASTEXITCODE -ne 0) { throw "Failed to sign deployment manifest: $deployManifest" }
 
       - name: Pack ClickOnce output (ZIP)
