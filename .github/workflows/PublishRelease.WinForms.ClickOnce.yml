@@ -144,6 +144,16 @@ jobs:
             -p:AssemblyVersion=${{ env.VERSION }} `
             -p:InformationalVersion=${{ env.VERSION }}
 
+          $appInfo = [ordered]@{
+            schemaVersion = 1
+            appId = "winforms"
+            deploymentType = "clickonce"
+            channel = $env:CLICKONCE_CHANNEL
+            version = "${{ env.VERSION }}"
+            updatesUrl = "https://jochenwezel.github.io/GuacamoleClient/app-updates.json"
+          }
+          $appInfo | ConvertTo-Json -Depth 4 | Set-Content -LiteralPath (Join-Path $appOut "app-info.json") -Encoding utf8
+
           "CLICKONCE_APP_SUBDIR=Application Files\$appSubdir" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
 
       - name: Detect main EXE
@@ -337,6 +347,16 @@ jobs:
           if (-not (Test-Path $pfxPath)) {
             [IO.File]::WriteAllBytes($pfxPath, [Convert]::FromBase64String($env:CLICKONCE_SIGNING_PFX_BASE64))
           }
+
+          $appInfo = [ordered]@{
+            schemaVersion = 1
+            appId = "winforms"
+            deploymentType = "clickonce"
+            channel = "dev"
+            version = "${{ env.VERSION }}"
+            updatesUrl = "https://jochenwezel.github.io/GuacamoleClient/app-updates.json"
+          }
+          $appInfo | ConvertTo-Json -Depth 4 | Set-Content -LiteralPath (Join-Path $appOut "app-info.json") -Encoding utf8
 
           Remove-Item -LiteralPath $appManifest -Force
           Remove-Item -LiteralPath $deployManifest -Force

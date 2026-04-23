@@ -75,6 +75,7 @@
         Menu_Help,
         Menu_HelpRdpResize,
         Menu_About,
+        Menu_CheckForUpdates,
         Menu_UpdateWebsite,
 
         // Help / about dialogs
@@ -87,6 +88,13 @@
         Help_About_Avalonia_ThirdParty_Text,
         Help_ProjectWebsite_Link,
         Help_ReportBug_Link,
+        UpdateCheck_Title,
+        UpdateCheck_UpdateAvailable_Text,
+        UpdateCheck_NoUpdate_Text,
+        UpdateCheck_Failed_Text,
+        UpdateCheck_Button_UpdateNow,
+        UpdateCheck_Button_RemindLater,
+        UpdateCheck_Button_SkipVersion,
 
         // Choose/Manage servers dialog
         ChooseServer_Column_Name,

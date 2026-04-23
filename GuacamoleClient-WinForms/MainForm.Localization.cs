@@ -29,6 +29,7 @@ namespace GuacamoleClient.WinForms
             this.rdpSessionResizeHelpToolStripMenuItem.Text = LocalizationProvider.Get(LocalizationKeys.Menu_HelpRdpResize);
             this.projectWebsiteHelpToolStripMenuItem.Text = LocalizationProvider.Get(LocalizationKeys.Help_ProjectWebsite_Link);
             this.updateWebsiteHelpToolStripMenuItem.Text = LocalizationProvider.Get(LocalizationKeys.Menu_UpdateWebsite);
+            this.checkForUpdatesHelpToolStripMenuItem.Text = LocalizationProvider.Get(LocalizationKeys.Menu_CheckForUpdates);
             this.aboutToolStripMenuItem.Text = LocalizationProvider.Get(LocalizationKeys.Menu_About);
             this.sendRemoteCtrlAltDelToolStripMenuItem.ShortcutKeyDisplayString = LocalizationProvider.Get(LocalizationKeys.ShortcutKeystroke_SendCtrlAltDelToolStripMenuItem);
             this.openGuacamoleMenuToolStripMenuItem.ShortcutKeyDisplayString = LocalizationProvider.Get(LocalizationKeys.ShortcutKeystroke_OpenGuacamoleMenuToolStripMenuItem);

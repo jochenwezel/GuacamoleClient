@@ -34,6 +34,7 @@ namespace GuacamoleClient.WinForms
         private ToolStripSeparator helpToolStripSeparator;
         private ToolStripMenuItem projectWebsiteHelpToolStripMenuItem;
         private ToolStripMenuItem updateWebsiteHelpToolStripMenuItem;
+        private ToolStripMenuItem checkForUpdatesHelpToolStripMenuItem;
         private ToolStripMenuItem aboutToolStripMenuItem;
 
         /// <summary>
@@ -88,6 +89,7 @@ namespace GuacamoleClient.WinForms
             helpToolStripSeparator = new ToolStripSeparator();
             projectWebsiteHelpToolStripMenuItem = new ToolStripMenuItem();
             updateWebsiteHelpToolStripMenuItem = new ToolStripMenuItem();
+            checkForUpdatesHelpToolStripMenuItem = new ToolStripMenuItem();
             aboutToolStripMenuItem = new ToolStripMenuItem();
             connectionNameInFullScreenModeToolStripMenuItem = new ToolStripMenuItem();
             HintStopWebcontrol2FocusShortcut = new ToolStripMenuItem();
@@ -262,7 +264,7 @@ namespace GuacamoleClient.WinForms
             // 
             // helpToolStripMenuItem
             // 
-            helpToolStripMenuItem.DropDownItems.AddRange(new ToolStripItem[] { setupGuideHelpToolStripMenuItem, rdpSessionResizeHelpToolStripMenuItem, helpToolStripSeparator, projectWebsiteHelpToolStripMenuItem, updateWebsiteHelpToolStripMenuItem, aboutToolStripMenuItem });
+            helpToolStripMenuItem.DropDownItems.AddRange(new ToolStripItem[] { setupGuideHelpToolStripMenuItem, rdpSessionResizeHelpToolStripMenuItem, helpToolStripSeparator, projectWebsiteHelpToolStripMenuItem, updateWebsiteHelpToolStripMenuItem, checkForUpdatesHelpToolStripMenuItem, aboutToolStripMenuItem });
             helpToolStripMenuItem.Name = "helpToolStripMenuItem";
             helpToolStripMenuItem.Size = new Size(44, 20);
             helpToolStripMenuItem.Text = "Help";
@@ -300,6 +302,13 @@ namespace GuacamoleClient.WinForms
             updateWebsiteHelpToolStripMenuItem.Text = "Update website";
             updateWebsiteHelpToolStripMenuItem.Visible = false;
             updateWebsiteHelpToolStripMenuItem.Click += updateWebsiteHelpToolStripMenuItem_Click;
+            //
+            // checkForUpdatesHelpToolStripMenuItem
+            //
+            checkForUpdatesHelpToolStripMenuItem.Name = "checkForUpdatesHelpToolStripMenuItem";
+            checkForUpdatesHelpToolStripMenuItem.Size = new Size(220, 22);
+            checkForUpdatesHelpToolStripMenuItem.Text = "Check for Updates";
+            checkForUpdatesHelpToolStripMenuItem.Click += checkForUpdatesHelpToolStripMenuItem_Click;
             //
             // aboutToolStripMenuItem
             // 

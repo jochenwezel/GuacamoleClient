@@ -154,6 +154,8 @@ namespace GuacamoleClient.Common.Localization
                         return "RDP-Sitzungsgröße aktualisieren";
                     case LocalizationKeys.Menu_About:
                         return "Info";
+                    case LocalizationKeys.Menu_CheckForUpdates:
+                        return "Jetzt auf Updates prüfen";
                     case LocalizationKeys.Menu_UpdateWebsite:
                         return "Update-Website";
 
@@ -176,6 +178,20 @@ namespace GuacamoleClient.Common.Localization
                         return "Projekt-Website";
                     case LocalizationKeys.Help_ReportBug_Link:
                         return "Bug melden";
+                    case LocalizationKeys.UpdateCheck_Title:
+                        return "Updates";
+                    case LocalizationKeys.UpdateCheck_UpdateAvailable_Text:
+                        return "Eine neue Version ist verfügbar.\n\nInstalliert: {0}\nVerfügbar: {1}\nChannel: {2}\n\nJetzt aktualisieren?";
+                    case LocalizationKeys.UpdateCheck_NoUpdate_Text:
+                        return "Du hast bereits die aktuelle Version.\n\nInstalliert: {0}\nChannel: {1}";
+                    case LocalizationKeys.UpdateCheck_Failed_Text:
+                        return "Die Update-Prüfung ist fehlgeschlagen. Bitte später erneut versuchen.";
+                    case LocalizationKeys.UpdateCheck_Button_UpdateNow:
+                        return "Jetzt aktualisieren";
+                    case LocalizationKeys.UpdateCheck_Button_RemindLater:
+                        return "Später erinnern";
+                    case LocalizationKeys.UpdateCheck_Button_SkipVersion:
+                        return "Diese Version überspringen";
 
                     // Choose server dialog
                     case LocalizationKeys.ChooseServer_Column_Name:
@@ -401,6 +417,8 @@ namespace GuacamoleClient.Common.Localization
                     return "RDP session resizing";
                 case LocalizationKeys.Menu_About:
                     return "About";
+                case LocalizationKeys.Menu_CheckForUpdates:
+                    return "Check for Updates";
                 case LocalizationKeys.Menu_UpdateWebsite:
                     return "Update Website";
 
@@ -423,6 +441,20 @@ namespace GuacamoleClient.Common.Localization
                     return "Project website";
                 case LocalizationKeys.Help_ReportBug_Link:
                     return "Report a bug";
+                case LocalizationKeys.UpdateCheck_Title:
+                    return "Updates";
+                case LocalizationKeys.UpdateCheck_UpdateAvailable_Text:
+                    return "A new version is available.\n\nInstalled: {0}\nAvailable: {1}\nChannel: {2}\n\nUpdate now?";
+                case LocalizationKeys.UpdateCheck_NoUpdate_Text:
+                    return "You've got the latest version.\n\nInstalled: {0}\nChannel: {1}";
+                case LocalizationKeys.UpdateCheck_Failed_Text:
+                    return "Update check failed. Please try again later.";
+                case LocalizationKeys.UpdateCheck_Button_UpdateNow:
+                    return "Update now";
+                case LocalizationKeys.UpdateCheck_Button_RemindLater:
+                    return "Remind me later";
+                case LocalizationKeys.UpdateCheck_Button_SkipVersion:
+                    return "Skip this version";
 
                 // Choose server dialog
                 case LocalizationKeys.ChooseServer_Column_Name:

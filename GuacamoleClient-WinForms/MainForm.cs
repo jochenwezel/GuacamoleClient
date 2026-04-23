@@ -43,6 +43,8 @@ namespace GuacamoleClient.WinForms
         public GuacamoleClient.Common.Settings.GuacamoleServerProfile ServerProfile { get; }
         private string? _temporaryCacheDirectory;
         private readonly ClickOnceDeploymentInfo? _clickOnceDeploymentInfo = ClickOnceDeploymentInfo.TryCreate();
+        private readonly AppInfo _appInfo = AppInfo.Load();
+        private readonly AppUpdateChecker _appUpdateChecker;
 
         public MainForm(GuacamoleClient.Common.Settings.GuacamoleSettingsManager settings, GuacamoleClient.Common.Settings.GuacamoleServerProfile serverProfile) : this(settings, serverProfile, new Uri(serverProfile.Url))
         { }
@@ -51,6 +53,7 @@ namespace GuacamoleClient.WinForms
         {
             _settings = settings ?? throw new ArgumentNullException(nameof(settings));
             ServerProfile = serverProfile ?? throw new ArgumentNullException(nameof(serverProfile));
+            _appUpdateChecker = new AppUpdateChecker(_appInfo);
             this.HomeUrl = new Uri(serverProfile.Url);
             this.StartUrl = startUrl;
             _trustedHosts.Add(this.HomeUrl.Host);
@@ -260,6 +263,7 @@ namespace GuacamoleClient.WinForms
             };
 
             RefreshFaviconAsync();
+            _ = CheckForUpdatesOnStartupAsync();
         }
 
         /// <summary>
@@ -708,6 +712,138 @@ namespace GuacamoleClient.WinForms
         {
             if (_clickOnceDeploymentInfo != null)
                 UITools.OpenUrlInDefaultBrowser(_clickOnceDeploymentInfo.UpdateWebsiteUrl);
+        }
+
+        private async void checkForUpdatesHelpToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            await CheckForUpdatesManuallyAsync().ConfigureAwait(true);
+        }
+
+        private async Task CheckForUpdatesOnStartupAsync()
+        {
+            try
+            {
+                if (string.Equals(_appInfo.DeploymentType, "local-dev", StringComparison.OrdinalIgnoreCase))
+                    return;
+
+                await Task.Delay(TimeSpan.FromSeconds(3)).ConfigureAwait(true);
+                AppUpdateCheckResult result = await _appUpdateChecker.CheckAsync().ConfigureAwait(true);
+                if (!result.IsUpdateAvailable || await _appUpdateChecker.IsSkippedAsync(result.LatestVersion).ConfigureAwait(true))
+                    return;
+
+                ShowUpdateAvailableDialog(result);
+            }
+            catch
+            {
+                // Background update checks are best effort and intentionally silent.
+            }
+        }
+
+        private async Task CheckForUpdatesManuallyAsync()
+        {
+            try
+            {
+                AppUpdateCheckResult result = await _appUpdateChecker.CheckAsync().ConfigureAwait(true);
+                if (result.IsUpdateAvailable)
+                {
+                    ShowUpdateAvailableDialog(result);
+                    return;
+                }
+
+                ShowMessageBoxNonModal(
+                    LocalizationProvider.Get(
+                        LocalizationKeys.UpdateCheck_NoUpdate_Text,
+                        result.AppInfo.CurrentVersion,
+                        result.AppInfo.Channel),
+                    LocalizationProvider.Get(LocalizationKeys.UpdateCheck_Title),
+                    InformationBoxButtons.OK,
+                    InformationBoxIcon.Information);
+            }
+            catch
+            {
+                ShowMessageBoxNonModal(
+                    LocalizationProvider.Get(LocalizationKeys.UpdateCheck_Failed_Text),
+                    LocalizationProvider.Get(LocalizationKeys.UpdateCheck_Title),
+                    InformationBoxButtons.OK,
+                    InformationBoxIcon.Warning);
+            }
+        }
+
+        private void ShowUpdateAvailableDialog(AppUpdateCheckResult result)
+        {
+            using var dialog = new Form
+            {
+                Text = LocalizationProvider.Get(LocalizationKeys.UpdateCheck_Title),
+                StartPosition = FormStartPosition.CenterParent,
+                MinimizeBox = false,
+                MaximizeBox = false,
+                ShowIcon = true,
+                Icon = this.Icon,
+                FormBorderStyle = FormBorderStyle.FixedDialog,
+                ClientSize = new Size(520, 190)
+            };
+
+            var messageLabel = new Label
+            {
+                Text = LocalizationProvider.Get(
+                    LocalizationKeys.UpdateCheck_UpdateAvailable_Text,
+                    result.AppInfo.CurrentVersion,
+                    result.LatestVersion,
+                    result.AppInfo.Channel),
+                AutoSize = false,
+                Dock = DockStyle.Fill,
+                Padding = new Padding(12),
+                TextAlign = ContentAlignment.TopLeft
+            };
+
+            var buttonPanel = new FlowLayoutPanel
+            {
+                Dock = DockStyle.Bottom,
+                FlowDirection = FlowDirection.RightToLeft,
+                AutoSize = true,
+                Padding = new Padding(12, 0, 12, 12),
+                WrapContents = false
+            };
+
+            var updateButton = new Button
+            {
+                Text = LocalizationProvider.Get(LocalizationKeys.UpdateCheck_Button_UpdateNow),
+                DialogResult = DialogResult.Yes,
+                AutoSize = true
+            };
+
+            var laterButton = new Button
+            {
+                Text = LocalizationProvider.Get(LocalizationKeys.UpdateCheck_Button_RemindLater),
+                DialogResult = DialogResult.No,
+                AutoSize = true
+            };
+
+            var skipButton = new Button
+            {
+                Text = LocalizationProvider.Get(LocalizationKeys.UpdateCheck_Button_SkipVersion),
+                DialogResult = DialogResult.Ignore,
+                AutoSize = true
+            };
+
+            buttonPanel.Controls.Add(updateButton);
+            buttonPanel.Controls.Add(laterButton);
+            buttonPanel.Controls.Add(skipButton);
+
+            dialog.Controls.Add(messageLabel);
+            dialog.Controls.Add(buttonPanel);
+            dialog.AcceptButton = updateButton;
+            dialog.CancelButton = laterButton;
+
+            DialogResult dialogResult = dialog.ShowDialog(this);
+            if (dialogResult == DialogResult.Yes)
+            {
+                _appUpdateChecker.StartUpdate(result);
+            }
+            else if (dialogResult == DialogResult.Ignore)
+            {
+                _ = _appUpdateChecker.SkipVersionAsync(result.LatestVersion);
+            }
         }
 
         private void aboutToolStripMenuItem_Click(object sender, EventArgs e)
