@@ -712,13 +712,15 @@ namespace GuacamoleClient.WinForms
 
         private void aboutToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            var text = LocalizationProvider.Get(
+            var detailsText = LocalizationProvider.Get(
                 LocalizationKeys.Help_About_Text,
                 "WinForms",
                 Application.ProductVersion,
                 RuntimeInformation.FrameworkDescription,
                 RuntimeInformation.OSDescription,
                 RuntimeInformation.ProcessArchitecture.ToString());
+            var licenseText = LocalizationProvider.Get(LocalizationKeys.Help_About_License_Text);
+            var text = string.Join("\n\n", detailsText, licenseText);
 
             ShowInfoDialogWithLinks(
                 LocalizationProvider.Get(LocalizationKeys.Help_About_Title),

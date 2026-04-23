@@ -697,13 +697,16 @@ namespace GuacClient
 
         private async void AboutMenuItem_Click(object? sender, RoutedEventArgs e)
         {
-            var text = LocalizationProvider.Get(
+            var detailsText = LocalizationProvider.Get(
                 LocalizationKeys.Help_About_Text,
                 "Avalonia",
                 VersionUtil.InformationalVersion(),
                 RuntimeInformation.FrameworkDescription,
                 RuntimeInformation.OSDescription,
                 RuntimeInformation.ProcessArchitecture.ToString());
+            var licenseText = LocalizationProvider.Get(LocalizationKeys.Help_About_License_Text);
+            var thirdPartyText = LocalizationProvider.Get(LocalizationKeys.Help_About_Avalonia_ThirdParty_Text);
+            var text = string.Join("\n\n", detailsText, licenseText, thirdPartyText);
 
             await MessageBoxSimple.Show(
                 this,
