@@ -52,6 +52,21 @@ jobs:
           echo "VERSION=$VER" >> "$GITHUB_ENV"
           echo "Resolved VERSION=$VER"
 
+      - name: Write app-info.json for MSIX build
+        shell: pwsh
+        run: |
+          $channel = if ("${{ github.event_name }}" -eq "release" -and "${{ github.event.release.prerelease }}" -eq "true") { "dev" } else { "stable" }
+          $appInfo = [ordered]@{
+            schemaVersion = 1
+            appId = "winforms"
+            deploymentType = "msix"
+            channel = $channel
+            version = $env:VERSION
+            updatesUrl = "https://jochenwezel.github.io/GuacamoleClient/app-updates.json"
+          }
+          $appInfoPath = Join-Path $env:GITHUB_WORKSPACE "GuacamoleClient-WinForms\app-info.json"
+          $appInfo | ConvertTo-Json -Depth 4 | Set-Content -LiteralPath $appInfoPath -Encoding utf8
+
       - name: Restore WinForms project
         run: dotnet restore GuacamoleClient-WinForms/GuacamoleClient-WinForms.csproj -r ${{ env.MSIX_RUNTIME_IDENTIFIER }}
 

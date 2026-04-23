@@ -38,8 +38,11 @@ namespace GuacamoleClient.Common.Updates
             if (string.IsNullOrWhiteSpace(latestVersion))
                 return AppUpdateCheckResult.NotAvailable(_appInfo);
 
+            if (!TryResolveDeployment(channel, out AppUpdatesDeployment? deployment))
+                return AppUpdateCheckResult.NotAvailable(_appInfo);
+
             bool isNewer = IsNewerVersion(latestVersion, _appInfo.CurrentVersion);
-            string updateUrl = ResolveUpdateUrl(app, channel);
+            string updateUrl = ResolveUpdateUrl(app, channel, deployment);
             return new AppUpdateCheckResult(_appInfo, latestVersion, updateUrl, isNewer);
         }
 
@@ -57,6 +60,7 @@ namespace GuacamoleClient.Common.Updates
 
                 return string.Equals(state?.AppId, _appInfo.AppId, StringComparison.OrdinalIgnoreCase)
                     && string.Equals(state?.Channel, _appInfo.Channel, StringComparison.OrdinalIgnoreCase)
+                    && string.Equals(state?.DeploymentType, _appInfo.DeploymentType, StringComparison.OrdinalIgnoreCase)
                     && string.Equals(state?.SkippedVersion, version, StringComparison.OrdinalIgnoreCase);
             }
             catch
@@ -74,6 +78,7 @@ namespace GuacamoleClient.Common.Updates
                 {
                     AppId = _appInfo.AppId,
                     Channel = _appInfo.Channel,
+                    DeploymentType = _appInfo.DeploymentType,
                     SkippedVersion = version
                 };
                 string json = JsonSerializer.Serialize(state, new JsonSerializerOptions { WriteIndented = true });
@@ -105,13 +110,51 @@ namespace GuacamoleClient.Common.Updates
                 ?? new AppUpdatesDocument();
         }
 
-        private static string ResolveUpdateUrl(AppUpdatesApp app, AppUpdatesChannel channel)
+        private bool TryResolveDeployment(AppUpdatesChannel channel, out AppUpdatesDeployment deployment)
         {
-            if (!string.IsNullOrWhiteSpace(channel.ManifestUrl))
-                return MakeAbsolute(channel.ManifestUrl);
+            if (channel.Deployments.TryGetValue(_appInfo.DeploymentType, out AppUpdatesDeployment? exactDeployment))
+            {
+                deployment = exactDeployment;
+                return true;
+            }
 
-            if (!string.IsNullOrWhiteSpace(channel.UpdatePageUrl))
-                return MakeAbsolute(channel.UpdatePageUrl);
+            foreach (AppUpdatesDeployment candidate in channel.Deployments.Values)
+            {
+                if (string.Equals(candidate.DeploymentType, _appInfo.DeploymentType, StringComparison.OrdinalIgnoreCase))
+                {
+                    deployment = candidate;
+                    return true;
+                }
+            }
+
+            if (channel.Deployments.Count == 0
+                && (string.IsNullOrWhiteSpace(channel.DeploymentType)
+                    || string.Equals(channel.DeploymentType, _appInfo.DeploymentType, StringComparison.OrdinalIgnoreCase)))
+            {
+                deployment = new AppUpdatesDeployment
+                {
+                    DeploymentType = channel.DeploymentType,
+                    ManifestUrl = channel.ManifestUrl,
+                    UpdatePageUrl = channel.UpdatePageUrl,
+                    ReleasesUrl = channel.ReleasesUrl
+                };
+                return true;
+            }
+
+            deployment = new AppUpdatesDeployment();
+            return false;
+        }
+
+        private static string ResolveUpdateUrl(AppUpdatesApp app, AppUpdatesChannel channel, AppUpdatesDeployment deployment)
+        {
+            if (!string.IsNullOrWhiteSpace(deployment.ManifestUrl))
+                return MakeAbsolute(deployment.ManifestUrl);
+
+            if (!string.IsNullOrWhiteSpace(deployment.UpdatePageUrl))
+                return MakeAbsolute(deployment.UpdatePageUrl);
+
+            if (!string.IsNullOrWhiteSpace(deployment.ReleasesUrl))
+                return MakeAbsolute(deployment.ReleasesUrl);
 
             if (!string.IsNullOrWhiteSpace(channel.ReleasesUrl))
                 return MakeAbsolute(channel.ReleasesUrl);
@@ -149,6 +192,7 @@ namespace GuacamoleClient.Common.Updates
         {
             public string? AppId { get; init; }
             public string? Channel { get; init; }
+            public string? DeploymentType { get; init; }
             public string? SkippedVersion { get; init; }
         }
     }

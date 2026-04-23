@@ -37,5 +37,23 @@ namespace GuacamoleClient.Common.Updates
 
         [JsonPropertyName("releasesUrl")]
         public string? ReleasesUrl { get; init; }
+
+        [JsonPropertyName("deployments")]
+        public Dictionary<string, AppUpdatesDeployment> Deployments { get; init; } = new();
+    }
+
+    public sealed class AppUpdatesDeployment
+    {
+        [JsonPropertyName("deploymentType")]
+        public string? DeploymentType { get; init; }
+
+        [JsonPropertyName("manifestUrl")]
+        public string? ManifestUrl { get; init; }
+
+        [JsonPropertyName("updatePageUrl")]
+        public string? UpdatePageUrl { get; init; }
+
+        [JsonPropertyName("releasesUrl")]
+        public string? ReleasesUrl { get; init; }
     }
 }

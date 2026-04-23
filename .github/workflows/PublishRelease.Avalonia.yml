@@ -79,9 +79,9 @@ jobs:
           $appInfo = [ordered]@{
             schemaVersion = 1
             appId = "avalonia"
-            deploymentType = "github-release"
+            deploymentType = "zip"
             channel = $channel
-            version = "${{ env.VERSION }}"
+            version = $env:VERSION
             updatesUrl = "https://jochenwezel.github.io/GuacamoleClient/app-updates.json"
           }
           $out = Join-Path $env:GITHUB_WORKSPACE "GuacamoleClient-Avalonia\bin\${{ env.BUILD_CONFIGURATION }}\net8.0"
@@ -128,9 +128,9 @@ jobs:
             $appInfo = [ordered]@{
               schemaVersion = 1
               appId = "avalonia"
-              deploymentType = "github-release"
+              deploymentType = "zip"
               channel = $channel
-              version = "${{ env.VERSION }}"
+              version = $env:VERSION
               updatesUrl = "https://jochenwezel.github.io/GuacamoleClient/app-updates.json"
             }
             $out = Join-Path $env:GITHUB_WORKSPACE "GuacamoleClient-Avalonia/bin/${{ env.BUILD_CONFIGURATION }}/net8.0/$rid/publish"
