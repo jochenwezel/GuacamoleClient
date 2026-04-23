@@ -7,6 +7,7 @@ using Avalonia;
 using Avalonia.Threading;
 using GuacamoleClient.Common.Localization;
 using GuacamoleClient.Common.Settings;
+using GuacamoleClient.Common.Updates;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -72,6 +73,7 @@ namespace GuacClient
         private MenuItem _setupGuideHelpMenuItem = default!;
         private MenuItem _rdpSessionResizeHelpMenuItem = default!;
         private MenuItem _projectWebsiteHelpMenuItem = default!;
+        private MenuItem _checkForUpdatesHelpMenuItem = default!;
         private MenuItem _aboutMenuItem = default!;
         private MenuItem _keyboardCaptureStatusMenuItem = default!;
         private MenuItem _keyboardHintMenuItem = default!;
@@ -89,6 +91,15 @@ namespace GuacClient
         private readonly Guid? _initialProfileId;
         private readonly string? _initialUrlOverride;
         private string? _temporaryCacheDirectory;
+        private readonly AppInfo _appInfo = AppInfo.Load(new AppInfo
+        {
+            AppId = "avalonia",
+            DeploymentType = "local-dev",
+            Channel = "dev",
+            Version = VersionUtil.InformationalVersion(),
+            UpdatesUrl = AppInfo.DefaultUpdatesUrl
+        });
+        private readonly AppUpdateChecker _appUpdateChecker;
 
         public MainWindow()
             : this(null, null)
@@ -100,6 +111,7 @@ namespace GuacClient
             _initialProfileId = initialProfileId;
             _initialUrlOverride = initialUrlOverride;
             _settingsManager = AvaloniaSettingsManagerFactory.LoadAsync().GetAwaiter().GetResult();
+            _appUpdateChecker = new AppUpdateChecker(_appInfo, "GuacamoleClient-Avalonia");
             ConfigureBrowserCacheBeforeWebViewCreation();
             InitializeComponent();
 
@@ -129,6 +141,7 @@ namespace GuacClient
             _setupGuideHelpMenuItem = this.FindControl<MenuItem>("SetupGuideHelpMenuItem")!;
             _rdpSessionResizeHelpMenuItem = this.FindControl<MenuItem>("RdpSessionResizeHelpMenuItem")!;
             _projectWebsiteHelpMenuItem = this.FindControl<MenuItem>("ProjectWebsiteHelpMenuItem")!;
+            _checkForUpdatesHelpMenuItem = this.FindControl<MenuItem>("CheckForUpdatesHelpMenuItem")!;
             _aboutMenuItem = this.FindControl<MenuItem>("AboutMenuItem")!;
             _keyboardCaptureStatusMenuItem = this.FindControl<MenuItem>("KeyboardCaptureStatusMenuItem")!;
             _keyboardHintMenuItem = this.FindControl<MenuItem>("KeyboardHintMenuItem")!;
@@ -155,6 +168,7 @@ namespace GuacClient
             _setupGuideHelpMenuItem.Click += SetupGuideHelpMenuItem_Click;
             _rdpSessionResizeHelpMenuItem.Click += RdpSessionResizeHelpMenuItem_Click;
             _projectWebsiteHelpMenuItem.Click += ProjectWebsiteHelpMenuItem_Click;
+            _checkForUpdatesHelpMenuItem.Click += CheckForUpdatesHelpMenuItem_Click;
             _aboutMenuItem.Click += AboutMenuItem_Click;
             _keyboardCaptureStatusMenuItem.Click += KeyboardCaptureStatusMenuItem_Click;
             this.Opened += async (_, __) =>
@@ -162,6 +176,7 @@ namespace GuacClient
                 await EnsureAndLoadUrlAsync();
                 UpdateKeyboardHookState();
                 UpdateViewMenuState();
+                _ = CheckForUpdatesOnStartupAsync();
             };
             this.Activated += (_, __) =>
             {
@@ -243,6 +258,7 @@ namespace GuacClient
             _setupGuideHelpMenuItem.Header = LocalizationProvider.Get(LocalizationKeys.AddEdit_Link_SetupGuideGuacamoleTestServer);
             _rdpSessionResizeHelpMenuItem.Header = LocalizationProvider.Get(LocalizationKeys.Menu_HelpRdpResize);
             _projectWebsiteHelpMenuItem.Header = LocalizationProvider.Get(LocalizationKeys.Help_ProjectWebsite_Link);
+            _checkForUpdatesHelpMenuItem.Header = LocalizationProvider.Get(LocalizationKeys.Menu_CheckForUpdates);
             _aboutMenuItem.Header = LocalizationProvider.Get(LocalizationKeys.Menu_About);
             _keyboardHintMenuItem.Header = string.Empty;
             _keyboardHintMenuItem.IsEnabled = false;
@@ -693,6 +709,134 @@ namespace GuacClient
         {
             if (Uri.TryCreate(ProjectWebsiteUrl, UriKind.Absolute, out var uri))
                 await Launcher.LaunchUriAsync(uri);
+        }
+
+        private async void CheckForUpdatesHelpMenuItem_Click(object? sender, RoutedEventArgs e)
+        {
+            await CheckForUpdatesManuallyAsync().ConfigureAwait(true);
+        }
+
+        private async Task CheckForUpdatesOnStartupAsync()
+        {
+            try
+            {
+                if (string.Equals(_appInfo.DeploymentType, "local-dev", StringComparison.OrdinalIgnoreCase))
+                    return;
+
+                await Task.Delay(TimeSpan.FromSeconds(3)).ConfigureAwait(true);
+                AppUpdateCheckResult result = await _appUpdateChecker.CheckAsync().ConfigureAwait(true);
+                if (!result.IsUpdateAvailable || await _appUpdateChecker.IsSkippedAsync(result.LatestVersion).ConfigureAwait(true))
+                    return;
+
+                await ShowUpdateAvailableDialogAsync(result).ConfigureAwait(true);
+            }
+            catch
+            {
+                // Background update checks are best effort and intentionally silent.
+            }
+        }
+
+        private async Task CheckForUpdatesManuallyAsync()
+        {
+            try
+            {
+                AppUpdateCheckResult result = await _appUpdateChecker.CheckAsync().ConfigureAwait(true);
+                if (result.IsUpdateAvailable)
+                {
+                    await ShowUpdateAvailableDialogAsync(result).ConfigureAwait(true);
+                    return;
+                }
+
+                await MessageBoxSimple.Show(
+                    this,
+                    LocalizationProvider.Get(LocalizationKeys.UpdateCheck_Title),
+                    LocalizationProvider.Get(
+                        LocalizationKeys.UpdateCheck_NoUpdate_Text,
+                        result.AppInfo.CurrentVersion,
+                        result.AppInfo.Channel));
+            }
+            catch
+            {
+                await MessageBoxSimple.Show(
+                    this,
+                    LocalizationProvider.Get(LocalizationKeys.UpdateCheck_Title),
+                    LocalizationProvider.Get(LocalizationKeys.UpdateCheck_Failed_Text));
+            }
+        }
+
+        private async Task ShowUpdateAvailableDialogAsync(AppUpdateCheckResult result)
+        {
+            var dialog = new Window
+            {
+                Title = LocalizationProvider.Get(LocalizationKeys.UpdateCheck_Title),
+                Width = 560,
+                Height = 240,
+                MinWidth = 520,
+                MinHeight = 220,
+                CanResize = false,
+                WindowStartupLocation = WindowStartupLocation.CenterOwner
+            };
+
+            if (Icon != null)
+                dialog.Icon = Icon;
+
+            var updateButton = new Button
+            {
+                Content = LocalizationProvider.Get(LocalizationKeys.UpdateCheck_Button_UpdateNow),
+                IsDefault = true
+            };
+            var laterButton = new Button
+            {
+                Content = LocalizationProvider.Get(LocalizationKeys.UpdateCheck_Button_RemindLater),
+                IsCancel = true
+            };
+            var skipButton = new Button
+            {
+                Content = LocalizationProvider.Get(LocalizationKeys.UpdateCheck_Button_SkipVersion)
+            };
+
+            updateButton.Click += (_, __) => dialog.Close("update");
+            laterButton.Click += (_, __) => dialog.Close("later");
+            skipButton.Click += (_, __) => dialog.Close("skip");
+
+            var buttonPanel = new StackPanel
+            {
+                Orientation = Avalonia.Layout.Orientation.Horizontal,
+                Spacing = 8,
+                HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Right,
+                Children = { skipButton, laterButton, updateButton }
+            };
+            Grid.SetRow(buttonPanel, 1);
+
+            dialog.Content = new Grid
+            {
+                Margin = new Thickness(16),
+                RowDefinitions = new RowDefinitions("*,Auto"),
+                RowSpacing = 12,
+                Children =
+                {
+                    new TextBlock
+                    {
+                        Text = LocalizationProvider.Get(
+                            LocalizationKeys.UpdateCheck_UpdateAvailable_Text,
+                            result.AppInfo.CurrentVersion,
+                            result.LatestVersion,
+                            result.AppInfo.Channel),
+                        TextWrapping = TextWrapping.Wrap
+                    },
+                    buttonPanel
+                }
+            };
+
+            string? action = await dialog.ShowDialog<string?>(this).ConfigureAwait(true);
+            if (string.Equals(action, "update", StringComparison.Ordinal))
+            {
+                _appUpdateChecker.StartUpdate(result);
+            }
+            else if (string.Equals(action, "skip", StringComparison.Ordinal))
+            {
+                await _appUpdateChecker.SkipVersionAsync(result.LatestVersion).ConfigureAwait(true);
+            }
         }
 
         private async void AboutMenuItem_Click(object? sender, RoutedEventArgs e)

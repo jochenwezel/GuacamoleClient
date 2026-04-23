@@ -1,15 +1,15 @@
 using System.Collections.Generic;
 using System.Text.Json.Serialization;
 
-namespace GuacamoleClient.WinForms
+namespace GuacamoleClient.Common.Updates
 {
-    internal sealed class AppUpdatesDocument
+    public sealed class AppUpdatesDocument
     {
         [JsonPropertyName("apps")]
         public Dictionary<string, AppUpdatesApp> Apps { get; init; } = new();
     }
 
-    internal sealed class AppUpdatesApp
+    public sealed class AppUpdatesApp
     {
         [JsonPropertyName("releasesUrl")]
         public string? ReleasesUrl { get; init; }
@@ -18,7 +18,7 @@ namespace GuacamoleClient.WinForms
         public Dictionary<string, AppUpdatesChannel> Channels { get; init; } = new();
     }
 
-    internal sealed class AppUpdatesChannel
+    public sealed class AppUpdatesChannel
     {
         [JsonPropertyName("deploymentType")]
         public string? DeploymentType { get; init; }

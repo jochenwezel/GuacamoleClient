@@ -1,0 +1,7 @@
+{
+  "schemaVersion": 1,
+  "appId": "avalonia",
+  "deploymentType": "local-dev",
+  "channel": "dev",
+  "updatesUrl": "https://jochenwezel.github.io/GuacamoleClient/app-updates.json"
+}

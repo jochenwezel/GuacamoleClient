@@ -71,6 +71,22 @@ jobs:
           -p:AssemblyVersion=${{ env.VERSION }}
           -p:InformationalVersion=${{ env.VERSION }}
 
+      - name: Write app-info.json for Avalonia (Windows/Linux)
+        if: runner.os != 'macOS'
+        shell: pwsh
+        run: |
+          $channel = if ("${{ github.event_name }}" -eq "release" -and "${{ github.event.release.prerelease }}" -eq "true") { "dev" } else { "stable" }
+          $appInfo = [ordered]@{
+            schemaVersion = 1
+            appId = "avalonia"
+            deploymentType = "github-release"
+            channel = $channel
+            version = "${{ env.VERSION }}"
+            updatesUrl = "https://jochenwezel.github.io/GuacamoleClient/app-updates.json"
+          }
+          $out = Join-Path $env:GITHUB_WORKSPACE "GuacamoleClient-Avalonia\bin\${{ env.BUILD_CONFIGURATION }}\net8.0"
+          $appInfo | ConvertTo-Json -Depth 4 | Set-Content -LiteralPath (Join-Path $out "app-info.json") -Encoding utf8
+
       - name: Publish Avalonia (macOS ARM64)
         if: runner.os == 'macOS'
         run: >
@@ -102,6 +118,24 @@ jobs:
           -p:FileVersion=${{ env.VERSION }}
           -p:AssemblyVersion=${{ env.VERSION }}
           -p:InformationalVersion=${{ env.VERSION }}
+
+      - name: Write app-info.json for Avalonia (macOS)
+        if: runner.os == 'macOS'
+        shell: pwsh
+        run: |
+          $channel = if ("${{ github.event_name }}" -eq "release" -and "${{ github.event.release.prerelease }}" -eq "true") { "dev" } else { "stable" }
+          foreach ($rid in @("osx-arm64", "osx-x64")) {
+            $appInfo = [ordered]@{
+              schemaVersion = 1
+              appId = "avalonia"
+              deploymentType = "github-release"
+              channel = $channel
+              version = "${{ env.VERSION }}"
+              updatesUrl = "https://jochenwezel.github.io/GuacamoleClient/app-updates.json"
+            }
+            $out = Join-Path $env:GITHUB_WORKSPACE "GuacamoleClient-Avalonia/bin/${{ env.BUILD_CONFIGURATION }}/net8.0/$rid/publish"
+            $appInfo | ConvertTo-Json -Depth 4 | Set-Content -LiteralPath (Join-Path $out "app-info.json") -Encoding utf8
+          }
 
       - name: Pack binaries - Avalonia (Windows)
         if: runner.os == 'Windows'

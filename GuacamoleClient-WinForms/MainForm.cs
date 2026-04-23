@@ -1,6 +1,7 @@
 ﻿using GuacamoleClient.Common;
 using GuacamoleClient.Common.Localization;
 using GuacamoleClient.Common.Settings;
+using GuacamoleClient.Common.Updates;
 using GuacamoleClient.RestClient;
 using InfoBox;
 using Microsoft.VisualBasic.ApplicationServices;
@@ -43,7 +44,7 @@ namespace GuacamoleClient.WinForms
         public GuacamoleClient.Common.Settings.GuacamoleServerProfile ServerProfile { get; }
         private string? _temporaryCacheDirectory;
         private readonly ClickOnceDeploymentInfo? _clickOnceDeploymentInfo = ClickOnceDeploymentInfo.TryCreate();
-        private readonly AppInfo _appInfo = AppInfo.Load();
+        private readonly AppInfo _appInfo = AppInfo.Load(CreateFallbackAppInfo());
         private readonly AppUpdateChecker _appUpdateChecker;
 
         public MainForm(GuacamoleClient.Common.Settings.GuacamoleSettingsManager settings, GuacamoleClient.Common.Settings.GuacamoleServerProfile serverProfile) : this(settings, serverProfile, new Uri(serverProfile.Url))
@@ -53,7 +54,7 @@ namespace GuacamoleClient.WinForms
         {
             _settings = settings ?? throw new ArgumentNullException(nameof(settings));
             ServerProfile = serverProfile ?? throw new ArgumentNullException(nameof(serverProfile));
-            _appUpdateChecker = new AppUpdateChecker(_appInfo);
+            _appUpdateChecker = new AppUpdateChecker(_appInfo, "GuacamoleClient");
             this.HomeUrl = new Uri(serverProfile.Url);
             this.StartUrl = startUrl;
             _trustedHosts.Add(this.HomeUrl.Host);
@@ -141,6 +142,31 @@ namespace GuacamoleClient.WinForms
         {
             // existing implementation supports all relevant color assignments - now driven by profile
             mainMenuStrip!.SetMenuStripColorsRecursive(this.ServerProfile.LookupColorScheme());
+        }
+
+        private static AppInfo CreateFallbackAppInfo()
+        {
+            ClickOnceDeploymentInfo? clickOnceInfo = ClickOnceDeploymentInfo.TryCreate();
+            if (clickOnceInfo != null)
+            {
+                return new AppInfo
+                {
+                    AppId = "winforms",
+                    DeploymentType = "clickonce",
+                    Channel = clickOnceInfo.Channel,
+                    Version = clickOnceInfo.CurrentVersion,
+                    UpdatesUrl = AppInfo.DefaultUpdatesUrl
+                };
+            }
+
+            return new AppInfo
+            {
+                AppId = "winforms",
+                DeploymentType = "local-dev",
+                Channel = "dev",
+                Version = Application.ProductVersion,
+                UpdatesUrl = AppInfo.DefaultUpdatesUrl
+            };
         }
 
         /// <summary>

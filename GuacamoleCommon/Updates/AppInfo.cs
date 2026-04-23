@@ -2,11 +2,10 @@ using System;
 using System.IO;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using System.Windows.Forms;
 
-namespace GuacamoleClient.WinForms
+namespace GuacamoleClient.Common.Updates
 {
-    internal sealed class AppInfo
+    public sealed class AppInfo
     {
         public const string DefaultUpdatesUrl = "https://jochenwezel.github.io/GuacamoleClient/app-updates.json";
 
@@ -28,9 +27,9 @@ namespace GuacamoleClient.WinForms
         [JsonPropertyName("updatesUrl")]
         public string UpdatesUrl { get; init; } = DefaultUpdatesUrl;
 
-        public string CurrentVersion => string.IsNullOrWhiteSpace(Version) ? Application.ProductVersion : Version;
+        public string CurrentVersion => string.IsNullOrWhiteSpace(Version) ? "0.0.0" : Version;
 
-        public static AppInfo Load()
+        public static AppInfo Load(AppInfo fallback)
         {
             try
             {
@@ -42,40 +41,27 @@ namespace GuacamoleClient.WinForms
                         new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
 
                     if (appInfo != null)
-                        return appInfo.Normalize();
+                        return appInfo.Normalize(fallback);
                 }
             }
             catch
             {
-                // Fall through to ClickOnce/env fallback. App startup must stay resilient.
+                // App metadata must never prevent startup.
             }
 
-            ClickOnceDeploymentInfo? clickOnceInfo = ClickOnceDeploymentInfo.TryCreate();
-            if (clickOnceInfo != null)
-            {
-                return new AppInfo
-                {
-                    AppId = "winforms",
-                    DeploymentType = "clickonce",
-                    Channel = clickOnceInfo.Channel,
-                    Version = clickOnceInfo.CurrentVersion,
-                    UpdatesUrl = DefaultUpdatesUrl
-                };
-            }
-
-            return new AppInfo().Normalize();
+            return fallback.Normalize(fallback);
         }
 
-        private AppInfo Normalize()
+        private AppInfo Normalize(AppInfo fallback)
         {
             return new AppInfo
             {
                 SchemaVersion = SchemaVersion <= 0 ? 1 : SchemaVersion,
-                AppId = string.IsNullOrWhiteSpace(AppId) ? "winforms" : AppId,
-                DeploymentType = string.IsNullOrWhiteSpace(DeploymentType) ? "unknown" : DeploymentType,
-                Channel = string.IsNullOrWhiteSpace(Channel) ? "stable" : Channel,
-                Version = Version,
-                UpdatesUrl = string.IsNullOrWhiteSpace(UpdatesUrl) ? DefaultUpdatesUrl : UpdatesUrl
+                AppId = string.IsNullOrWhiteSpace(AppId) ? fallback.AppId : AppId,
+                DeploymentType = string.IsNullOrWhiteSpace(DeploymentType) ? fallback.DeploymentType : DeploymentType,
+                Channel = string.IsNullOrWhiteSpace(Channel) ? fallback.Channel : Channel,
+                Version = string.IsNullOrWhiteSpace(Version) ? fallback.Version : Version,
+                UpdatesUrl = string.IsNullOrWhiteSpace(UpdatesUrl) ? fallback.UpdatesUrl : UpdatesUrl
             };
         }
     }

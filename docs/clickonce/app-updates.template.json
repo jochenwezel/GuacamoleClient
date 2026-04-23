@@ -26,6 +26,29 @@
           "updatePageUrl": "https://jochenwezel.github.io/GuacamoleClient/?app=winforms-clickonce&channel=dev&version=__WINFORMS_DEV_VERSION__"
         }
       }
+    },
+    "avalonia": {
+      "appId": "avalonia",
+      "appInfoFileName": "app-info.json",
+      "displayName": "GuacamoleClient Avalonia",
+      "defaultChannel": "stable",
+      "releasesUrl": "https://github.com/jochenwezel/GuacamoleClient/releases",
+      "channels": {
+        "stable": {
+          "appId": "avalonia",
+          "deploymentType": "github-release",
+          "channel": "stable",
+          "version": "__AVALONIA_STABLE_VERSION__",
+          "releasesUrl": "https://github.com/jochenwezel/GuacamoleClient/releases"
+        },
+        "dev": {
+          "appId": "avalonia",
+          "deploymentType": "github-release",
+          "channel": "dev",
+          "version": "__AVALONIA_DEV_VERSION__",
+          "releasesUrl": "https://github.com/jochenwezel/GuacamoleClient/releases"
+        }
+      }
     }
   }
 }

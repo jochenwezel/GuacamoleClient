@@ -610,10 +610,15 @@ jobs:
           if [[ "${{ needs.winforms-clickonce.outputs.publish_both_channels }}" == "true" ]]; then
             echo "STABLE_VERSION=${{ needs.winforms-clickonce.outputs.version }}" >> "$GITHUB_ENV"
             echo "DEV_VERSION=${{ needs.winforms-clickonce.outputs.version }}" >> "$GITHUB_ENV"
+            echo "AVALONIA_STABLE_VERSION=${{ needs.winforms-clickonce.outputs.version }}" >> "$GITHUB_ENV"
+            echo "AVALONIA_DEV_VERSION=${{ needs.winforms-clickonce.outputs.version }}" >> "$GITHUB_ENV"
           else
             STABLE_VERSION=$(python -c 'import json, pathlib; p=pathlib.Path("public/app-updates.json"); print("unknown" if not p.exists() else json.loads(p.read_text(encoding="utf-8")).get("apps", {}).get("winforms", {}).get("channels", {}).get("stable", {}).get("version", "unknown"))')
+            AVALONIA_STABLE_VERSION=$(python -c 'import json, pathlib; p=pathlib.Path("public/app-updates.json"); print("unknown" if not p.exists() else json.loads(p.read_text(encoding="utf-8")).get("apps", {}).get("avalonia", {}).get("channels", {}).get("stable", {}).get("version", "unknown"))')
             echo "STABLE_VERSION=${STABLE_VERSION}" >> "$GITHUB_ENV"
             echo "DEV_VERSION=${{ needs.winforms-clickonce.outputs.version }}" >> "$GITHUB_ENV"
+            echo "AVALONIA_STABLE_VERSION=${AVALONIA_STABLE_VERSION}" >> "$GITHUB_ENV"
+            echo "AVALONIA_DEV_VERSION=${{ needs.winforms-clickonce.outputs.version }}" >> "$GITHUB_ENV"
           fi
 
       - name: Add .nojekyll + .gitattributes
@@ -650,6 +655,8 @@ jobs:
           cp -f "logos/guac-client-app_banner_1280x640.png" "public/assets/guac-client-app_banner_1280x640.png"
           sed -i "s/__WINFORMS_STABLE_VERSION__/${STABLE_VERSION}/g" "public/app-updates.json"
           sed -i "s/__WINFORMS_DEV_VERSION__/${DEV_VERSION}/g" "public/app-updates.json"
+          sed -i "s/__AVALONIA_STABLE_VERSION__/${AVALONIA_STABLE_VERSION}/g" "public/app-updates.json"
+          sed -i "s/__AVALONIA_DEV_VERSION__/${AVALONIA_DEV_VERSION}/g" "public/app-updates.json"
 
           # RELEASE.md is generated from GitHub Release text (no per-release repo edits needed)
           if [[ "${{ github.event_name }}" == "release" ]]; then

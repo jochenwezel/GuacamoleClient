@@ -7,9 +7,9 @@ using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace GuacamoleClient.WinForms
+namespace GuacamoleClient.Common.Updates
 {
-    internal sealed class AppUpdateChecker
+    public sealed class AppUpdateChecker
     {
         private static readonly HttpClient HttpClient = new()
         {
@@ -19,10 +19,10 @@ namespace GuacamoleClient.WinForms
         private readonly AppInfo _appInfo;
         private readonly string _statePath;
 
-        public AppUpdateChecker(AppInfo appInfo)
+        public AppUpdateChecker(AppInfo appInfo, string settingsAppName)
         {
             _appInfo = appInfo ?? throw new ArgumentNullException(nameof(appInfo));
-            _statePath = Path.Combine(GuacamoleSettingsPaths.GetDefaultSettingsDirectory(), "update-check-state.json");
+            _statePath = Path.Combine(GuacamoleSettingsPaths.GetDefaultSettingsDirectory(settingsAppName), "update-check-state.json");
         }
 
         public async Task<AppUpdateCheckResult> CheckAsync(CancellationToken cancellationToken = default)
@@ -87,11 +87,10 @@ namespace GuacamoleClient.WinForms
 
         public void StartUpdate(AppUpdateCheckResult result)
         {
-            string url = result.UpdateUrl;
-            if (string.IsNullOrWhiteSpace(url))
+            if (string.IsNullOrWhiteSpace(result.UpdateUrl))
                 return;
 
-            Process.Start(new ProcessStartInfo(url) { UseShellExecute = true });
+            Process.Start(new ProcessStartInfo(result.UpdateUrl) { UseShellExecute = true });
         }
 
         private async Task<AppUpdatesDocument> LoadUpdatesDocumentAsync(CancellationToken cancellationToken)
@@ -143,10 +142,7 @@ namespace GuacamoleClient.WinForms
         {
             version = version.Trim().TrimStart('v', 'V');
             string[] parts = version.Split('.', StringSplitOptions.RemoveEmptyEntries);
-            if (parts.Length >= 2)
-                return version;
-
-            return version + ".0";
+            return parts.Length >= 2 ? version : version + ".0";
         }
 
         private sealed class AppUpdateCheckState
@@ -157,7 +153,7 @@ namespace GuacamoleClient.WinForms
         }
     }
 
-    internal sealed record AppUpdateCheckResult(
+    public sealed record AppUpdateCheckResult(
         AppInfo AppInfo,
         string LatestVersion,
         string UpdateUrl,
