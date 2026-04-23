@@ -34,7 +34,10 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Content Include="guac.ico" />
+    <Content Include="guac.ico">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+    </Content>
     <Content Include="..\LICENSE">
       <Link>LICENSE</Link>
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
