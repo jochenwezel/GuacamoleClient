@@ -361,29 +361,94 @@ jobs:
           $publicRoot = Join-Path $env:GITHUB_WORKSPACE "public"
           New-Item -ItemType Directory -Force -Path $publicRoot | Out-Null
 
-          $siteArchiveUrl = "https://github.com/jochenwezel/GuacamoleClient/archive/refs/heads/gh-pages.zip"
-          $siteArchivePath = Join-Path $env:RUNNER_TEMP "gh-pages.zip"
-          $extractPath = Join-Path $env:RUNNER_TEMP "gh-pages"
+          $baseUrl = "https://jochenwezel.github.io/GuacamoleClient"
 
-          try {
-            Invoke-WebRequest -Uri $siteArchiveUrl -OutFile $siteArchivePath
-          }
-          catch {
-            throw "Unable to download the current gh-pages branch archive from $siteArchiveUrl. $($_.Exception.Message)"
-          }
-
-          if (Test-Path $extractPath) {
-            Remove-Item -Recurse -Force $extractPath
+          function Save-PageFile([string]$RelativePath) {
+            $normalizedRelativePath = $RelativePath -replace '\\', '/'
+            $escapedRelativePath = (($normalizedRelativePath -split '/') | ForEach-Object { [Uri]::EscapeDataString($_) }) -join '/'
+            $sourceUrl = "$baseUrl/$escapedRelativePath"
+            $targetPath = Join-Path $publicRoot ($RelativePath -replace '/', [IO.Path]::DirectorySeparatorChar)
+            $targetDirectory = Split-Path -Parent $targetPath
+            New-Item -ItemType Directory -Force -Path $targetDirectory | Out-Null
+            Invoke-WebRequest -Uri $sourceUrl -OutFile $targetPath
           }
 
-          Expand-Archive -LiteralPath $siteArchivePath -DestinationPath $extractPath -Force
-
-          $archiveRoot = Get-ChildItem -Path $extractPath -Directory | Select-Object -First 1
-          if ($null -eq $archiveRoot) {
-            throw "Unable to locate the extracted gh-pages branch contents."
+          foreach ($relativePath in @(
+            "INSTALL.md",
+            "RELEASE.md",
+            "index.html",
+            "app-updates.json",
+            "assets/guac-client-app_banner_1280x640.png",
+            "clickonce/stable/${{ env.CLICKONCE_APP_NAME }}.application"
+          )) {
+            Save-PageFile $relativePath
           }
 
-          Copy-Item -Path (Join-Path $archiveRoot.FullName '*') -Destination $publicRoot -Recurse -Force
+          $stableRoot = Join-Path $publicRoot "clickonce/stable"
+          $deploymentPath = Join-Path $stableRoot "${{ env.CLICKONCE_APP_NAME }}.application"
+
+          [xml]$deploymentXml = Get-Content -LiteralPath $deploymentPath
+          $appManifestNode = $deploymentXml.SelectSingleNode("/*[local-name()='assembly']/*[local-name()='dependency']/*[local-name()='dependentAssembly']")
+          if ($null -eq $appManifestNode -or $appManifestNode -isnot [System.Xml.XmlElement]) {
+            throw "Unable to locate the stable application manifest entry."
+          }
+
+          $appManifestElement = [System.Xml.XmlElement]$appManifestNode
+          $appManifestRelativePath = $appManifestElement.GetAttribute("codebase")
+          if ([string]::IsNullOrWhiteSpace($appManifestRelativePath)) {
+            throw "Stable deployment manifest does not contain an application manifest codebase."
+          }
+          $appManifestRelativePath = $appManifestRelativePath -replace '\\', '/'
+
+          Save-PageFile "clickonce/stable/$appManifestRelativePath"
+          $appManifestPath = Join-Path $stableRoot ($appManifestRelativePath -replace '/', [IO.Path]::DirectorySeparatorChar)
+
+          [xml]$appManifestXml = Get-Content -LiteralPath $appManifestPath
+          $appManifestRelativeDirectory = Split-Path -Parent $appManifestRelativePath
+          $relativeFilesToRestore = New-Object 'System.Collections.Generic.HashSet[string]' ([System.StringComparer]::OrdinalIgnoreCase)
+
+          $fileNodes = $appManifestXml.SelectNodes("//*[local-name()='assembly']/*[local-name()='file']")
+          foreach ($fileNode in $fileNodes) {
+            if ($fileNode -isnot [System.Xml.XmlElement]) {
+              continue
+            }
+
+            $fileElement = [System.Xml.XmlElement]$fileNode
+            $fileName = $fileElement.GetAttribute("name")
+            if ([string]::IsNullOrWhiteSpace($fileName)) {
+              continue
+            }
+
+            $relativeFilePath = [IO.Path]::Combine($appManifestRelativeDirectory, $fileName)
+            $relativeFilePath = $relativeFilePath -replace '\\', '/'
+            [void]$relativeFilesToRestore.Add($relativeFilePath)
+          }
+
+          $dependencyNodes = $appManifestXml.SelectNodes("//*[local-name()='assembly']/*[local-name()='dependency']/*[local-name()='dependentAssembly' and @codebase]")
+          foreach ($dependencyNode in $dependencyNodes) {
+            if ($dependencyNode -isnot [System.Xml.XmlElement]) {
+              continue
+            }
+
+            $dependencyElement = [System.Xml.XmlElement]$dependencyNode
+            $dependencyType = $dependencyElement.GetAttribute("dependencyType")
+            if (-not [string]::IsNullOrWhiteSpace($dependencyType) -and $dependencyType -ne "install") {
+              continue
+            }
+
+            $codebase = $dependencyElement.GetAttribute("codebase")
+            if ([string]::IsNullOrWhiteSpace($codebase)) {
+              continue
+            }
+
+            $relativeDependencyPath = [IO.Path]::Combine($appManifestRelativeDirectory, $codebase)
+            $relativeDependencyPath = $relativeDependencyPath -replace '\\', '/'
+            [void]$relativeFilesToRestore.Add($relativeDependencyPath)
+          }
+
+          foreach ($relativeFilePath in $relativeFilesToRestore) {
+            Save-PageFile "clickonce/stable/$relativeFilePath"
+          }
 
       - name: Prepare Pages site (place into subdir)
         shell: bash
