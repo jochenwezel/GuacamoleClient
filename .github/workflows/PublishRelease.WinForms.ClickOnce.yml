@@ -422,11 +422,16 @@ jobs:
             Invoke-WebRequest -Uri $sourceUrl -OutFile $targetPath
           }
 
-          $stableVersion = $appManifestElement.GetAttribute("version")
+          $stableVersion = ""
+          $nestedAssemblyIdentityNode = $appManifestElement.SelectSingleNode("*[local-name()='assemblyIdentity']")
+          if ($nestedAssemblyIdentityNode -is [System.Xml.XmlElement]) {
+            $stableVersion = ([System.Xml.XmlElement]$nestedAssemblyIdentityNode).GetAttribute("version")
+          }
+
           if ([string]::IsNullOrWhiteSpace($stableVersion)) {
-            $assemblyNode = $appManifestXml.SelectSingleNode("/*[local-name()='assembly']")
-            if ($assemblyNode -is [System.Xml.XmlElement]) {
-              $stableVersion = ([System.Xml.XmlElement]$assemblyNode).GetAttribute("version")
+            $deploymentAssemblyIdentityNode = $deploymentXml.SelectSingleNode("/*[local-name()='assembly']/*[local-name()='assemblyIdentity']")
+            if ($deploymentAssemblyIdentityNode -is [System.Xml.XmlElement]) {
+              $stableVersion = ([System.Xml.XmlElement]$deploymentAssemblyIdentityNode).GetAttribute("version")
             }
           }
           if ([string]::IsNullOrWhiteSpace($stableVersion)) {
