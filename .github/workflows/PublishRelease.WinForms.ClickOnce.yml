@@ -354,120 +354,49 @@ jobs:
           name: clickonce-folder
           path: site
 
-      - name: Prepare Pages site (place into subdir)
-        shell: bash
-        run: |
-          mkdir -p "public/${{ needs.winforms-clickonce.outputs.pages_subdir }}"
-          cp -R "site/." "public/${{ needs.winforms-clickonce.outputs.pages_subdir }}/"
-          if [[ "${{ needs.winforms-clickonce.outputs.publish_both_channels }}" == "true" ]]; then
-            mkdir -p "public/clickonce/dev"
-            cp -R "site/." "public/clickonce/dev/"
-          fi
-
-      - name: Restore stable ClickOnce channel when only dev is updated
+      - name: Download current GitHub Pages site
         if: ${{ needs.winforms-clickonce.outputs.publish_both_channels != 'true' }}
         shell: pwsh
         run: |
           $publicRoot = Join-Path $env:GITHUB_WORKSPACE "public"
-          $stableRoot = Join-Path $publicRoot "clickonce/stable"
-          New-Item -ItemType Directory -Force -Path $stableRoot | Out-Null
+          New-Item -ItemType Directory -Force -Path $publicRoot | Out-Null
 
-          $deploymentUrl = "https://jochenwezel.github.io/GuacamoleClient/clickonce/stable/${{ env.CLICKONCE_APP_NAME }}.application"
-          $deploymentPath = Join-Path $stableRoot "${{ env.CLICKONCE_APP_NAME }}.application"
+          $siteArchiveUrl = "https://github.com/jochenwezel/GuacamoleClient/archive/refs/heads/gh-pages.zip"
+          $siteArchivePath = Join-Path $env:RUNNER_TEMP "gh-pages.zip"
+          $extractPath = Join-Path $env:RUNNER_TEMP "gh-pages"
 
           try {
-            Invoke-WebRequest -Uri $deploymentUrl -OutFile $deploymentPath
+            Invoke-WebRequest -Uri $siteArchiveUrl -OutFile $siteArchivePath
           }
           catch {
-            throw "Unable to preserve the current stable ClickOnce deployment from $deploymentUrl. $($_.Exception.Message)"
+            throw "Unable to download the current gh-pages branch archive from $siteArchiveUrl. $($_.Exception.Message)"
           }
 
-          [xml]$deploymentXml = Get-Content -LiteralPath $deploymentPath
-          $appManifestNode = $deploymentXml.SelectSingleNode("/*[local-name()='assembly']/*[local-name()='dependency']/*[local-name()='dependentAssembly']")
-          if ($null -eq $appManifestNode -or $appManifestNode -isnot [System.Xml.XmlElement]) {
-            throw "Unable to locate the stable application manifest entry."
+          if (Test-Path $extractPath) {
+            Remove-Item -Recurse -Force $extractPath
           }
 
-          $appManifestElement = [System.Xml.XmlElement]$appManifestNode
-          $appManifestRelativePath = $appManifestElement.GetAttribute("codebase")
-          if ([string]::IsNullOrWhiteSpace($appManifestRelativePath)) {
-            throw "Stable deployment manifest does not contain an application manifest codebase."
+          Expand-Archive -LiteralPath $siteArchivePath -DestinationPath $extractPath -Force
+
+          $archiveRoot = Get-ChildItem -Path $extractPath -Directory | Select-Object -First 1
+          if ($null -eq $archiveRoot) {
+            throw "Unable to locate the extracted gh-pages branch contents."
           }
 
-          $appManifestUrl = "https://jochenwezel.github.io/GuacamoleClient/clickonce/stable/$appManifestRelativePath"
-          $appManifestPath = Join-Path $stableRoot ($appManifestRelativePath -replace '/', [IO.Path]::DirectorySeparatorChar)
-          $appManifestDirectory = Split-Path -Parent $appManifestPath
-          New-Item -ItemType Directory -Force -Path $appManifestDirectory | Out-Null
-          Invoke-WebRequest -Uri $appManifestUrl -OutFile $appManifestPath
+          Copy-Item -Path (Join-Path $archiveRoot.FullName '*') -Destination $publicRoot -Recurse -Force
 
-          [xml]$appManifestXml = Get-Content -LiteralPath $appManifestPath
-          $appManifestRelativeDirectory = Split-Path -Parent $appManifestRelativePath
-          $relativeFilesToRestore = New-Object 'System.Collections.Generic.HashSet[string]' ([System.StringComparer]::OrdinalIgnoreCase)
-
-          $fileNodes = $appManifestXml.SelectNodes("//*[local-name()='assembly']/*[local-name()='file']")
-          foreach ($fileNode in $fileNodes) {
-            if ($fileNode -isnot [System.Xml.XmlElement]) {
-              continue
-            }
-
-            $fileElement = [System.Xml.XmlElement]$fileNode
-            $fileName = $fileElement.GetAttribute("name")
-            if ([string]::IsNullOrWhiteSpace($fileName)) {
-              continue
-            }
-
-            $relativeFilePath = [IO.Path]::Combine($appManifestRelativeDirectory, $fileName)
-            $relativeFilePath = $relativeFilePath -replace '\\', '/'
-            [void]$relativeFilesToRestore.Add($relativeFilePath)
-          }
-
-          $dependencyNodes = $appManifestXml.SelectNodes("//*[local-name()='assembly']/*[local-name()='dependency']/*[local-name()='dependentAssembly' and @codebase]")
-          foreach ($dependencyNode in $dependencyNodes) {
-            if ($dependencyNode -isnot [System.Xml.XmlElement]) {
-              continue
-            }
-
-            $dependencyElement = [System.Xml.XmlElement]$dependencyNode
-            $dependencyType = $dependencyElement.GetAttribute("dependencyType")
-            if (-not [string]::IsNullOrWhiteSpace($dependencyType) -and $dependencyType -ne "install") {
-              continue
-            }
-
-            $codebase = $dependencyElement.GetAttribute("codebase")
-            if ([string]::IsNullOrWhiteSpace($codebase)) {
-              continue
-            }
-
-            $relativeDependencyPath = [IO.Path]::Combine($appManifestRelativeDirectory, $codebase)
-            $relativeDependencyPath = $relativeDependencyPath -replace '\\', '/'
-            [void]$relativeFilesToRestore.Add($relativeDependencyPath)
-          }
-
-          foreach ($relativeFilePath in $relativeFilesToRestore) {
-            $sourceUrl = "https://jochenwezel.github.io/GuacamoleClient/clickonce/stable/$relativeFilePath"
-            $targetPath = Join-Path $stableRoot ($relativeFilePath -replace '/', [IO.Path]::DirectorySeparatorChar)
-            $targetDirectory = Split-Path -Parent $targetPath
-            New-Item -ItemType Directory -Force -Path $targetDirectory | Out-Null
-            Invoke-WebRequest -Uri $sourceUrl -OutFile $targetPath
-          }
-
-          $stableVersion = ""
-          $nestedAssemblyIdentityNode = $appManifestElement.SelectSingleNode("*[local-name()='assemblyIdentity']")
-          if ($nestedAssemblyIdentityNode -is [System.Xml.XmlElement]) {
-            $stableVersion = ([System.Xml.XmlElement]$nestedAssemblyIdentityNode).GetAttribute("version")
-          }
-
-          if ([string]::IsNullOrWhiteSpace($stableVersion)) {
-            $deploymentAssemblyIdentityNode = $deploymentXml.SelectSingleNode("/*[local-name()='assembly']/*[local-name()='assemblyIdentity']")
-            if ($deploymentAssemblyIdentityNode -is [System.Xml.XmlElement]) {
-              $stableVersion = ([System.Xml.XmlElement]$deploymentAssemblyIdentityNode).GetAttribute("version")
-            }
-          }
-          if ([string]::IsNullOrWhiteSpace($stableVersion)) {
-            $stableVersion = "unknown"
-          }
-
-          "STABLE_VERSION=$stableVersion" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+      - name: Prepare Pages site (place into subdir)
+        shell: bash
+        run: |
+          mkdir -p "public"
+          mkdir -p "public/${{ needs.winforms-clickonce.outputs.pages_subdir }}"
+          find "public/${{ needs.winforms-clickonce.outputs.pages_subdir }}" -mindepth 1 -delete
+          cp -R "site/." "public/${{ needs.winforms-clickonce.outputs.pages_subdir }}/"
+          if [[ "${{ needs.winforms-clickonce.outputs.publish_both_channels }}" == "true" ]]; then
+            mkdir -p "public/clickonce/dev"
+            find "public/clickonce/dev" -mindepth 1 -delete
+            cp -R "site/." "public/clickonce/dev/"
+          fi
 
       - name: Set channel versions for landing page
         shell: bash
@@ -476,9 +405,19 @@ jobs:
             echo "STABLE_VERSION=${{ needs.winforms-clickonce.outputs.version }}" >> "$GITHUB_ENV"
             echo "DEV_VERSION=${{ needs.winforms-clickonce.outputs.version }}" >> "$GITHUB_ENV"
           else
-            if [[ -z "${STABLE_VERSION:-}" ]]; then
-              echo "STABLE_VERSION=unknown" >> "$GITHUB_ENV"
-            fi
+            STABLE_VERSION=$(python - <<'PY'
+import json
+from pathlib import Path
+
+path = Path("public/app-updates.json")
+if not path.exists():
+    print("unknown")
+else:
+    data = json.loads(path.read_text(encoding="utf-8"))
+    print(data.get("apps", {}).get("winforms", {}).get("channels", {}).get("stable", {}).get("version", "unknown"))
+PY
+)
+            echo "STABLE_VERSION=${STABLE_VERSION}" >> "$GITHUB_ENV"
             echo "DEV_VERSION=${{ needs.winforms-clickonce.outputs.version }}" >> "$GITHUB_ENV"
           fi
 
