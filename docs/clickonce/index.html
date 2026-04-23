@@ -245,6 +245,7 @@
           })
           .then(meta => {
             const channels = meta?.apps?.winforms?.channels;
+            const requestedChannel = params.get("channel");
 
             installButtons.forEach(button => {
               const channel = button.dataset.channel;
@@ -259,6 +260,13 @@
                 button.href = info.manifestUrl;
               }
             });
+
+            const stableButton = document.getElementById("install-stable");
+            const devButton = document.getElementById("install-dev");
+            if (requestedChannel === "dev" && stableButton && devButton) {
+              stableButton.classList.add("secondary");
+              devButton.classList.remove("secondary");
+            }
 
             if (params.get("app") !== "winforms-clickonce") {
               return;
