@@ -383,7 +383,7 @@ jobs:
           }
 
           [xml]$deploymentXml = Get-Content -LiteralPath $deploymentPath
-          $appManifestNode = $deploymentXml.SelectSingleNode("//*[local-name()='deployment']/*[local-name()='dependency']/*[local-name()='dependentAssembly']")
+          $appManifestNode = $deploymentXml.SelectSingleNode("/*[local-name()='assembly']/*[local-name()='dependency']/*[local-name()='dependentAssembly']")
           if ($null -eq $appManifestNode -or $appManifestNode -isnot [System.Xml.XmlElement]) {
             throw "Unable to locate the stable application manifest entry."
           }
