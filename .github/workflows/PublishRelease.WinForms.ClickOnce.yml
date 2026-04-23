@@ -26,6 +26,7 @@ concurrency:
 env:
   BUILD_CONFIGURATION: Release
   CLICKONCE_OUTDIR: artifacts/clickonce/anycpu
+  CLICKONCE_DEV_OUTDIR: artifacts/clickonce-dev/anycpu
   CLICKONCE_APP_NAME: GuacamoleClient
 
 jobs:
@@ -308,6 +309,103 @@ jobs:
           Pop-Location
           if ($LASTEXITCODE -ne 0) { throw "Failed to sign deployment manifest: $deployManifest" }
 
+      - name: Create Dev ClickOnce output for release
+        if: ${{ steps.pages.outputs.publish_both_channels == 'true' }}
+        shell: pwsh
+        env:
+          CLICKONCE_SIGNING_PFX_BASE64: ${{ secrets.CLICKONCE_SIGNING_PFX_BASE64 }}
+          CLICKONCE_SIGNING_PFX_PASSWORD: ${{ secrets.CLICKONCE_SIGNING_PFX_PASSWORD }}
+        run: |
+          if ([string]::IsNullOrWhiteSpace($env:CLICKONCE_SIGNING_PFX_BASE64)) { throw "Missing secret: CLICKONCE_SIGNING_PFX_BASE64" }
+          if ([string]::IsNullOrWhiteSpace($env:CLICKONCE_SIGNING_PFX_PASSWORD)) { throw "Missing secret: CLICKONCE_SIGNING_PFX_PASSWORD" }
+
+          $stableOut = Join-Path $env:GITHUB_WORKSPACE "${{ env.CLICKONCE_OUTDIR }}"
+          $devOut = Join-Path $env:GITHUB_WORKSPACE "${{ env.CLICKONCE_DEV_OUTDIR }}"
+          if (Test-Path $devOut) { Remove-Item -Recurse -Force $devOut }
+          New-Item -ItemType Directory -Force -Path $devOut | Out-Null
+          Copy-Item -Path (Join-Path $stableOut "*") -Destination $devOut -Recurse -Force
+
+          $appOut = Join-Path $devOut $env:CLICKONCE_APP_SUBDIR
+          $exe = $env:CLICKONCE_EXE_NAME
+          $appManifest = Join-Path $appOut "$exe.manifest"
+          $deployManifest = Join-Path $devOut "${{ env.CLICKONCE_APP_NAME }}.application"
+          $iconFile = Join-Path $appOut "guac.ico"
+          $providerUrl = "https://jochenwezel.github.io/GuacamoleClient/clickonce/dev/${{ env.CLICKONCE_APP_NAME }}.application"
+          $pfxPath = Join-Path $env:RUNNER_TEMP "clickonce-signing.pfx"
+
+          if (-not (Test-Path $iconFile)) { throw "ClickOnce icon file not found: $iconFile" }
+          if (-not (Test-Path $pfxPath)) {
+            [IO.File]::WriteAllBytes($pfxPath, [Convert]::FromBase64String($env:CLICKONCE_SIGNING_PFX_BASE64))
+          }
+
+          Remove-Item -LiteralPath $appManifest -Force
+          Remove-Item -LiteralPath $deployManifest -Force
+
+          dotnet mage -New Application `
+            -Name "GuacamoleClient Dev" `
+            -Version "${{ env.VERSION }}" `
+            -FromDirectory "$appOut" `
+            -ToFile "$appManifest" `
+            -IconFile "$iconFile" `
+            -Processor msil
+          if ($LASTEXITCODE -ne 0) { throw "Dev application manifest creation failed: $appManifest" }
+
+          Push-Location $devOut
+          dotnet mage -New Deployment `
+            -Name "GuacamoleClient Dev" `
+            -Version "${{ env.VERSION }}" `
+            -AppManifest "$env:CLICKONCE_APP_MANIFEST" `
+            -ToFile "$deployManifest" `
+            -ProviderURL "$providerUrl" `
+            -Install true
+          Pop-Location
+          if ($LASTEXITCODE -ne 0) { throw "Dev deployment manifest creation failed: $deployManifest" }
+
+          [xml]$deploymentXml = Get-Content -LiteralPath $deployManifest
+          $deploymentNode = $deploymentXml.SelectSingleNode("//*[local-name()='deployment']")
+          if ($deploymentNode -isnot [System.Xml.XmlElement]) {
+            throw "Unable to locate <deployment> in $deployManifest"
+          }
+
+          $deploymentElement = [System.Xml.XmlElement]$deploymentNode
+          $manifestNamespace = $deploymentElement.NamespaceURI
+          $subscriptionNode = $deploymentElement.SelectSingleNode("*[local-name()='subscription']")
+          if ($subscriptionNode -isnot [System.Xml.XmlElement]) {
+            $subscriptionNode = $deploymentXml.CreateElement("subscription", $manifestNamespace)
+            [void]$deploymentElement.PrependChild($subscriptionNode)
+          }
+
+          $subscriptionElement = [System.Xml.XmlElement]$subscriptionNode
+          $updateNode = $subscriptionElement.SelectSingleNode("*[local-name()='update']")
+          if ($updateNode -isnot [System.Xml.XmlElement]) {
+            $updateNode = $deploymentXml.CreateElement("update", $manifestNamespace)
+            [void]$subscriptionElement.AppendChild($updateNode)
+          }
+
+          $updateElement = [System.Xml.XmlElement]$updateNode
+          foreach ($child in @($updateElement.ChildNodes)) {
+            if ($child -is [System.Xml.XmlElement] -and $child.LocalName -eq "expiration") {
+              [void]$updateElement.RemoveChild($child)
+            }
+          }
+
+          $beforeStartupNode = $updateElement.SelectSingleNode("*[local-name()='beforeApplicationStartup']")
+          if ($beforeStartupNode -isnot [System.Xml.XmlElement]) {
+            $beforeStartupNode = $deploymentXml.CreateElement("beforeApplicationStartup", $manifestNamespace)
+            [void]$updateElement.AppendChild($beforeStartupNode)
+          }
+
+          $utf8NoBom = New-Object System.Text.UTF8Encoding($false)
+          [System.IO.File]::WriteAllText($deployManifest, $deploymentXml.OuterXml, $utf8NoBom)
+
+          dotnet mage -Update "$appManifest" -CertFile "$pfxPath" -Password "$env:CLICKONCE_SIGNING_PFX_PASSWORD"
+          if ($LASTEXITCODE -ne 0) { throw "Failed to sign dev application manifest: $appManifest" }
+
+          Push-Location $devOut
+          dotnet mage -Update "$deployManifest" -AppManifest "$env:CLICKONCE_APP_MANIFEST" -CertFile "$pfxPath" -Password "$env:CLICKONCE_SIGNING_PFX_PASSWORD"
+          Pop-Location
+          if ($LASTEXITCODE -ne 0) { throw "Failed to sign dev deployment manifest: $deployManifest" }
+
       - name: Pack ClickOnce output (ZIP)
         shell: pwsh
         run: |
@@ -340,6 +438,15 @@ jobs:
           if-no-files-found: error
           retention-days: 1
 
+      - name: Upload artifact (Dev ClickOnce folder for Pages)
+        if: ${{ steps.pages.outputs.publish_both_channels == 'true' }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: clickonce-folder-dev
+          path: ${{ env.CLICKONCE_DEV_OUTDIR }}/**
+          if-no-files-found: error
+          retention-days: 1
+
   deploy-pages:
     needs: winforms-clickonce
     runs-on: ubuntu-latest
@@ -360,6 +467,13 @@ jobs:
         with:
           name: clickonce-folder
           path: site
+
+      - name: Download Dev ClickOnce folder artifact
+        if: ${{ needs.winforms-clickonce.outputs.publish_both_channels == 'true' }}
+        uses: actions/download-artifact@v7
+        with:
+          name: clickonce-folder-dev
+          path: site-dev
 
       - name: Download current GitHub Pages site
         if: ${{ needs.winforms-clickonce.outputs.publish_both_channels != 'true' }}
@@ -467,7 +581,7 @@ jobs:
           if [[ "${{ needs.winforms-clickonce.outputs.publish_both_channels }}" == "true" ]]; then
             mkdir -p "public/clickonce/dev"
             find "public/clickonce/dev" -mindepth 1 -delete
-            cp -R "site/." "public/clickonce/dev/"
+            cp -R "site-dev/." "public/clickonce/dev/"
           fi
 
       - name: Set channel versions for landing page
