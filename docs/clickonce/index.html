@@ -106,6 +106,12 @@
         color: var(--green-dark);
       }
 
+      .update-status {
+        margin: 0 0 14px;
+        color: var(--green);
+        font-weight: 700;
+      }
+
       .panel {
         border: 1px solid var(--line);
         border-radius: 8px;
@@ -180,10 +186,11 @@
           </p>
 
           <section class="install" aria-labelledby="windows-clickonce-title">
+            <p id="update-status" class="update-status" hidden></p>
             <h2 id="windows-clickonce-title">Windows ClickOnce Installation</h2>
             <div class="actions" aria-label="Windows ClickOnce installation options">
-              <a class="button" href="./clickonce/stable/GuacamoleClient.application">Install Stable</a>
-              <a class="button secondary" href="./clickonce/dev/GuacamoleClient.application">Install Dev</a>
+              <a id="install-stable" class="button" data-channel="stable" href="./clickonce/stable/GuacamoleClient.application">Install Stable</a>
+              <a id="install-dev" class="button secondary" data-channel="dev" href="./clickonce/dev/GuacamoleClient.application">Install Dev</a>
             </div>
           </section>
         </div>
@@ -208,5 +215,71 @@
         ClickOnce artifacts are published for this project via GitHub Pages.
       </footer>
     </main>
+    <script>
+      (() => {
+        const params = new URLSearchParams(window.location.search);
+        const statusEl = document.getElementById("update-status");
+        const installButtons = Array.from(document.querySelectorAll("[data-channel]"));
+
+        const compareVersions = (left, right) => {
+          const a = String(left || "").split(".").map(value => Number.parseInt(value, 10) || 0);
+          const b = String(right || "").split(".").map(value => Number.parseInt(value, 10) || 0);
+          const maxLength = Math.max(a.length, b.length);
+
+          for (let index = 0; index < maxLength; index += 1) {
+            const diff = (a[index] || 0) - (b[index] || 0);
+            if (diff !== 0) {
+              return diff > 0 ? 1 : -1;
+            }
+          }
+
+          return 0;
+        };
+
+        fetch("./app-updates.json", { cache: "no-store" })
+          .then(response => {
+            if (!response.ok) {
+              throw new Error("Unable to load app update metadata.");
+            }
+            return response.json();
+          })
+          .then(meta => {
+            const channels = meta?.apps?.winforms?.channels;
+
+            installButtons.forEach(button => {
+              const channel = button.dataset.channel;
+              const info = channels?.[channel];
+              if (!info) {
+                return;
+              }
+
+              const label = channel === "stable" ? "Install Stable" : "Install Dev";
+              button.textContent = `${label} v${info.version}`;
+              if (info.manifestUrl) {
+                button.href = info.manifestUrl;
+              }
+            });
+
+            if (params.get("app") !== "winforms-clickonce") {
+              return;
+            }
+
+            const channel = params.get("channel");
+            const installedVersion = params.get("version");
+            const current = channel ? channels?.[channel] : null;
+            if (!statusEl || !channel || !installedVersion || !current?.version) {
+              return;
+            }
+
+            statusEl.hidden = false;
+            statusEl.textContent = compareVersions(current.version, installedVersion) > 0
+              ? "A new update is available."
+              : "You've got the latest version.";
+          })
+          .catch(() => {
+            // Keep the page usable even if metadata is temporarily unavailable.
+          });
+      })();
+    </script>
   </body>
 </html>

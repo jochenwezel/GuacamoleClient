@@ -36,6 +36,9 @@ jobs:
       version: ${{ steps.version.outputs.version }}
       pages_subdir: ${{ steps.pages.outputs.pages_subdir }}
       provider_url: ${{ steps.pages.outputs.provider_url }}
+      channel: ${{ steps.pages.outputs.channel }}
+      prerelease: ${{ steps.pages.outputs.prerelease }}
+      publish_both_channels: ${{ steps.pages.outputs.publish_both_channels }}
 
     steps:
       - name: Checkout
@@ -66,19 +69,35 @@ jobs:
         run: |
           # Project Pages base URL for this repo:
           # https://jochenwezel.github.io/GuacamoleClient/
-          if [[ "${{ github.event_name }}" == "release" ]]; then
+          if [[ "${{ github.event_name }}" == "release" && "${{ github.event.release.prerelease }}" != "true" ]]; then
             PROVIDER_URL="https://jochenwezel.github.io/GuacamoleClient/clickonce/stable/${{ env.CLICKONCE_APP_NAME }}.application"
             SUBDIR="clickonce/stable"
+            CHANNEL="stable"
+            PRERELEASE="false"
+            PUBLISH_BOTH_CHANNELS="true"
           else
             PROVIDER_URL="https://jochenwezel.github.io/GuacamoleClient/clickonce/dev/${{ env.CLICKONCE_APP_NAME }}.application"
             SUBDIR="clickonce/dev"
+            CHANNEL="dev"
+            if [[ "${{ github.event.release.prerelease }}" == "true" ]]; then
+              PRERELEASE="true"
+            else
+              PRERELEASE="false"
+            fi
+            PUBLISH_BOTH_CHANNELS="false"
           fi
 
           echo "CLICKONCE_PROVIDER_URL=$PROVIDER_URL" >> "$GITHUB_ENV"
           echo "PAGES_SUBDIR=$SUBDIR" >> "$GITHUB_ENV"
+          echo "CLICKONCE_CHANNEL=$CHANNEL" >> "$GITHUB_ENV"
+          echo "CLICKONCE_PRERELEASE=$PRERELEASE" >> "$GITHUB_ENV"
+          echo "CLICKONCE_PUBLISH_BOTH_CHANNELS=$PUBLISH_BOTH_CHANNELS" >> "$GITHUB_ENV"
 
           echo "provider_url=$PROVIDER_URL" >> "$GITHUB_OUTPUT"
           echo "pages_subdir=$SUBDIR" >> "$GITHUB_OUTPUT"
+          echo "channel=$CHANNEL" >> "$GITHUB_OUTPUT"
+          echo "prerelease=$PRERELEASE" >> "$GITHUB_OUTPUT"
+          echo "publish_both_channels=$PUBLISH_BOTH_CHANNELS" >> "$GITHUB_OUTPUT"
 
           echo "Resolved CLICKONCE_PROVIDER_URL=$PROVIDER_URL"
           echo "Resolved PAGES_SUBDIR=$SUBDIR"
@@ -191,6 +210,54 @@ jobs:
 
           if (-not (Test-Path $deployManifest)) { throw "Deployment manifest not created: $deployManifest" }
 
+      - name: Set explicit ClickOnce update policy
+        shell: pwsh
+        run: |
+          $out = Join-Path $env:GITHUB_WORKSPACE "${{ env.CLICKONCE_OUTDIR }}"
+          $deployManifest = Join-Path $out "${{ env.CLICKONCE_APP_NAME }}.application"
+
+          if (-not (Test-Path $deployManifest)) { throw "Deployment manifest not found: $deployManifest" }
+
+          [xml]$deploymentXml = Get-Content -LiteralPath $deployManifest
+          $deploymentNode = $deploymentXml.SelectSingleNode("//*[local-name()='deployment']")
+          if ($deploymentNode -isnot [System.Xml.XmlElement]) {
+            throw "Unable to locate <deployment> in $deployManifest"
+          }
+
+          $deploymentElement = [System.Xml.XmlElement]$deploymentNode
+          $manifestNamespace = $deploymentElement.NamespaceURI
+
+          $subscriptionNode = $deploymentElement.SelectSingleNode("*[local-name()='subscription']")
+          if ($subscriptionNode -isnot [System.Xml.XmlElement]) {
+            $subscriptionNode = $deploymentXml.CreateElement("subscription", $manifestNamespace)
+            [void]$deploymentElement.PrependChild($subscriptionNode)
+          }
+
+          $subscriptionElement = [System.Xml.XmlElement]$subscriptionNode
+          $updateNode = $subscriptionElement.SelectSingleNode("*[local-name()='update']")
+          if ($updateNode -isnot [System.Xml.XmlElement]) {
+            $updateNode = $deploymentXml.CreateElement("update", $manifestNamespace)
+            [void]$subscriptionElement.AppendChild($updateNode)
+          }
+
+          $updateElement = [System.Xml.XmlElement]$updateNode
+
+          foreach ($child in @($updateElement.ChildNodes)) {
+            if ($child -is [System.Xml.XmlElement] -and $child.LocalName -eq "expiration") {
+              [void]$updateElement.RemoveChild($child)
+            }
+          }
+
+          $beforeStartupNode = $updateElement.SelectSingleNode("*[local-name()='beforeApplicationStartup']")
+          if ($beforeStartupNode -isnot [System.Xml.XmlElement]) {
+            $beforeStartupNode = $deploymentXml.CreateElement("beforeApplicationStartup", $manifestNamespace)
+            [void]$updateElement.AppendChild($beforeStartupNode)
+          }
+
+          $utf8NoBom = New-Object System.Text.UTF8Encoding($false)
+          [System.IO.File]::WriteAllText($deployManifest, $deploymentXml.OuterXml, $utf8NoBom)
+          Write-Host "Configured ClickOnce update policy: beforeApplicationStartup"
+
       - name: Sign ClickOnce manifests (dotnet mage)
         shell: pwsh
         env:
@@ -292,6 +359,94 @@ jobs:
         run: |
           mkdir -p "public/${{ needs.winforms-clickonce.outputs.pages_subdir }}"
           cp -R "site/." "public/${{ needs.winforms-clickonce.outputs.pages_subdir }}/"
+          if [[ "${{ needs.winforms-clickonce.outputs.publish_both_channels }}" == "true" ]]; then
+            mkdir -p "public/clickonce/dev"
+            cp -R "site/." "public/clickonce/dev/"
+          fi
+
+      - name: Restore stable ClickOnce channel when only dev is updated
+        if: ${{ needs.winforms-clickonce.outputs.publish_both_channels != 'true' }}
+        shell: pwsh
+        run: |
+          $publicRoot = Join-Path $env:GITHUB_WORKSPACE "public"
+          $stableRoot = Join-Path $publicRoot "clickonce/stable"
+          New-Item -ItemType Directory -Force -Path $stableRoot | Out-Null
+
+          $deploymentUrl = "https://jochenwezel.github.io/GuacamoleClient/clickonce/stable/${{ env.CLICKONCE_APP_NAME }}.application"
+          $deploymentPath = Join-Path $stableRoot "${{ env.CLICKONCE_APP_NAME }}.application"
+
+          try {
+            Invoke-WebRequest -Uri $deploymentUrl -OutFile $deploymentPath
+          }
+          catch {
+            throw "Unable to preserve the current stable ClickOnce deployment from $deploymentUrl. $($_.Exception.Message)"
+          }
+
+          [xml]$deploymentXml = Get-Content -LiteralPath $deploymentPath
+          $appManifestNode = $deploymentXml.SelectSingleNode("//*[local-name()='deployment']/*[local-name()='dependency']/*[local-name()='dependentAssembly']")
+          if ($null -eq $appManifestNode -or $appManifestNode -isnot [System.Xml.XmlElement]) {
+            throw "Unable to locate the stable application manifest entry."
+          }
+
+          $appManifestElement = [System.Xml.XmlElement]$appManifestNode
+          $appManifestRelativePath = $appManifestElement.GetAttribute("codebase")
+          if ([string]::IsNullOrWhiteSpace($appManifestRelativePath)) {
+            throw "Stable deployment manifest does not contain an application manifest codebase."
+          }
+
+          $appManifestUrl = "https://jochenwezel.github.io/GuacamoleClient/clickonce/stable/$appManifestRelativePath"
+          $appManifestPath = Join-Path $stableRoot ($appManifestRelativePath -replace '/', [IO.Path]::DirectorySeparatorChar)
+          $appManifestDirectory = Split-Path -Parent $appManifestPath
+          New-Item -ItemType Directory -Force -Path $appManifestDirectory | Out-Null
+          Invoke-WebRequest -Uri $appManifestUrl -OutFile $appManifestPath
+
+          [xml]$appManifestXml = Get-Content -LiteralPath $appManifestPath
+          $fileNodes = $appManifestXml.SelectNodes("//*[local-name()='assembly']/*[local-name()='file']")
+          foreach ($fileNode in $fileNodes) {
+            if ($fileNode -isnot [System.Xml.XmlElement]) {
+              continue
+            }
+
+            $fileElement = [System.Xml.XmlElement]$fileNode
+            $fileName = $fileElement.GetAttribute("name")
+            if ([string]::IsNullOrWhiteSpace($fileName)) {
+              continue
+            }
+
+            $relativeFilePath = [IO.Path]::Combine((Split-Path -Parent $appManifestRelativePath), $fileName)
+            $relativeFilePath = $relativeFilePath -replace '\\', '/'
+            $sourceUrl = "https://jochenwezel.github.io/GuacamoleClient/clickonce/stable/$relativeFilePath"
+            $targetPath = Join-Path $stableRoot ($relativeFilePath -replace '/', [IO.Path]::DirectorySeparatorChar)
+            $targetDirectory = Split-Path -Parent $targetPath
+            New-Item -ItemType Directory -Force -Path $targetDirectory | Out-Null
+            Invoke-WebRequest -Uri $sourceUrl -OutFile $targetPath
+          }
+
+          $stableVersion = $appManifestElement.GetAttribute("version")
+          if ([string]::IsNullOrWhiteSpace($stableVersion)) {
+            $assemblyNode = $appManifestXml.SelectSingleNode("/*[local-name()='assembly']")
+            if ($assemblyNode -is [System.Xml.XmlElement]) {
+              $stableVersion = ([System.Xml.XmlElement]$assemblyNode).GetAttribute("version")
+            }
+          }
+          if ([string]::IsNullOrWhiteSpace($stableVersion)) {
+            $stableVersion = "unknown"
+          }
+
+          "STABLE_VERSION=$stableVersion" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+
+      - name: Set channel versions for landing page
+        shell: bash
+        run: |
+          if [[ "${{ needs.winforms-clickonce.outputs.publish_both_channels }}" == "true" ]]; then
+            echo "STABLE_VERSION=${{ needs.winforms-clickonce.outputs.version }}" >> "$GITHUB_ENV"
+            echo "DEV_VERSION=${{ needs.winforms-clickonce.outputs.version }}" >> "$GITHUB_ENV"
+          else
+            if [[ -z "${STABLE_VERSION:-}" ]]; then
+              echo "STABLE_VERSION=unknown" >> "$GITHUB_ENV"
+            fi
+            echo "DEV_VERSION=${{ needs.winforms-clickonce.outputs.version }}" >> "$GITHUB_ENV"
+          fi
 
       - name: Add .nojekyll + .gitattributes
         shell: bash
@@ -315,8 +470,11 @@ jobs:
           # Static docs from repo
           cp -f "docs/clickonce/INSTALL.md" "public/INSTALL.md"
           cp -f "docs/clickonce/index.html" "public/index.html"
+          cp -f "docs/clickonce/app-updates.template.json" "public/app-updates.json"
           mkdir -p "public/assets"
           cp -f "logos/guac-client-app_banner_1280x640.png" "public/assets/guac-client-app_banner_1280x640.png"
+          sed -i "s/__WINFORMS_STABLE_VERSION__/${STABLE_VERSION}/g" "public/app-updates.json"
+          sed -i "s/__WINFORMS_DEV_VERSION__/${DEV_VERSION}/g" "public/app-updates.json"
 
           # RELEASE.md is generated from GitHub Release text (no per-release repo edits needed)
           if [[ "${{ github.event_name }}" == "release" ]]; then

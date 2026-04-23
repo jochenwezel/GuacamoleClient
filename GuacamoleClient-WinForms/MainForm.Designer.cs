@@ -33,6 +33,7 @@ namespace GuacamoleClient.WinForms
         private ToolStripMenuItem rdpSessionResizeHelpToolStripMenuItem;
         private ToolStripSeparator helpToolStripSeparator;
         private ToolStripMenuItem projectWebsiteHelpToolStripMenuItem;
+        private ToolStripMenuItem updateWebsiteHelpToolStripMenuItem;
         private ToolStripMenuItem aboutToolStripMenuItem;
 
         /// <summary>
@@ -86,6 +87,7 @@ namespace GuacamoleClient.WinForms
             rdpSessionResizeHelpToolStripMenuItem = new ToolStripMenuItem();
             helpToolStripSeparator = new ToolStripSeparator();
             projectWebsiteHelpToolStripMenuItem = new ToolStripMenuItem();
+            updateWebsiteHelpToolStripMenuItem = new ToolStripMenuItem();
             aboutToolStripMenuItem = new ToolStripMenuItem();
             connectionNameInFullScreenModeToolStripMenuItem = new ToolStripMenuItem();
             HintStopWebcontrol2FocusShortcut = new ToolStripMenuItem();
@@ -260,7 +262,7 @@ namespace GuacamoleClient.WinForms
             // 
             // helpToolStripMenuItem
             // 
-            helpToolStripMenuItem.DropDownItems.AddRange(new ToolStripItem[] { setupGuideHelpToolStripMenuItem, rdpSessionResizeHelpToolStripMenuItem, helpToolStripSeparator, projectWebsiteHelpToolStripMenuItem, aboutToolStripMenuItem });
+            helpToolStripMenuItem.DropDownItems.AddRange(new ToolStripItem[] { setupGuideHelpToolStripMenuItem, rdpSessionResizeHelpToolStripMenuItem, helpToolStripSeparator, projectWebsiteHelpToolStripMenuItem, updateWebsiteHelpToolStripMenuItem, aboutToolStripMenuItem });
             helpToolStripMenuItem.Name = "helpToolStripMenuItem";
             helpToolStripMenuItem.Size = new Size(44, 20);
             helpToolStripMenuItem.Text = "Help";
@@ -291,6 +293,14 @@ namespace GuacamoleClient.WinForms
             projectWebsiteHelpToolStripMenuItem.Text = "Project website";
             projectWebsiteHelpToolStripMenuItem.Click += projectWebsiteHelpToolStripMenuItem_Click;
             // 
+            // updateWebsiteHelpToolStripMenuItem
+            //
+            updateWebsiteHelpToolStripMenuItem.Name = "updateWebsiteHelpToolStripMenuItem";
+            updateWebsiteHelpToolStripMenuItem.Size = new Size(220, 22);
+            updateWebsiteHelpToolStripMenuItem.Text = "Update website";
+            updateWebsiteHelpToolStripMenuItem.Visible = false;
+            updateWebsiteHelpToolStripMenuItem.Click += updateWebsiteHelpToolStripMenuItem_Click;
+            //
             // aboutToolStripMenuItem
             // 
             aboutToolStripMenuItem.Name = "aboutToolStripMenuItem";

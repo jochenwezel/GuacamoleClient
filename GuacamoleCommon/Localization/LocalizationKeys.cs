@@ -75,6 +75,7 @@
         Menu_Help,
         Menu_HelpRdpResize,
         Menu_About,
+        Menu_UpdateWebsite,
 
         // Help / about dialogs
         Help_RdpResize_Title,

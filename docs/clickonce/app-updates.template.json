@@ -1,0 +1,31 @@
+{
+  "schemaVersion": 1,
+  "generatedBy": "PublishRelease.WinForms.ClickOnce",
+  "apps": {
+    "winforms": {
+      "appId": "winforms",
+      "appInfoFileName": "app-info.json",
+      "displayName": "GuacamoleClient WinForms",
+      "defaultChannel": "stable",
+      "releasesUrl": "https://github.com/jochenwezel/GuacamoleClient/releases",
+      "channels": {
+        "stable": {
+          "appId": "winforms",
+          "deploymentType": "clickonce",
+          "channel": "stable",
+          "version": "__WINFORMS_STABLE_VERSION__",
+          "manifestUrl": "./clickonce/stable/GuacamoleClient.application",
+          "updatePageUrl": "https://jochenwezel.github.io/GuacamoleClient/?app=winforms-clickonce&channel=stable&version=__WINFORMS_STABLE_VERSION__"
+        },
+        "dev": {
+          "appId": "winforms",
+          "deploymentType": "clickonce",
+          "channel": "dev",
+          "version": "__WINFORMS_DEV_VERSION__",
+          "manifestUrl": "./clickonce/dev/GuacamoleClient.application",
+          "updatePageUrl": "https://jochenwezel.github.io/GuacamoleClient/?app=winforms-clickonce&channel=dev&version=__WINFORMS_DEV_VERSION__"
+        }
+      }
+    }
+  }
+}

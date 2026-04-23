@@ -42,6 +42,7 @@ namespace GuacamoleClient.WinForms
         private readonly GuacamoleClient.Common.Settings.GuacamoleSettingsManager _settings;
         public GuacamoleClient.Common.Settings.GuacamoleServerProfile ServerProfile { get; }
         private string? _temporaryCacheDirectory;
+        private readonly ClickOnceDeploymentInfo? _clickOnceDeploymentInfo = ClickOnceDeploymentInfo.TryCreate();
 
         public MainForm(GuacamoleClient.Common.Settings.GuacamoleSettingsManager settings, GuacamoleClient.Common.Settings.GuacamoleServerProfile serverProfile) : this(settings, serverProfile, new Uri(serverProfile.Url))
         { }
@@ -65,6 +66,8 @@ namespace GuacamoleClient.WinForms
             KeyPreview = true;
             ApplyProfileColors();
             UITools.SwitchToolStripVisibility(testToolStripMenuItem, TEST_MENU_ENABLED, false);
+            UITools.SwitchToolStripVisibility(updateWebsiteHelpToolStripMenuItem, _clickOnceDeploymentInfo != null, false);
+            UITools.SwitchSeparatorLinesVisibility(helpToolStripMenuItem.DropDownItems);
 
             //Assign commands to close timer
             _closeTimer.Tick += (_, __) => { _closeTimer.Stop(); Close(); };
@@ -699,6 +702,12 @@ namespace GuacamoleClient.WinForms
         private void projectWebsiteHelpToolStripMenuItem_Click(object sender, EventArgs e)
         {
             UITools.OpenUrlInDefaultBrowser(ProjectWebsiteUrl);
+        }
+
+        private void updateWebsiteHelpToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            if (_clickOnceDeploymentInfo != null)
+                UITools.OpenUrlInDefaultBrowser(_clickOnceDeploymentInfo.UpdateWebsiteUrl);
         }
 
         private void aboutToolStripMenuItem_Click(object sender, EventArgs e)

@@ -154,6 +154,8 @@ namespace GuacamoleClient.Common.Localization
                         return "RDP-Sitzungsgröße aktualisieren";
                     case LocalizationKeys.Menu_About:
                         return "Info";
+                    case LocalizationKeys.Menu_UpdateWebsite:
+                        return "Update-Website";
 
                     // Help / about dialogs
                     case LocalizationKeys.Help_RdpResize_Title:
@@ -395,6 +397,8 @@ namespace GuacamoleClient.Common.Localization
                     return "RDP session resizing";
                 case LocalizationKeys.Menu_About:
                     return "About";
+                case LocalizationKeys.Menu_UpdateWebsite:
+                    return "Update Website";
 
                 // Help / about dialogs
                 case LocalizationKeys.Help_RdpResize_Title:
