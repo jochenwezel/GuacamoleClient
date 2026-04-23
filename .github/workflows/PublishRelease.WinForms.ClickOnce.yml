@@ -73,12 +73,14 @@ jobs:
             PROVIDER_URL="https://jochenwezel.github.io/GuacamoleClient/clickonce/stable/${{ env.CLICKONCE_APP_NAME }}.application"
             SUBDIR="clickonce/stable"
             CHANNEL="stable"
+            MANIFEST_NAME="GuacamoleClient Stable"
             PRERELEASE="false"
             PUBLISH_BOTH_CHANNELS="true"
           else
             PROVIDER_URL="https://jochenwezel.github.io/GuacamoleClient/clickonce/dev/${{ env.CLICKONCE_APP_NAME }}.application"
             SUBDIR="clickonce/dev"
             CHANNEL="dev"
+            MANIFEST_NAME="GuacamoleClient Dev"
             if [[ "${{ github.event.release.prerelease }}" == "true" ]]; then
               PRERELEASE="true"
             else
@@ -90,6 +92,7 @@ jobs:
           echo "CLICKONCE_PROVIDER_URL=$PROVIDER_URL" >> "$GITHUB_ENV"
           echo "PAGES_SUBDIR=$SUBDIR" >> "$GITHUB_ENV"
           echo "CLICKONCE_CHANNEL=$CHANNEL" >> "$GITHUB_ENV"
+          echo "CLICKONCE_MANIFEST_NAME=$MANIFEST_NAME" >> "$GITHUB_ENV"
           echo "CLICKONCE_PRERELEASE=$PRERELEASE" >> "$GITHUB_ENV"
           echo "CLICKONCE_PUBLISH_BOTH_CHANNELS=$PUBLISH_BOTH_CHANNELS" >> "$GITHUB_ENV"
 
@@ -101,6 +104,7 @@ jobs:
 
           echo "Resolved CLICKONCE_PROVIDER_URL=$PROVIDER_URL"
           echo "Resolved PAGES_SUBDIR=$SUBDIR"
+          echo "Resolved CLICKONCE_MANIFEST_NAME=$MANIFEST_NAME"
 
       - name: Restore Tools
         run: dotnet tool restore
@@ -164,15 +168,18 @@ jobs:
           $appOut = Join-Path $out $env:CLICKONCE_APP_SUBDIR
           $exe = $env:CLICKONCE_EXE_NAME
           $appManifest = Join-Path $appOut "$exe.manifest"
+          $iconFile = Join-Path $appOut "guac.ico"
+          if (-not (Test-Path $iconFile)) { throw "ClickOnce icon file not found: $iconFile" }
 
           dotnet mage -AddLauncher "$exe" -TargetDirectory "$appOut"
           if ($LASTEXITCODE -ne 0) { throw "Failed to add ClickOnce launcher to: $appOut" }
 
           dotnet mage -New Application `
-            -Name "${{ env.CLICKONCE_APP_NAME }}" `
+            -Name "$env:CLICKONCE_MANIFEST_NAME" `
             -Version "${{ env.VERSION }}" `
             -FromDirectory "$appOut" `
             -ToFile "$appManifest" `
+            -IconFile "$iconFile" `
             -Processor msil
 
           if ($LASTEXITCODE -eq 0) 
@@ -199,7 +206,7 @@ jobs:
 
           Push-Location $out
           dotnet mage -New Deployment `
-            -Name "${{ env.CLICKONCE_APP_NAME }}" `
+            -Name "$env:CLICKONCE_MANIFEST_NAME" `
             -Version "${{ env.VERSION }}" `
             -AppManifest "$env:CLICKONCE_APP_MANIFEST" `
             -ToFile "$deployManifest" `
