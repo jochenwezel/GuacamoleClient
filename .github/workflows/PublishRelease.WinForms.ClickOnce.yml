@@ -401,6 +401,9 @@ jobs:
           Invoke-WebRequest -Uri $appManifestUrl -OutFile $appManifestPath
 
           [xml]$appManifestXml = Get-Content -LiteralPath $appManifestPath
+          $appManifestRelativeDirectory = Split-Path -Parent $appManifestRelativePath
+          $relativeFilesToRestore = New-Object 'System.Collections.Generic.HashSet[string]' ([System.StringComparer]::OrdinalIgnoreCase)
+
           $fileNodes = $appManifestXml.SelectNodes("//*[local-name()='assembly']/*[local-name()='file']")
           foreach ($fileNode in $fileNodes) {
             if ($fileNode -isnot [System.Xml.XmlElement]) {
@@ -413,8 +416,34 @@ jobs:
               continue
             }
 
-            $relativeFilePath = [IO.Path]::Combine((Split-Path -Parent $appManifestRelativePath), $fileName)
+            $relativeFilePath = [IO.Path]::Combine($appManifestRelativeDirectory, $fileName)
             $relativeFilePath = $relativeFilePath -replace '\\', '/'
+            [void]$relativeFilesToRestore.Add($relativeFilePath)
+          }
+
+          $dependencyNodes = $appManifestXml.SelectNodes("//*[local-name()='assembly']/*[local-name()='dependency']/*[local-name()='dependentAssembly' and @codebase]")
+          foreach ($dependencyNode in $dependencyNodes) {
+            if ($dependencyNode -isnot [System.Xml.XmlElement]) {
+              continue
+            }
+
+            $dependencyElement = [System.Xml.XmlElement]$dependencyNode
+            $dependencyType = $dependencyElement.GetAttribute("dependencyType")
+            if (-not [string]::IsNullOrWhiteSpace($dependencyType) -and $dependencyType -ne "install") {
+              continue
+            }
+
+            $codebase = $dependencyElement.GetAttribute("codebase")
+            if ([string]::IsNullOrWhiteSpace($codebase)) {
+              continue
+            }
+
+            $relativeDependencyPath = [IO.Path]::Combine($appManifestRelativeDirectory, $codebase)
+            $relativeDependencyPath = $relativeDependencyPath -replace '\\', '/'
+            [void]$relativeFilesToRestore.Add($relativeDependencyPath)
+          }
+
+          foreach ($relativeFilePath in $relativeFilesToRestore) {
             $sourceUrl = "https://jochenwezel.github.io/GuacamoleClient/clickonce/stable/$relativeFilePath"
             $targetPath = Join-Path $stableRoot ($relativeFilePath -replace '/', [IO.Path]::DirectorySeparatorChar)
             $targetDirectory = Split-Path -Parent $targetPath
