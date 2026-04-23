@@ -3,6 +3,7 @@
 ![GuacamoleClient Logo](./logos/guac-client-app_banner_1280x640.png)
 
 [![ClickOnce Installer](https://img.shields.io/badge/ClickOnce-Web%20Installer-blue)](https://jochenwezel.github.io/GuacamoleClient/)
+[![All Downloads](https://img.shields.io/badge/Downloads-All%20Downloads-green)](https://github.com/jochenwezel/GuacamoleClient/releases)
 
 ➡️ **Web-Installer for Windows:** https://jochenwezel.github.io/GuacamoleClient/
 
