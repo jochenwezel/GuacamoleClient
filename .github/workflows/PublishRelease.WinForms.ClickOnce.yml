@@ -73,7 +73,7 @@ jobs:
             PROVIDER_URL="https://jochenwezel.github.io/GuacamoleClient/clickonce/stable/${{ env.CLICKONCE_APP_NAME }}.application"
             SUBDIR="clickonce/stable"
             CHANNEL="stable"
-            MANIFEST_NAME="GuacamoleClient Stable"
+            MANIFEST_NAME="GuacamoleClient"
             PRERELEASE="false"
             PUBLISH_BOTH_CHANNELS="true"
           else
