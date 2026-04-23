@@ -17,8 +17,8 @@ namespace GuacamoleClient.WinForms
         {
             try
             {
-                string? executablePath = Environment.ProcessPath;
-                if (string.IsNullOrWhiteSpace(executablePath) || !File.Exists(executablePath))
+                string iconPath = Path.Combine(AppContext.BaseDirectory, "guac.ico");
+                if (!File.Exists(iconPath))
                     return;
 
                 using RegistryKey? uninstallRoot = Registry.CurrentUser.OpenSubKey(UninstallRegistryPath, writable: false);
@@ -39,7 +39,7 @@ namespace GuacamoleClient.WinForms
                         $@"{UninstallRegistryPath}\{subKeyName}",
                         writable: true);
 
-                    writeKey?.SetValue("DisplayIcon", executablePath, RegistryValueKind.String);
+                    writeKey?.SetValue("DisplayIcon", iconPath, RegistryValueKind.String);
                 }
             }
             catch
