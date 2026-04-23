@@ -405,18 +405,7 @@ jobs:
             echo "STABLE_VERSION=${{ needs.winforms-clickonce.outputs.version }}" >> "$GITHUB_ENV"
             echo "DEV_VERSION=${{ needs.winforms-clickonce.outputs.version }}" >> "$GITHUB_ENV"
           else
-            STABLE_VERSION=$(python - <<'PY'
-import json
-from pathlib import Path
-
-path = Path("public/app-updates.json")
-if not path.exists():
-    print("unknown")
-else:
-    data = json.loads(path.read_text(encoding="utf-8"))
-    print(data.get("apps", {}).get("winforms", {}).get("channels", {}).get("stable", {}).get("version", "unknown"))
-PY
-)
+            STABLE_VERSION=$(python -c 'import json, pathlib; p=pathlib.Path("public/app-updates.json"); print("unknown" if not p.exists() else json.loads(p.read_text(encoding="utf-8")).get("apps", {}).get("winforms", {}).get("channels", {}).get("stable", {}).get("version", "unknown"))')
             echo "STABLE_VERSION=${STABLE_VERSION}" >> "$GITHUB_ENV"
             echo "DEV_VERSION=${{ needs.winforms-clickonce.outputs.version }}" >> "$GITHUB_ENV"
           fi
