@@ -131,6 +131,48 @@
         margin-top: 28px;
       }
 
+      .linux-install {
+        margin-top: 32px;
+      }
+
+      .distro-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+        gap: 18px;
+        margin-top: 16px;
+      }
+
+      .distro {
+        border-top: 1px solid var(--line);
+        padding-top: 16px;
+      }
+
+      .distro h3 {
+        margin: 0 0 8px;
+        font-size: 1rem;
+      }
+
+      code {
+        display: inline-block;
+        max-width: 100%;
+        padding: 2px 5px;
+        border: 1px solid var(--line);
+        border-radius: 4px;
+        background: #f2f5ef;
+        overflow-wrap: anywhere;
+        font-family: "Cascadia Mono", "Consolas", monospace;
+        font-size: 0.92em;
+      }
+
+      ol {
+        margin: 8px 0 0;
+        padding-left: 22px;
+      }
+
+      li {
+        margin-bottom: 8px;
+      }
+
       .links {
         display: grid;
         gap: 10px;
@@ -197,6 +239,36 @@
               <a id="install-dev" class="button secondary" data-channel="dev" href="./clickonce/dev/GuacamoleClient.application">Install Dev</a>
             </div>
           </section>
+
+          <section class="linux-install" aria-labelledby="linux-install-title">
+            <h2 id="linux-install-title">Linux Installation</h2>
+            <div class="distro-grid">
+              <section class="distro" aria-labelledby="linux-debian-title">
+                <h3 id="linux-debian-title">Debian / Ubuntu</h3>
+                <ol>
+                  <li>Download the latest <code>guacamoleclient-avalonia_*_amd64.deb</code> package from GitHub Releases.</li>
+                  <li>Install it with <code>sudo apt install ./guacamoleclient-avalonia_*_amd64.deb</code>.</li>
+                  <li>Start it from the application menu or run <code>guacamoleclient</code>.</li>
+                </ol>
+                <p>The package includes the .NET runtime and declares the required Linux desktop libraries as package dependencies.</p>
+              </section>
+
+              <section class="distro" aria-labelledby="linux-rpm-title">
+                <h3 id="linux-rpm-title">Fedora / Red Hat / openSUSE</h3>
+                <p>RPM packaging is planned. Until then, use the Linux zip release artifact when available.</p>
+              </section>
+
+              <section class="distro" aria-labelledby="linux-arch-title">
+                <h3 id="linux-arch-title">Arch / Manjaro</h3>
+                <p>Native package instructions are planned. Until then, use the Linux zip release artifact when available.</p>
+              </section>
+
+              <section class="distro" aria-labelledby="linux-universal-title">
+                <h3 id="linux-universal-title">Snap / Flatpak / AppImage</h3>
+                <p>Universal package formats are being evaluated for a later release.</p>
+              </section>
+            </div>
+          </section>
         </div>
 
         <aside class="panel" aria-labelledby="resources-title">
@@ -205,18 +277,18 @@
           <div class="links">
             <a href="https://github.com/jochenwezel/GuacamoleClient#readme">README <span>Overview</span></a>
             <a href="https://github.com/jochenwezel/GuacamoleClient">Project site <span>GitHub</span></a>
-            <a href="./INSTALL.md">Installation <span>ClickOnce notes</span></a>
+            <a href="./INSTALL.md">Installation <span>Windows notes</span></a>
             <a href="./RELEASE.md">Release <span>Current notes</span></a>
           </div>
         </aside>
       </section>
 
       <section class="note" aria-label="Windows security note">
-        Windows may show an unknown publisher warning for self-signed open-source builds. See the installation notes for details.
+        Windows may show an unknown publisher warning for self-signed open-source builds. Linux package-manager builds suppress automatic startup update checks because updates should be handled by the package manager.
       </section>
 
       <footer>
-        ClickOnce artifacts are published for this project via GitHub Pages.
+        Installation artifacts are published for this project via GitHub Pages and GitHub Releases.
       </footer>
     </main>
     <script>

@@ -720,7 +720,8 @@ namespace GuacClient
         {
             try
             {
-                if (string.Equals(_appInfo.DeploymentType, "local-dev", StringComparison.OrdinalIgnoreCase))
+                if (string.Equals(_appInfo.DeploymentType, "local-dev", StringComparison.OrdinalIgnoreCase)
+                    || _appInfo.SuppressAutomaticUpdateChecks)
                     return;
 
                 await Task.Delay(TimeSpan.FromSeconds(3)).ConfigureAwait(true);

@@ -71,6 +71,20 @@ jobs:
           -p:AssemblyVersion=${{ env.VERSION }}
           -p:InformationalVersion=${{ env.VERSION }}
 
+      - name: Publish Avalonia (Linux x64)
+        if: runner.os == 'Linux'
+        run: >
+          dotnet publish GuacamoleClient-Avalonia/GuacamoleClient-Avalonia.csproj
+          -c ${{ env.BUILD_CONFIGURATION }}
+          -r linux-x64
+          --self-contained true
+          /p:PublishSingleFile=false
+          /p:IncludeNativeLibrariesForSelfExtract=false
+          -p:Version=${{ env.VERSION }}
+          -p:FileVersion=${{ env.VERSION }}
+          -p:AssemblyVersion=${{ env.VERSION }}
+          -p:InformationalVersion=${{ env.VERSION }}
+
       - name: Write app-info.json for Avalonia (Windows/Linux)
         if: runner.os != 'macOS'
         shell: pwsh
@@ -86,6 +100,10 @@ jobs:
           }
           $out = Join-Path $env:GITHUB_WORKSPACE "GuacamoleClient-Avalonia\bin\${{ env.BUILD_CONFIGURATION }}\net8.0"
           $appInfo | ConvertTo-Json -Depth 4 | Set-Content -LiteralPath (Join-Path $out "app-info.json") -Encoding utf8
+          if ("${{ runner.os }}" -eq "Linux") {
+            $publishOut = Join-Path $env:GITHUB_WORKSPACE "GuacamoleClient-Avalonia/bin/${{ env.BUILD_CONFIGURATION }}/net8.0/linux-x64/publish"
+            $appInfo | ConvertTo-Json -Depth 4 | Set-Content -LiteralPath (Join-Path $publishOut "app-info.json") -Encoding utf8
+          }
 
       - name: Publish Avalonia (macOS ARM64)
         if: runner.os == 'macOS'
@@ -149,8 +167,72 @@ jobs:
         if: runner.os == 'Linux'
         shell: bash
         run: |
-          (cd "GuacamoleClient-Avalonia/bin/${{ env.BUILD_CONFIGURATION }}/net8.0" && \
+          (cd "GuacamoleClient-Avalonia/bin/${{ env.BUILD_CONFIGURATION }}/net8.0/linux-x64/publish" && \
            zip "$GITHUB_WORKSPACE/bin-avalonia-${{ env.OS_NAME }}-${{ env.VERSION }}.zip" -r .)
+
+      - name: Pack Debian package - Avalonia (Linux x64)
+        if: runner.os == 'Linux'
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          package_name="guacamoleclient-avalonia"
+          package_version="${VERSION}"
+          package_root="$GITHUB_WORKSPACE/pkg-${package_name}-${package_version}-linux-x64"
+          publish_dir="$GITHUB_WORKSPACE/GuacamoleClient-Avalonia/bin/${BUILD_CONFIGURATION}/net8.0/linux-x64/publish"
+          install_dir="$package_root/opt/guacamoleclient"
+
+          rm -rf "$package_root"
+          mkdir -p "$install_dir" "$package_root/DEBIAN" "$package_root/usr/bin" "$package_root/usr/share/applications" "$package_root/usr/share/icons/hicolor/256x256/apps"
+          cp -a "$publish_dir/." "$install_dir/"
+
+          cat > "$install_dir/app-info.json" <<EOF
+          {
+            "schemaVersion": 1,
+            "appId": "avalonia",
+            "deploymentType": "linux-deb",
+            "channel": "$([[ "${{ github.event_name }}" == "release" && "${{ github.event.release.prerelease }}" == "true" ]] && echo "dev" || echo "stable")",
+            "version": "${VERSION}",
+            "updatesUrl": "https://jochenwezel.github.io/GuacamoleClient/app-updates.json"
+          }
+          EOF
+
+          cat > "$package_root/usr/bin/guacamoleclient" <<'EOF'
+          #!/usr/bin/env sh
+          exec /opt/guacamoleclient/GuacamoleClient-Avalonia "$@"
+          EOF
+          chmod 0755 "$package_root/usr/bin/guacamoleclient"
+          chmod 0755 "$install_dir/GuacamoleClient-Avalonia"
+
+          cp "$GITHUB_WORKSPACE/logos/favicon-guac-classic-logo/web-app-manifest-512x512.png" "$package_root/usr/share/icons/hicolor/256x256/apps/guacamoleclient.png"
+
+          cat > "$package_root/usr/share/applications/guacamoleclient.desktop" <<'EOF'
+          [Desktop Entry]
+          Type=Application
+          Name=GuacamoleClient
+          Comment=Desktop client for Apache Guacamole remote sessions
+          Exec=guacamoleclient
+          Icon=guacamoleclient
+          Terminal=false
+          Categories=Network;RemoteAccess;
+          EOF
+
+          installed_size="$(du -sk "$package_root" | cut -f1)"
+          cat > "$package_root/DEBIAN/control" <<EOF
+          Package: $package_name
+          Version: $package_version
+          Section: net
+          Priority: optional
+          Architecture: amd64
+          Maintainer: CompuMaster GmbH <info@compumaster.de>
+          Installed-Size: $installed_size
+          Depends: libc6, libfontconfig1, libgcc-s1, libgtk-3-0, libnss3, libstdc++6, zlib1g
+          Homepage: https://github.com/jochenwezel/GuacamoleClient
+          Description: Desktop client for Apache Guacamole
+           GuacamoleClient runs Apache Guacamole sessions in a dedicated desktop application window.
+          EOF
+
+          dpkg-deb --build "$package_root" "$GITHUB_WORKSPACE/${package_name}_${package_version}_amd64.deb"
 
       - name: Pack binaries - Avalonia - macOS ARM64
         if: runner.os == 'macOS'
@@ -184,6 +266,7 @@ jobs:
         with:
           files: |
             bin-avalonia-${{ env.OS_NAME }}-${{ env.VERSION }}.zip
+            guacamoleclient-avalonia_${{ env.VERSION }}_amd64.deb
           tag_name: ${{ github.event.release.tag_name || github.ref_name }}
           prerelease: ${{ github.event_name != 'release' || github.event.release.prerelease }}
           make_latest: ${{ github.event_name == 'release' && !github.event.release.prerelease }}
