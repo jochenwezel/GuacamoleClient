@@ -77,16 +77,19 @@ jobs:
             MANIFEST_NAME="GuacamoleClient"
             PRERELEASE="false"
             PUBLISH_BOTH_CHANNELS="true"
-          else
+          elif [[ "${{ github.event_name }}" == "release" && "${{ github.event.release.prerelease }}" == "true" ]]; then
             PROVIDER_URL="https://jochenwezel.github.io/GuacamoleClient/clickonce/dev/${{ env.CLICKONCE_APP_NAME }}.application"
             SUBDIR="clickonce/dev"
             CHANNEL="dev"
             MANIFEST_NAME="GuacamoleClient Dev"
-            if [[ "${{ github.event.release.prerelease }}" == "true" ]]; then
-              PRERELEASE="true"
-            else
-              PRERELEASE="false"
-            fi
+            PRERELEASE="true"
+            PUBLISH_BOTH_CHANNELS="false"
+          else
+            PROVIDER_URL="https://jochenwezel.github.io/GuacamoleClient/clickonce/test/${{ env.CLICKONCE_APP_NAME }}.application"
+            SUBDIR="clickonce/test"
+            CHANNEL="test"
+            MANIFEST_NAME="GuacamoleClient Test"
+            PRERELEASE="false"
             PUBLISH_BOTH_CHANNELS="false"
           fi
 
@@ -149,7 +152,7 @@ jobs:
             appId = "winforms"
             deploymentType = "clickonce"
             channel = $env:CLICKONCE_CHANNEL
-            version = "${{ env.VERSION }}"
+            version = $env:VERSION
             updatesUrl = "https://jochenwezel.github.io/GuacamoleClient/app-updates.json"
           }
           $appInfo | ConvertTo-Json -Depth 4 | Set-Content -LiteralPath (Join-Path $appOut "app-info.json") -Encoding utf8
@@ -353,7 +356,7 @@ jobs:
             appId = "winforms"
             deploymentType = "clickonce"
             channel = "dev"
-            version = "${{ env.VERSION }}"
+            version = $env:VERSION
             updatesUrl = "https://jochenwezel.github.io/GuacamoleClient/app-updates.json"
           }
           $appInfo | ConvertTo-Json -Depth 4 | Set-Content -LiteralPath (Join-Path $appOut "app-info.json") -Encoding utf8
@@ -467,7 +470,7 @@ jobs:
           if-no-files-found: error
           retention-days: 1
 
-  deploy-pages:
+  prepare-pages:
     needs: winforms-clickonce
     runs-on: ubuntu-latest
 
@@ -676,12 +679,12 @@ jobs:
             } > "public/RELEASE.md"
           else
             {
-              echo "# Dev Build"
+              echo "# Test Build"
               echo
-              echo "Diese Seite wurde über workflow_dispatch (Dev) deployed."
+              echo "Diese Seite wurde über workflow_dispatch als Test-Artefakt erzeugt und nicht auf GitHub Pages veröffentlicht."
               echo
-              echo "## Installation (Dev)"
-              echo "- https://jochenwezel.github.io/GuacamoleClient/clickonce/dev/GuacamoleClient.application"
+              echo "## Installation (Test)"
+              echo "- Test-Artefakte bitte direkt aus dem Workflow-Lauf herunterladen."
               echo
               echo "## Release Notes"
               echo "- Für Stable-Versionen siehe GitHub Releases."
@@ -694,5 +697,6 @@ jobs:
           path: public
 
       - name: Deploy to GitHub Pages
+        if: ${{ github.event_name == 'release' }}
         id: deployment
         uses: actions/deploy-pages@v5

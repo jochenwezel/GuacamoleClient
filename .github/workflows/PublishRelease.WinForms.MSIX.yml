@@ -55,7 +55,7 @@ jobs:
       - name: Write app-info.json for MSIX build
         shell: pwsh
         run: |
-          $channel = if ("${{ github.event_name }}" -eq "release" -and "${{ github.event.release.prerelease }}" -eq "true") { "dev" } else { "stable" }
+          $channel = if ("${{ github.event_name }}" -ne "release") { "test" } elseif ("${{ github.event.release.prerelease }}" -eq "true") { "dev" } else { "stable" }
           $appInfo = [ordered]@{
             schemaVersion = 1
             appId = "winforms"
