@@ -122,5 +122,7 @@ jobs:
           files: |
             ${{ env.MSIX_FILE }}
           tag_name: ${{ github.event.release.tag_name || github.ref_name }}
+          prerelease: ${{ github.event_name != 'release' || github.event.release.prerelease }}
+          make_latest: ${{ github.event_name == 'release' && !github.event.release.prerelease }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

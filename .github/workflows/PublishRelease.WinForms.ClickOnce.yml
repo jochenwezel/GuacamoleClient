@@ -696,6 +696,15 @@ jobs:
         with:
           path: public
 
+      - name: Upload Pages preview artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: github-pages-preview-${{ needs.winforms-clickonce.outputs.version }}
+          path: public/**
+          if-no-files-found: error
+          retention-days: 14
+          include-hidden-files: true
+
       - name: Deploy to GitHub Pages
         if: ${{ github.event_name == 'release' }}
         id: deployment
