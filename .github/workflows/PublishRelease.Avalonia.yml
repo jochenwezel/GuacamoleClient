@@ -226,7 +226,7 @@ jobs:
           Architecture: amd64
           Maintainer: CompuMaster GmbH <info@compumaster.de>
           Installed-Size: $installed_size
-          Depends: libc6, libfontconfig1, libgcc-s1, libgtk-3-0, libnss3, libstdc++6, zlib1g
+          Depends: libc6, libcups2, libasound2 | libasound2t64, libatk-bridge2.0-0, libatk1.0-0, libdrm2, libfontconfig1, libgbm1, libgcc-s1, libgl1, libgtk-3-0, libnss3, libstdc++6, libx11-xcb1, libxcb1, libxcomposite1, libxcursor1, libxdamage1, libxi6, libxkbcommon0, libxrandr2, libxrender1, libxss1, libxtst6, zlib1g
           Homepage: https://github.com/jochenwezel/GuacamoleClient
           Description: Desktop client for Apache Guacamole
            GuacamoleClient runs Apache Guacamole sessions in a dedicated desktop application window.

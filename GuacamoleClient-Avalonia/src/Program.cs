@@ -1,7 +1,10 @@
 ﻿using Avalonia;
 using GuacamoleClient.Common.Localization;
 using System;
+using System.Linq;
+using System.Runtime.InteropServices;
 using System.Threading.Tasks;
+using WebViewControl;
 
 namespace GuacClient;
 internal static class Program
@@ -13,6 +16,7 @@ internal static class Program
 
         try
         {
+            ConfigureBrowserCompatibilitySwitches(args);
             BuildAvaloniaApp().StartWithClassicDesktopLifetime(args);
         }
         catch (Exception ex)
@@ -26,6 +30,30 @@ internal static class Program
         => AppBuilder.Configure<App>()
             .UsePlatformDetect()
             .LogToTrace();
+
+    private static void ConfigureBrowserCompatibilitySwitches(string[] args)
+    {
+        if (!RuntimeInformation.IsOSPlatform(OSPlatform.Linux) || !IsDisableGpuRequested(args))
+            return;
+
+        WebView.Settings.AddCommandLineSwitch("disable-accelerated-2d-canvas", string.Empty);
+        WebView.Settings.AddCommandLineSwitch("disable-accelerated-video-decode", string.Empty);
+        WebView.Settings.AddCommandLineSwitch("disable-accelerated-video-encode", string.Empty);
+        WebView.Settings.AddCommandLineSwitch("disable-dev-shm-usage", string.Empty);
+        WebView.Settings.AddCommandLineSwitch("disable-gpu", string.Empty);
+        WebView.Settings.AddCommandLineSwitch("disable-gpu-compositing", string.Empty);
+        WebView.Settings.AddCommandLineSwitch("disable-gpu-rasterization", string.Empty);
+        WebView.Settings.AddCommandLineSwitch("in-process-gpu", string.Empty);
+    }
+
+    private static bool IsDisableGpuRequested(string[] args)
+        => args.Any(arg => string.Equals(arg, "--disable-gpu", StringComparison.OrdinalIgnoreCase))
+           || IsTruthy(Environment.GetEnvironmentVariable("GUACAMOLECLIENT_DISABLE_GPU"));
+
+    private static bool IsTruthy(string? value)
+        => string.Equals(value, "1", StringComparison.OrdinalIgnoreCase)
+           || string.Equals(value, "true", StringComparison.OrdinalIgnoreCase)
+           || string.Equals(value, "yes", StringComparison.OrdinalIgnoreCase);
 
     private static void RegisterGlobalExceptionHandlers()
     {
