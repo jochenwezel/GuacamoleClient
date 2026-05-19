@@ -1,6 +1,8 @@
 using Microsoft.Win32;
 using System;
 using System.IO;
+using System.Linq;
+using System.Windows.Forms;
 
 namespace GuacamoleClient.WinForms
 {
@@ -11,6 +13,12 @@ namespace GuacamoleClient.WinForms
         public static void ApplyBestEffortFixes(ClickOnceDeploymentInfo deploymentInfo)
         {
             TrySetInstalledAppsIcon(deploymentInfo);
+            TryCreateRootStartMenuShortcut(deploymentInfo);
+        }
+
+        public static void ApplyLocalDevBestEffortFixes()
+        {
+            TryCreateLocalDevStartMenuShortcut();
         }
 
         private static void TrySetInstalledAppsIcon(ClickOnceDeploymentInfo deploymentInfo)
@@ -73,6 +81,77 @@ namespace GuacamoleClient.WinForms
                 : "GuacamoleClient.app";
 
             return uninstallString.IndexOf(expectedApplicationIdentity, StringComparison.OrdinalIgnoreCase) >= 0;
+        }
+
+        private static void TryCreateRootStartMenuShortcut(ClickOnceDeploymentInfo deploymentInfo)
+        {
+            try
+            {
+                string programsDirectory = Environment.GetFolderPath(Environment.SpecialFolder.Programs);
+                if (string.IsNullOrWhiteSpace(programsDirectory) || !Directory.Exists(programsDirectory))
+                    return;
+
+                string sourceShortcutName = deploymentInfo.Channel.Equals("dev", StringComparison.OrdinalIgnoreCase)
+                    ? "GuacamoleClient Dev.appref-ms"
+                    : "GuacamoleClient.appref-ms";
+
+                string? sourceShortcut = Directory.EnumerateFiles(programsDirectory, sourceShortcutName, SearchOption.AllDirectories)
+                    .Where(path => !string.Equals(Path.GetDirectoryName(path), programsDirectory, StringComparison.OrdinalIgnoreCase))
+                    .OrderByDescending(File.GetLastWriteTimeUtc)
+                    .FirstOrDefault();
+
+                if (sourceShortcut == null)
+                    return;
+
+                string targetShortcutName = deploymentInfo.Channel.Equals("dev", StringComparison.OrdinalIgnoreCase)
+                    ? "GuacamoleClient Dev (WinForms).appref-ms"
+                    : "GuacamoleClient (WinForms).appref-ms";
+
+                string targetShortcut = Path.Combine(programsDirectory, targetShortcutName);
+                File.Copy(sourceShortcut, targetShortcut, overwrite: true);
+            }
+            catch
+            {
+                // Start menu integration is cosmetic only; never disturb app startup.
+            }
+        }
+
+        private static void TryCreateLocalDevStartMenuShortcut()
+        {
+            try
+            {
+                string programsDirectory = Environment.GetFolderPath(Environment.SpecialFolder.Programs);
+                if (string.IsNullOrWhiteSpace(programsDirectory) || !Directory.Exists(programsDirectory))
+                    return;
+
+                string executablePath = Environment.ProcessPath ?? Application.ExecutablePath;
+                if (string.IsNullOrWhiteSpace(executablePath) || !File.Exists(executablePath))
+                    return;
+
+                string targetShortcut = Path.Combine(programsDirectory, "GuacamoleClient Local Dev (WinForms).lnk");
+                string iconPath = Path.Combine(AppContext.BaseDirectory, "guac.ico");
+                string workingDirectory = Path.GetDirectoryName(executablePath) ?? AppContext.BaseDirectory;
+
+                Type? shellType = Type.GetTypeFromProgID("WScript.Shell");
+                if (shellType == null)
+                    return;
+
+                dynamic? shell = Activator.CreateInstance(shellType);
+                if (shell == null)
+                    return;
+
+                dynamic shortcut = shell.CreateShortcut(targetShortcut);
+                shortcut.TargetPath = executablePath;
+                shortcut.WorkingDirectory = workingDirectory;
+                shortcut.Description = "GuacamoleClient Local Dev (WinForms)";
+                if (File.Exists(iconPath))
+                    shortcut.IconLocation = iconPath;
+                shortcut.Save();
+            }
+            catch
+            {
+                // Start menu integration is cosmetic only; never disturb app startup.
+            }
         }
     }
 }

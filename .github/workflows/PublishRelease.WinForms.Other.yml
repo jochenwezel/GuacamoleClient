@@ -42,6 +42,23 @@ jobs:
           else
             VER="${RAW_TAG#v}"
           fi
+
+          IFS='.' read -ra VERSION_PARTS <<< "$VER"
+          if (( ${#VERSION_PARTS[@]} > 4 )); then
+            echo "Version '$VER' has more than four parts and cannot be used for .NET manifests." >&2
+            exit 1
+          fi
+          for part in "${VERSION_PARTS[@]}"; do
+            if [[ ! "$part" =~ ^[0-9]+$ ]]; then
+              echo "Version '$VER' contains a non-numeric part '$part' and cannot be used for .NET manifests." >&2
+              exit 1
+            fi
+          done
+          while (( ${#VERSION_PARTS[@]} < 4 )); do
+            VERSION_PARTS+=("0")
+          done
+          VER="$(IFS=.; echo "${VERSION_PARTS[*]}")"
+
           echo "VERSION=$VER" >> "$GITHUB_ENV"
           echo "Resolved VERSION=$VER"
 
