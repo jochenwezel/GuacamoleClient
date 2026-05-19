@@ -677,6 +677,10 @@ jobs:
           sed -i "s/__WINFORMS_DEV_VERSION__/${DEV_VERSION}/g" "public/app-updates.json"
           sed -i "s/__AVALONIA_STABLE_VERSION__/${AVALONIA_STABLE_VERSION}/g" "public/app-updates.json"
           sed -i "s/__AVALONIA_DEV_VERSION__/${AVALONIA_DEV_VERSION}/g" "public/app-updates.json"
+          AVALONIA_DEB_VERSION="${AVALONIA_STABLE_VERSION}"
+          AVALONIA_DEB_RELEASE_TAG="${RELEASE_TAG:-v${AVALONIA_DEB_VERSION}}"
+          sed -i "s/__AVALONIA_DEB_VERSION__/${AVALONIA_DEB_VERSION}/g" "public/INSTALL.md" "public/index.html"
+          sed -i "s#__AVALONIA_DEB_RELEASE_TAG__#${AVALONIA_DEB_RELEASE_TAG}#g" "public/INSTALL.md" "public/index.html"
 
           # RELEASE.md is generated from GitHub Release text (no per-release repo edits needed)
           if [[ "${{ github.event_name }}" == "release" ]]; then
