@@ -536,6 +536,9 @@ jobs:
 
           foreach ($relativePath in @(
             "INSTALL.md",
+            "install-windows.md",
+            "install-linux.md",
+            "install-mac.md",
             "RELEASE.md",
             "index.html",
             "app-updates.json",
@@ -653,7 +656,7 @@ jobs:
             cp -f ".gitattributes" "public/.gitattributes"
           fi
 
-      - name: Add INSTALL.md + RELEASE.md + Landing Page
+      - name: Add installation docs, release notes and landing page
         shell: bash
         env:
           RELEASE_TAG: ${{ github.event.release.tag_name }}
@@ -662,6 +665,9 @@ jobs:
         run: |
           # Static docs from repo
           cp -f "docs/clickonce/INSTALL.md" "public/INSTALL.md"
+          cp -f "docs/clickonce/install-windows.md" "public/install-windows.md"
+          cp -f "docs/clickonce/install-linux.md" "public/install-linux.md"
+          cp -f "docs/clickonce/install-mac.md" "public/install-mac.md"
           cp -f "docs/clickonce/index.html" "public/index.html"
           cp -f "docs/clickonce/app-updates.template.json" "public/app-updates.json"
           cp -f "logos/favicon-guac-tricolor-logo/favicon.ico" "public/favicon.ico"
@@ -679,8 +685,8 @@ jobs:
           sed -i "s/__AVALONIA_DEV_VERSION__/${AVALONIA_DEV_VERSION}/g" "public/app-updates.json"
           AVALONIA_DEB_VERSION="${AVALONIA_STABLE_VERSION}"
           AVALONIA_DEB_RELEASE_TAG="${RELEASE_TAG:-v${AVALONIA_DEB_VERSION}}"
-          sed -i "s/__AVALONIA_DEB_VERSION__/${AVALONIA_DEB_VERSION}/g" "public/INSTALL.md" "public/index.html"
-          sed -i "s#__AVALONIA_DEB_RELEASE_TAG__#${AVALONIA_DEB_RELEASE_TAG}#g" "public/INSTALL.md" "public/index.html"
+          sed -i "s/__AVALONIA_DEB_VERSION__/${AVALONIA_DEB_VERSION}/g" "public/install-linux.md" "public/index.html"
+          sed -i "s#__AVALONIA_DEB_RELEASE_TAG__#${AVALONIA_DEB_RELEASE_TAG}#g" "public/install-linux.md" "public/index.html"
 
           # RELEASE.md is generated from GitHub Release text (no per-release repo edits needed)
           if [[ "${{ github.event_name }}" == "release" ]]; then
