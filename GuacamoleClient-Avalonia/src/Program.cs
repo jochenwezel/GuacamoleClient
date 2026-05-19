@@ -155,10 +155,35 @@ internal static class Program
         WebView.Settings.AddCommandLineSwitch("disable-accelerated-video-decode", string.Empty);
         WebView.Settings.AddCommandLineSwitch("disable-accelerated-video-encode", string.Empty);
         WebView.Settings.AddCommandLineSwitch("disable-dev-shm-usage", string.Empty);
+        WebView.Settings.AddCommandLineSwitch("disable-features", "Vulkan");
         WebView.Settings.AddCommandLineSwitch("disable-gpu", string.Empty);
         WebView.Settings.AddCommandLineSwitch("disable-gpu-compositing", string.Empty);
         WebView.Settings.AddCommandLineSwitch("disable-gpu-rasterization", string.Empty);
-        WebView.Settings.AddCommandLineSwitch("in-process-gpu", string.Empty);
+        WebView.Settings.AddCommandLineSwitch("ignore-gpu-blocklist", string.Empty);
+        WebView.Settings.AddCommandLineSwitch("use-angle", "swiftshader");
+        WebView.Settings.AddCommandLineSwitch("use-gl", "swiftshader");
+
+        AddOptionalBrowserCommandLineSwitch(args, "enable-logging");
+        AddOptionalBrowserCommandLineSwitch(args, "log-file");
+        AddOptionalBrowserCommandLineSwitch(args, "v");
+    }
+
+    private static void AddOptionalBrowserCommandLineSwitch(string[] args, string switchName)
+    {
+        string prefix = "--" + switchName;
+        string? argument = args.FirstOrDefault(arg =>
+            string.Equals(arg, prefix, StringComparison.OrdinalIgnoreCase)
+            || arg.StartsWith(prefix + "=", StringComparison.OrdinalIgnoreCase));
+
+        if (argument == null)
+            return;
+
+        string value = string.Empty;
+        int equalsIndex = argument.IndexOf('=');
+        if (equalsIndex >= 0)
+            value = argument[(equalsIndex + 1)..];
+
+        WebView.Settings.AddCommandLineSwitch(switchName, value);
     }
 
     private static bool IsDisableGpuRequested(string[] args)

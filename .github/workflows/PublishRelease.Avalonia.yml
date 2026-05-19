@@ -234,6 +234,7 @@ jobs:
 
           cat > "$package_root/usr/bin/guacamoleclient" <<'EOF'
           #!/usr/bin/env sh
+          cd /opt/guacamoleclient || exit 1
           exec /opt/guacamoleclient/GuacamoleClient-Avalonia "$@"
           EOF
           chmod 0755 "$package_root/usr/bin/guacamoleclient"
