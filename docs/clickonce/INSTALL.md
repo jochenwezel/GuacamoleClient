@@ -41,13 +41,13 @@ cd ~/Downloads/guacamoleclient-test
 Download the package from the release page. Replace the version and release URL when testing another build:
 
 ```bash
-wget https://github.com/jochenwezel/GuacamoleClient/releases/download/codex/issue-12-linux-deb-deployment/guacamoleclient-avalonia_0.0.0.22_amd64.deb
+wget https://github.com/jochenwezel/GuacamoleClient/releases/download/preview-codex-issue-12-linux-deb-deployment-32/guacamoleclient-avalonia_0.0.0.32_amd64.deb
 ```
 
 Install the downloaded package with `apt`:
 
 ```bash
-sudo apt install ./guacamoleclient-avalonia_0.0.0.22_amd64.deb
+sudo apt install ./guacamoleclient-avalonia_0.0.0.32_amd64.deb
 ```
 
 Start the application from the desktop application menu or from a terminal:
@@ -87,7 +87,7 @@ dpkg -L guacamoleclient-avalonia
 Show package metadata:
 
 ```bash
-apt show ./guacamoleclient-avalonia_0.0.0.22_amd64.deb
+apt show ./guacamoleclient-avalonia_0.0.0.32_amd64.deb
 dpkg -s guacamoleclient-avalonia
 ```
 
@@ -117,7 +117,7 @@ sudo apt purge guacamoleclient-avalonia
 Prefer `apt install ./package.deb` because it resolves dependencies. If testing with `dpkg` directly, repair missing dependencies afterwards:
 
 ```bash
-sudo dpkg -i guacamoleclient-avalonia_0.0.0.22_amd64.deb
+sudo dpkg -i guacamoleclient-avalonia_0.0.0.32_amd64.deb
 sudo apt --fix-broken install
 ```
 
