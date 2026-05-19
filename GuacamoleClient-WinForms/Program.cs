@@ -16,6 +16,8 @@ namespace GuacamoleClient.WinForms
             ClickOnceDeploymentInfo? clickOnceDeploymentInfo = ClickOnceDeploymentInfo.TryCreate();
             if (clickOnceDeploymentInfo != null)
                 ClickOnceWindowsIntegration.ApplyBestEffortFixes(clickOnceDeploymentInfo);
+            else
+                ClickOnceWindowsIntegration.ApplyLocalDevBestEffortFixes();
 
             // Load settings (JSON). If not present, migrate from legacy Registry configuration.
             var store = new JsonFileGuacamoleSettingsStore(GuacamoleSettingsPaths.GetSettingsFilePath());
