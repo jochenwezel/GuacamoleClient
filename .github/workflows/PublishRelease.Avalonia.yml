@@ -239,6 +239,7 @@ jobs:
           EOF
           chmod 0755 "$package_root/usr/bin/guacamoleclient"
           chmod 0755 "$install_dir/GuacamoleClient-Avalonia"
+          chmod 0755 "$install_dir/CefGlueBrowserProcess/Xilium.CefGlue.BrowserProcess"
 
           cp "$GITHUB_WORKSPACE/logos/favicon-guac-classic-logo/web-app-manifest-512x512.png" "$package_root/usr/share/icons/hicolor/256x256/apps/guacamoleclient.png"
 
