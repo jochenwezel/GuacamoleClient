@@ -734,16 +734,19 @@ namespace GuacClient
         private void UpdateGpuHardwareAccelerationMenuState()
         {
             bool disabled = Program.IsGpuHardwareAccelerationDisabledByPreference();
-            _gpuHardwareAccelerationEnabledMenuItem.Header = FormatCheckedMenuItem(
-                LocalizationProvider.Get(LocalizationKeys.Menu_GpuHardwareAccelerationEnabled),
-                !disabled);
-            _gpuHardwareAccelerationDisabledMenuItem.Header = FormatCheckedMenuItem(
-                LocalizationProvider.Get(LocalizationKeys.Menu_GpuHardwareAccelerationDisabled),
-                disabled);
+            _gpuHardwareAccelerationEnabledMenuItem.Header = LocalizationProvider.Get(LocalizationKeys.Menu_GpuHardwareAccelerationEnabled);
+            _gpuHardwareAccelerationDisabledMenuItem.Header = LocalizationProvider.Get(LocalizationKeys.Menu_GpuHardwareAccelerationDisabled);
+            _gpuHardwareAccelerationEnabledMenuItem.Icon = CreateCheckedMenuIcon(!disabled);
+            _gpuHardwareAccelerationDisabledMenuItem.Icon = CreateCheckedMenuIcon(disabled);
         }
 
-        private static string FormatCheckedMenuItem(string text, bool isChecked)
-            => (isChecked ? "[x] " : "[ ] ") + text;
+        private static TextBlock CreateCheckedMenuIcon(bool isChecked)
+            => new()
+            {
+                Text = isChecked ? "\u2713" : string.Empty,
+                Width = 16,
+                TextAlignment = TextAlignment.Center
+            };
 
         private static void RestartApplication()
         {

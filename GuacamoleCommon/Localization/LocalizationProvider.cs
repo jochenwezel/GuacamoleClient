@@ -153,7 +153,7 @@ namespace GuacamoleClient.Common.Localization
                     case LocalizationKeys.Menu_GpuHardwareAcceleration:
                         return "GPU-Hardware-Beschleunigung";
                     case LocalizationKeys.Menu_GpuHardwareAccelerationEnabled:
-                        return "Aktiviert";
+                        return "Aktiviert/Automatisch";
                     case LocalizationKeys.Menu_GpuHardwareAccelerationDisabled:
                         return "Deaktiviert";
                     case LocalizationKeys.Menu_RestartRequired_Title:
@@ -428,7 +428,7 @@ namespace GuacamoleClient.Common.Localization
                 case LocalizationKeys.Menu_GpuHardwareAcceleration:
                     return "GPU hardware acceleration";
                 case LocalizationKeys.Menu_GpuHardwareAccelerationEnabled:
-                    return "Enabled";
+                    return "Enabled/Auto";
                 case LocalizationKeys.Menu_GpuHardwareAccelerationDisabled:
                     return "Disabled";
                 case LocalizationKeys.Menu_RestartRequired_Title:
