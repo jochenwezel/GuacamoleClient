@@ -74,6 +74,10 @@
             "zip": {
               "deploymentType": "zip",
               "releasesUrl": "https://github.com/jochenwezel/GuacamoleClient/releases"
+            },
+            "linux-deb": {
+              "deploymentType": "linux-deb",
+              "releasesUrl": "https://github.com/jochenwezel/GuacamoleClient/releases"
             }
           }
         },
@@ -84,6 +88,10 @@
           "deployments": {
             "zip": {
               "deploymentType": "zip",
+              "releasesUrl": "https://github.com/jochenwezel/GuacamoleClient/releases"
+            },
+            "linux-deb": {
+              "deploymentType": "linux-deb",
               "releasesUrl": "https://github.com/jochenwezel/GuacamoleClient/releases"
             }
           }

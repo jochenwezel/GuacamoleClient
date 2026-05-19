@@ -1,4 +1,5 @@
 ﻿using Avalonia.Controls;
+using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Markup.Xaml;
@@ -69,6 +70,10 @@ namespace GuacClient
         private MenuItem _sendRemoteCtrlAltEndMenuItem = default!;
         private MenuItem _sendRemoteCtrlAltBackspaceMenuItem = default!;
         private MenuItem _openGuacamoleMenuMenuItem = default!;
+        private MenuItem _settingsMenuItem = default!;
+        private MenuItem _gpuHardwareAccelerationMenuItem = default!;
+        private MenuItem _gpuHardwareAccelerationEnabledMenuItem = default!;
+        private MenuItem _gpuHardwareAccelerationDisabledMenuItem = default!;
         private MenuItem _helpMenuItem = default!;
         private MenuItem _setupGuideHelpMenuItem = default!;
         private MenuItem _rdpSessionResizeHelpMenuItem = default!;
@@ -137,6 +142,10 @@ namespace GuacClient
             _sendRemoteCtrlAltEndMenuItem = this.FindControl<MenuItem>("SendRemoteCtrlAltEndMenuItem")!;
             _sendRemoteCtrlAltBackspaceMenuItem = this.FindControl<MenuItem>("SendRemoteCtrlAltBackspaceMenuItem")!;
             _openGuacamoleMenuMenuItem = this.FindControl<MenuItem>("OpenGuacamoleMenuMenuItem")!;
+            _settingsMenuItem = this.FindControl<MenuItem>("SettingsMenuItem")!;
+            _gpuHardwareAccelerationMenuItem = this.FindControl<MenuItem>("GpuHardwareAccelerationMenuItem")!;
+            _gpuHardwareAccelerationEnabledMenuItem = this.FindControl<MenuItem>("GpuHardwareAccelerationEnabledMenuItem")!;
+            _gpuHardwareAccelerationDisabledMenuItem = this.FindControl<MenuItem>("GpuHardwareAccelerationDisabledMenuItem")!;
             _helpMenuItem = this.FindControl<MenuItem>("HelpMenuItem")!;
             _setupGuideHelpMenuItem = this.FindControl<MenuItem>("SetupGuideHelpMenuItem")!;
             _rdpSessionResizeHelpMenuItem = this.FindControl<MenuItem>("RdpSessionResizeHelpMenuItem")!;
@@ -165,6 +174,8 @@ namespace GuacClient
             _sendRemoteCtrlAltEndMenuItem.Click += SendRemoteCtrlAltEndMenuItem_Click;
             _sendRemoteCtrlAltBackspaceMenuItem.Click += SendRemoteCtrlAltBackspaceMenuItem_Click;
             _openGuacamoleMenuMenuItem.Click += OpenGuacamoleMenuMenuItem_Click;
+            _gpuHardwareAccelerationEnabledMenuItem.Click += GpuHardwareAccelerationEnabledMenuItem_Click;
+            _gpuHardwareAccelerationDisabledMenuItem.Click += GpuHardwareAccelerationDisabledMenuItem_Click;
             _setupGuideHelpMenuItem.Click += SetupGuideHelpMenuItem_Click;
             _rdpSessionResizeHelpMenuItem.Click += RdpSessionResizeHelpMenuItem_Click;
             _projectWebsiteHelpMenuItem.Click += ProjectWebsiteHelpMenuItem_Click;
@@ -254,6 +265,9 @@ namespace GuacClient
                 LocalizationProvider.Get(LocalizationKeys.Menu_OpenGuacamoleMenu),
                 LocalizationProvider.Get(LocalizationKeys.ShortcutKeystroke_OpenGuacamoleMenuToolStripMenuItem));
             _openGuacamoleMenuMenuItem.InputGesture = null;
+            _settingsMenuItem.Header = LocalizationProvider.Get(LocalizationKeys.Menu_Settings);
+            _gpuHardwareAccelerationMenuItem.Header = LocalizationProvider.Get(LocalizationKeys.Menu_GpuHardwareAcceleration);
+            UpdateGpuHardwareAccelerationMenuState();
             _helpMenuItem.Header = LocalizationProvider.Get(LocalizationKeys.Menu_Help);
             _setupGuideHelpMenuItem.Header = LocalizationProvider.Get(LocalizationKeys.AddEdit_Link_SetupGuideGuacamoleTestServer);
             _rdpSessionResizeHelpMenuItem.Header = LocalizationProvider.Get(LocalizationKeys.Menu_HelpRdpResize);
@@ -690,6 +704,59 @@ namespace GuacClient
             }, DispatcherPriority.Background);
         }
 
+        private async void GpuHardwareAccelerationEnabledMenuItem_Click(object? sender, RoutedEventArgs e)
+            => await ApplyGpuHardwareAccelerationPreferenceAsync(enabled: true).ConfigureAwait(true);
+
+        private async void GpuHardwareAccelerationDisabledMenuItem_Click(object? sender, RoutedEventArgs e)
+            => await ApplyGpuHardwareAccelerationPreferenceAsync(enabled: false).ConfigureAwait(true);
+
+        private async Task ApplyGpuHardwareAccelerationPreferenceAsync(bool enabled)
+        {
+            bool currentlyDisabled = Program.IsGpuHardwareAccelerationDisabledByPreference();
+            if (currentlyDisabled == !enabled)
+            {
+                UpdateGpuHardwareAccelerationMenuState();
+                return;
+            }
+
+            Program.SetGpuHardwareAccelerationEnabledPreference(enabled);
+            UpdateGpuHardwareAccelerationMenuState();
+
+            bool restart = await ConfirmDialog.ShowYesNoAsync(
+                this,
+                LocalizationProvider.Get(LocalizationKeys.Menu_RestartRequired_Title),
+                LocalizationProvider.Get(LocalizationKeys.Menu_RestartRequired_Text)).ConfigureAwait(true);
+
+            if (restart)
+                RestartApplication();
+        }
+
+        private void UpdateGpuHardwareAccelerationMenuState()
+        {
+            bool disabled = Program.IsGpuHardwareAccelerationDisabledByPreference();
+            _gpuHardwareAccelerationEnabledMenuItem.Header = LocalizationProvider.Get(LocalizationKeys.Menu_GpuHardwareAccelerationEnabled);
+            _gpuHardwareAccelerationDisabledMenuItem.Header = LocalizationProvider.Get(LocalizationKeys.Menu_GpuHardwareAccelerationDisabled);
+            _gpuHardwareAccelerationEnabledMenuItem.Icon = CreateCheckedMenuIcon(!disabled);
+            _gpuHardwareAccelerationDisabledMenuItem.Icon = CreateCheckedMenuIcon(disabled);
+        }
+
+        private static TextBlock CreateCheckedMenuIcon(bool isChecked)
+            => new()
+            {
+                Text = isChecked ? "\u2713" : string.Empty,
+                Width = 16,
+                TextAlignment = TextAlignment.Center
+            };
+
+        private static void RestartApplication()
+        {
+            Program.StartNewApplicationProcess();
+            if (Application.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
+                desktop.Shutdown();
+            else
+                Environment.Exit(0);
+        }
+
         private async void RdpSessionResizeHelpMenuItem_Click(object? sender, RoutedEventArgs e)
         {
             await MessageBoxSimple.Show(
@@ -720,7 +787,8 @@ namespace GuacClient
         {
             try
             {
-                if (string.Equals(_appInfo.DeploymentType, "local-dev", StringComparison.OrdinalIgnoreCase))
+                if (string.Equals(_appInfo.DeploymentType, "local-dev", StringComparison.OrdinalIgnoreCase)
+                    || _appInfo.SuppressAutomaticUpdateChecks)
                     return;
 
                 await Task.Delay(TimeSpan.FromSeconds(3)).ConfigureAwait(true);
@@ -844,7 +912,7 @@ namespace GuacClient
             var detailsText = LocalizationProvider.Get(
                 LocalizationKeys.Help_About_Text,
                 "Avalonia",
-                VersionUtil.InformationalVersion(),
+                $"{VersionUtil.InformationalVersion()} ({FormatChannelForDisplay(_appInfo.Channel)})",
                 RuntimeInformation.FrameworkDescription,
                 RuntimeInformation.OSDescription,
                 RuntimeInformation.ProcessArchitecture.ToString());
@@ -859,6 +927,9 @@ namespace GuacClient
                 (LocalizationProvider.Get(LocalizationKeys.Help_ProjectWebsite_Link), ProjectWebsiteUrl),
                 (LocalizationProvider.Get(LocalizationKeys.Help_ReportBug_Link), ProjectIssuesUrl));
         }
+
+        private static string FormatChannelForDisplay(string channel)
+            => channel.Replace("-", " ");
 
         private void KeyboardCaptureStatusMenuItem_Click(object? sender, RoutedEventArgs e)
             => ToggleKeyboardCapture();

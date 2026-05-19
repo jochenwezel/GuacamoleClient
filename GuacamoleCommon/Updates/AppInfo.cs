@@ -29,6 +29,20 @@ namespace GuacamoleClient.Common.Updates
 
         public string CurrentVersion => string.IsNullOrWhiteSpace(Version) ? "0.0.0" : Version;
 
+        public bool SuppressAutomaticUpdateChecks
+            => IsPackageManagerManagedDeployment(DeploymentType);
+
+        public static bool IsPackageManagerManagedDeployment(string? deploymentType)
+        {
+            if (string.IsNullOrWhiteSpace(deploymentType))
+                return false;
+
+            return deploymentType.Equals("linux-deb", StringComparison.OrdinalIgnoreCase)
+                || deploymentType.Equals("linux-rpm", StringComparison.OrdinalIgnoreCase)
+                || deploymentType.Equals("snap", StringComparison.OrdinalIgnoreCase)
+                || deploymentType.Equals("flatpak", StringComparison.OrdinalIgnoreCase);
+        }
+
         public static AppInfo Load(AppInfo fallback)
         {
             try

@@ -49,6 +49,12 @@
         <Separator />
         <MenuItem x:Name="OpenGuacamoleMenuMenuItem" />
       </MenuItem>
+      <MenuItem x:Name="SettingsMenuItem">
+        <MenuItem x:Name="GpuHardwareAccelerationMenuItem">
+          <MenuItem x:Name="GpuHardwareAccelerationEnabledMenuItem" />
+          <MenuItem x:Name="GpuHardwareAccelerationDisabledMenuItem" />
+        </MenuItem>
+      </MenuItem>
       <MenuItem x:Name="HelpMenuItem">
         <MenuItem x:Name="SetupGuideHelpMenuItem" />
         <MenuItem x:Name="RdpSessionResizeHelpMenuItem" />

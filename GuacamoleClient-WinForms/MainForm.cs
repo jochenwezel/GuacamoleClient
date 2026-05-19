@@ -877,7 +877,7 @@ namespace GuacamoleClient.WinForms
             var detailsText = LocalizationProvider.Get(
                 LocalizationKeys.Help_About_Text,
                 "WinForms",
-                Application.ProductVersion,
+                $"{Application.ProductVersion} ({FormatChannelForDisplay(_appInfo.Channel)})",
                 RuntimeInformation.FrameworkDescription,
                 RuntimeInformation.OSDescription,
                 RuntimeInformation.ProcessArchitecture.ToString());
@@ -890,6 +890,9 @@ namespace GuacamoleClient.WinForms
                 (LocalizationProvider.Get(LocalizationKeys.Help_ProjectWebsite_Link), ProjectWebsiteUrl),
                 (LocalizationProvider.Get(LocalizationKeys.Help_ReportBug_Link), ProjectIssuesUrl));
         }
+
+        private static string FormatChannelForDisplay(string channel)
+            => channel.Replace("-", " ");
 
         private void ShowInfoDialogWithLinks(string title, string message, params (string Text, string Url)[] links)
         {

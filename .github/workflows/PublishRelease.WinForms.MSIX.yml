@@ -84,6 +84,24 @@ jobs:
           $appInfoPath = Join-Path $env:GITHUB_WORKSPACE "GuacamoleClient-WinForms\app-info.json"
           $appInfo | ConvertTo-Json -Depth 4 | Set-Content -LiteralPath $appInfoPath -Encoding utf8
 
+      - name: Resolve release tag
+        shell: bash
+        run: |
+          if [[ "${{ github.event_name }}" == "release" ]]; then
+            RELEASE_TAG="${{ github.event.release.tag_name }}"
+          else
+            SAFE_REF="$(printf '%s' "$GITHUB_REF_NAME" | tr '/._' '-' | tr -cd 'A-Za-z0-9-')"
+            RELEASE_TAG="preview-${SAFE_REF}-${GITHUB_RUN_NUMBER}"
+          fi
+
+          if git ls-remote --heads origin "$RELEASE_TAG" | grep -q .; then
+            echo "Release tag would collide with branch name: $RELEASE_TAG" >&2
+            exit 1
+          fi
+
+          echo "RELEASE_TAG=$RELEASE_TAG" >> "$GITHUB_ENV"
+          echo "Resolved RELEASE_TAG=$RELEASE_TAG"
+
       - name: Restore WinForms project
         run: dotnet restore GuacamoleClient-WinForms/GuacamoleClient-WinForms.csproj -r ${{ env.MSIX_RUNTIME_IDENTIFIER }}
 
@@ -138,7 +156,7 @@ jobs:
         with:
           files: |
             ${{ env.MSIX_FILE }}
-          tag_name: ${{ github.event.release.tag_name || github.ref_name }}
+          tag_name: ${{ env.RELEASE_TAG }}
           prerelease: ${{ github.event_name != 'release' || github.event.release.prerelease }}
           make_latest: ${{ github.event_name == 'release' && !github.event.release.prerelease }}
         env:
