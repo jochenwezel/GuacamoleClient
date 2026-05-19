@@ -531,7 +531,22 @@ jobs:
             $targetPath = Join-Path $publicRoot ($RelativePath -replace '/', [IO.Path]::DirectorySeparatorChar)
             $targetDirectory = Split-Path -Parent $targetPath
             New-Item -ItemType Directory -Force -Path $targetDirectory | Out-Null
-            Invoke-WebRequest -Uri $sourceUrl -OutFile $targetPath
+            try {
+              Invoke-WebRequest -Uri $sourceUrl -OutFile $targetPath -ErrorAction Stop
+            }
+            catch {
+              $statusCode = $null
+              if ($null -ne $_.Exception.Response -and $null -ne $_.Exception.Response.StatusCode) {
+                $statusCode = [int]$_.Exception.Response.StatusCode
+              }
+
+              if ($statusCode -eq 404) {
+                Write-Host "Skipping missing existing GitHub Pages file: $normalizedRelativePath"
+                return
+              }
+
+              throw
+            }
           }
 
           foreach ($relativePath in @(
