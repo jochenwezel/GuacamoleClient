@@ -148,6 +148,18 @@ namespace GuacamoleClient.Common.Localization
                         return "Sende Strg+Alt+Rücktaste";
                     case LocalizationKeys.Menu_OpenGuacamoleMenu:
                         return "Guacamole-Menü öffnen";
+                    case LocalizationKeys.Menu_Settings:
+                        return "Einstellungen";
+                    case LocalizationKeys.Menu_GpuHardwareAcceleration:
+                        return "GPU-Hardware-Beschleunigung";
+                    case LocalizationKeys.Menu_GpuHardwareAccelerationEnabled:
+                        return "Aktiviert";
+                    case LocalizationKeys.Menu_GpuHardwareAccelerationDisabled:
+                        return "Deaktiviert";
+                    case LocalizationKeys.Menu_RestartRequired_Title:
+                        return "Neustart erforderlich";
+                    case LocalizationKeys.Menu_RestartRequired_Text:
+                        return "Diese Änderung wird erst nach einem Neustart wirksam.\n\nGuacamoleClient jetzt neu starten?";
                     case LocalizationKeys.Menu_Help:
                         return "Hilfe";
                     case LocalizationKeys.Menu_HelpRdpResize:
@@ -411,6 +423,18 @@ namespace GuacamoleClient.Common.Localization
                     return "Send Ctrl+Alt+Backspace";
                 case LocalizationKeys.Menu_OpenGuacamoleMenu:
                     return "Open Guacamole menu";
+                case LocalizationKeys.Menu_Settings:
+                    return "Settings";
+                case LocalizationKeys.Menu_GpuHardwareAcceleration:
+                    return "GPU hardware acceleration";
+                case LocalizationKeys.Menu_GpuHardwareAccelerationEnabled:
+                    return "Enabled";
+                case LocalizationKeys.Menu_GpuHardwareAccelerationDisabled:
+                    return "Disabled";
+                case LocalizationKeys.Menu_RestartRequired_Title:
+                    return "Restart required";
+                case LocalizationKeys.Menu_RestartRequired_Text:
+                    return "This change takes effect after restarting.\n\nRestart GuacamoleClient now?";
                 case LocalizationKeys.Menu_Help:
                     return "Help";
                 case LocalizationKeys.Menu_HelpRdpResize:

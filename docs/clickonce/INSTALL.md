@@ -56,16 +56,24 @@ Start the application from the desktop application menu or from a terminal:
 guacamoleclient
 ```
 
-If Chromium/CEF fails to start the GPU process in a VM or remote desktop session, start with GPU acceleration disabled:
+On Linux, GuacamoleClient automatically retries early Chromium/CEF GPU startup crashes with GPU acceleration disabled. If the fallback succeeds, this preference is stored for future starts.
+
+To force GPU acceleration off manually, start with:
 
 ```bash
 guacamoleclient --disable-gpu
 ```
 
-The same fallback can be enabled through an environment variable:
+The same mode can be enabled through an environment variable:
 
 ```bash
 GUACAMOLECLIENT_DISABLE_GPU=1 guacamoleclient
+```
+
+To force a normal GPU-enabled startup while testing, use:
+
+```bash
+guacamoleclient --enable-gpu
 ```
 
 ### Inspect The Installation
