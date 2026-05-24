@@ -92,6 +92,20 @@ jobs:
           echo "RELEASE_TAG=$RELEASE_TAG" >> "$GITHUB_ENV"
           echo "Resolved RELEASE_TAG=$RELEASE_TAG"
 
+      - name: Resolve update channel
+        shell: bash
+        run: |
+          if [[ "${{ github.event_name }}" != "release" ]]; then
+            CHANNEL="test"
+          elif [[ "${{ github.event.release.prerelease }}" == "true" ]]; then
+            CHANNEL="dev"
+          else
+            CHANNEL="stable"
+          fi
+
+          echo "CHANNEL=$CHANNEL" >> "$GITHUB_ENV"
+          echo "Resolved CHANNEL=$CHANNEL"
+
       - name: Restore
         run: dotnet restore GuacamoleClient-Avalonia/GuacamoleClient-Avalonia.csproj
 
@@ -124,12 +138,11 @@ jobs:
         if: runner.os != 'macOS'
         shell: pwsh
         run: |
-          $channel = if ("${{ github.event_name }}" -ne "release") { "test" } elseif ("${{ github.event.release.prerelease }}" -eq "true") { "dev" } else { "stable" }
           $appInfo = [ordered]@{
             schemaVersion = 1
             appId = "avalonia"
             deploymentType = "zip"
-            channel = $channel
+            channel = $env:CHANNEL
             version = $env:VERSION
             updatesUrl = "https://jochenwezel.github.io/GuacamoleClient/app-updates.json"
           }
@@ -176,13 +189,12 @@ jobs:
         if: runner.os == 'macOS'
         shell: pwsh
         run: |
-          $channel = if ("${{ github.event_name }}" -ne "release") { "test" } elseif ("${{ github.event.release.prerelease }}" -eq "true") { "dev" } else { "stable" }
           foreach ($rid in @("osx-arm64", "osx-x64")) {
             $appInfo = [ordered]@{
               schemaVersion = 1
               appId = "avalonia"
               deploymentType = "zip"
-              channel = $channel
+              channel = $env:CHANNEL
               version = $env:VERSION
               updatesUrl = "https://jochenwezel.github.io/GuacamoleClient/app-updates.json"
             }
@@ -226,7 +238,7 @@ jobs:
             "schemaVersion": 1,
             "appId": "avalonia",
             "deploymentType": "linux-deb",
-            "channel": "$([[ "${{ github.event_name }}" == "release" && "${{ github.event.release.prerelease }}" == "true" ]] && echo "dev" || echo "stable")",
+            "channel": "${CHANNEL}",
             "version": "${VERSION}",
             "updatesUrl": "https://jochenwezel.github.io/GuacamoleClient/app-updates.json"
           }
