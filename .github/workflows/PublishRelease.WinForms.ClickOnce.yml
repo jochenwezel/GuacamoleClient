@@ -358,6 +358,7 @@ jobs:
           $appOut = Join-Path $devOut $env:CLICKONCE_APP_SUBDIR
           $exe = $env:CLICKONCE_EXE_NAME
           $appManifest = Join-Path $appOut "$exe.manifest"
+          $devAppManifestRelativePath = "$($env:CLICKONCE_APP_SUBDIR)\$exe.manifest"
           $deployManifest = Join-Path $devOut "${{ env.CLICKONCE_APP_NAME }}.application"
           $iconFile = Join-Path $appOut "guac.ico"
           $providerUrl = "https://jochenwezel.github.io/GuacamoleClient/clickonce/dev/${{ env.CLICKONCE_APP_NAME }}.application"
@@ -394,7 +395,7 @@ jobs:
           dotnet mage -New Deployment `
             -Name "GuacamoleClient Dev" `
             -Version "${{ env.VERSION }}" `
-            -AppManifest "$env:CLICKONCE_APP_MANIFEST" `
+            -AppManifest "$devAppManifestRelativePath" `
             -ToFile "$deployManifest" `
             -ProviderURL "$providerUrl" `
             -Install true
@@ -442,7 +443,7 @@ jobs:
           if ($LASTEXITCODE -ne 0) { throw "Failed to sign dev application manifest: $appManifest" }
 
           Push-Location $devOut
-          dotnet mage -Update "$deployManifest" -AppManifest "$env:CLICKONCE_APP_MANIFEST" -CertFile "$pfxPath" -Password "$env:CLICKONCE_SIGNING_PFX_PASSWORD"
+          dotnet mage -Update "$deployManifest" -AppManifest "$devAppManifestRelativePath" -CertFile "$pfxPath" -Password "$env:CLICKONCE_SIGNING_PFX_PASSWORD"
           Pop-Location
           if ($LASTEXITCODE -ne 0) { throw "Failed to sign dev deployment manifest: $deployManifest" }
 

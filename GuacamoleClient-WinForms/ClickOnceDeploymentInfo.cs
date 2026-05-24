@@ -4,14 +4,9 @@ namespace GuacamoleClient.WinForms
 {
     internal sealed class ClickOnceDeploymentInfo
     {
-        private const string UpdateWebsiteBaseUrl = "https://jochenwezel.github.io/GuacamoleClient/";
-
         public required string Channel { get; init; }
         public required string CurrentVersion { get; init; }
         public required string UpdateLocation { get; init; }
-
-        public string UpdateWebsiteUrl
-            => $"{UpdateWebsiteBaseUrl}?app=winforms-clickonce&channel={Uri.EscapeDataString(Channel)}&version={Uri.EscapeDataString(CurrentVersion)}";
 
         public static ClickOnceDeploymentInfo? TryCreate()
         {

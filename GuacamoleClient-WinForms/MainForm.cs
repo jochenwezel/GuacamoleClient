@@ -28,6 +28,7 @@ namespace GuacamoleClient.WinForms
         private const string ProjectIssuesUrl = "https://github.com/jochenwezel/GuacamoleClient/issues";
         private const string RdpResizeDetailsUrl = "https://github.com/jochenwezel/GuacamoleClient/blob/main/README.md#faq-known-issues-typical-trouble-shooting";
         private const string SetupGuideUrl = "https://github.com/jochenwezel/GuacamoleClient/blob/main/docs/SetupTestGuacamoleServer.md";
+        private const string UpdateWebsiteBaseUrl = "https://jochenwezel.github.io/GuacamoleClient/";
 
 
         [Obsolete("For designer support only", true)]
@@ -737,8 +738,11 @@ namespace GuacamoleClient.WinForms
         private void updateWebsiteHelpToolStripMenuItem_Click(object sender, EventArgs e)
         {
             if (_clickOnceDeploymentInfo != null)
-                UITools.OpenUrlInDefaultBrowser(_clickOnceDeploymentInfo.UpdateWebsiteUrl);
+                UITools.OpenUrlInDefaultBrowser(CreateUpdateWebsiteUrl(_appInfo));
         }
+
+        private static string CreateUpdateWebsiteUrl(AppInfo appInfo)
+            => $"{UpdateWebsiteBaseUrl}?app=winforms-clickonce&channel={Uri.EscapeDataString(appInfo.Channel)}&version={Uri.EscapeDataString(appInfo.CurrentVersion)}";
 
         private async void checkForUpdatesHelpToolStripMenuItem_Click(object sender, EventArgs e)
         {
