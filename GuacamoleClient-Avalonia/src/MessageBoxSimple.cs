@@ -1,5 +1,6 @@
-using Avalonia.Controls;
+﻿using Avalonia.Controls;
 using Avalonia.Layout;
+using Avalonia.Threading;
 using System;
 using System.Threading.Tasks;
 
@@ -95,9 +96,7 @@ public static class MessageBoxSimple
 
         dialog.Opened += (_, __) =>
         {
-            messageTextBox.Focus();
-            messageTextBox.SelectionStart = 0;
-            messageTextBox.SelectionEnd = messageTextBox.Text?.Length ?? 0;
+            Dispatcher.UIThread.Post(() => okButton.Focus(), DispatcherPriority.Input);
         };
 
 #pragma warning disable CS8604
