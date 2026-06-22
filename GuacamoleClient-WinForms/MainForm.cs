@@ -29,6 +29,7 @@ namespace GuacamoleClient.WinForms
         private const string RdpResizeDetailsUrl = "https://github.com/jochenwezel/GuacamoleClient/blob/main/README.md#faq-known-issues-typical-trouble-shooting";
         private const string SetupGuideUrl = "https://github.com/jochenwezel/GuacamoleClient/blob/main/docs/SetupTestGuacamoleServer.md";
         private const string UpdateWebsiteBaseUrl = "https://jochenwezel.github.io/GuacamoleClient/";
+        private static readonly Guid TaskbarListClassId = new("56FDF344-FD6D-11d0-958A-006097C9A090");
 
 
         [Obsolete("For designer support only", true)]
@@ -137,6 +138,51 @@ namespace GuacamoleClient.WinForms
         {
             base.OnHandleCreated(e);
             TitleBarHelper.ApplyTitleBarColors(this, this.ServerProfile.LookupColorScheme());
+        }
+
+        /// <inheritdoc/>
+        protected override void OnShown(EventArgs e)
+        {
+            base.OnShown(e);
+            BeginInvoke(TryRegisterTaskbarTab);
+        }
+
+        [ComImport]
+        [Guid("56FDF342-FD6D-11d0-958A-006097C9A090")]
+        [InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
+        private interface ITaskbarList
+        {
+            void HrInit();
+
+            void AddTab(IntPtr hwnd);
+
+            void DeleteTab(IntPtr hwnd);
+
+            void ActivateTab(IntPtr hwnd);
+
+            void SetActiveAlt(IntPtr hwnd);
+        }
+
+        private void TryRegisterTaskbarTab()
+        {
+            if (!OperatingSystem.IsWindows() || IsDisposed || !IsHandleCreated)
+                return;
+
+            try
+            {
+                Type? taskbarListType = Type.GetTypeFromCLSID(TaskbarListClassId);
+                if (taskbarListType == null)
+                    return;
+
+                var taskbarList = (ITaskbarList)Activator.CreateInstance(taskbarListType)!;
+                taskbarList.HrInit();
+                taskbarList.AddTab(Handle);
+                taskbarList.ActivateTab(Handle);
+            }
+            catch
+            {
+                // The normal window style path is sufficient on most systems.
+            }
         }
 
         private void ApplyProfileColors()
