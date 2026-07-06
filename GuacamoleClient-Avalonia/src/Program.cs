@@ -51,11 +51,19 @@ internal static class Program
         exitCode = 0;
 
         if (!RuntimeInformation.IsOSPlatform(OSPlatform.Linux)
-            || IsLauncherChild(args)
-            || IsDisableGpuRequested(args)
-            || IsEnableGpuRequested(args))
+            || IsLauncherChild(args))
         {
             return false;
+        }
+
+        if (IsDisableGpuRequested(args) || IsEnableGpuRequested(args))
+        {
+            var explicitAttempt = RunChildAndWatchStartup(args);
+            if (explicitAttempt.FailedEarly)
+                ShowEarlyStartupFailure(explicitAttempt, disableGpuWasUsed: IsDisableGpuRequested(args));
+
+            exitCode = explicitAttempt.ExitCode;
+            return true;
         }
 
         bool preferDisableGpu = LoadBrowserCompatibilityState().PreferDisableGpu;
@@ -148,33 +156,55 @@ internal static class Program
 
     private static void ConfigureBrowserCompatibilitySwitches(string[] args)
     {
-        if (!RuntimeInformation.IsOSPlatform(OSPlatform.Linux) || !IsDisableGpuRequested(args))
+        if (!RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
             return;
 
-        WebView.Settings.AddCommandLineSwitch("disable-accelerated-2d-canvas", string.Empty);
-        WebView.Settings.AddCommandLineSwitch("disable-accelerated-video-decode", string.Empty);
-        WebView.Settings.AddCommandLineSwitch("disable-accelerated-video-encode", string.Empty);
-        WebView.Settings.AddCommandLineSwitch("disable-dev-shm-usage", string.Empty);
-        WebView.Settings.AddCommandLineSwitch("disable-features", "Vulkan");
-        WebView.Settings.AddCommandLineSwitch("disable-gpu", string.Empty);
-        WebView.Settings.AddCommandLineSwitch("disable-gpu-compositing", string.Empty);
-        WebView.Settings.AddCommandLineSwitch("disable-gpu-rasterization", string.Empty);
-        WebView.Settings.AddCommandLineSwitch("ignore-gpu-blocklist", string.Empty);
-        WebView.Settings.AddCommandLineSwitch("use-angle", "swiftshader");
-        WebView.Settings.AddCommandLineSwitch("use-gl", "swiftshader");
+        if (IsDisableGpuRequested(args))
+        {
+            AddDefaultBrowserCommandLineSwitch(args, "disable-accelerated-2d-canvas", string.Empty);
+            AddDefaultBrowserCommandLineSwitch(args, "disable-accelerated-video-decode", string.Empty);
+            AddDefaultBrowserCommandLineSwitch(args, "disable-accelerated-video-encode", string.Empty);
+            AddDefaultBrowserCommandLineSwitch(args, "disable-dev-shm-usage", string.Empty);
+            AddDefaultBrowserCommandLineSwitch(args, "disable-features", "Vulkan");
+            AddDefaultBrowserCommandLineSwitch(args, "disable-gpu", string.Empty);
+            AddDefaultBrowserCommandLineSwitch(args, "disable-gpu-compositing", string.Empty);
+            AddDefaultBrowserCommandLineSwitch(args, "disable-gpu-rasterization", string.Empty);
+            AddDefaultBrowserCommandLineSwitch(args, "ignore-gpu-blocklist", string.Empty);
+            AddDefaultBrowserCommandLineSwitch(args, "use-angle", "swiftshader");
+            AddDefaultBrowserCommandLineSwitch(args, "use-gl", "swiftshader");
+        }
 
-        AddOptionalBrowserCommandLineSwitch(args, "enable-logging");
-        AddOptionalBrowserCommandLineSwitch(args, "log-file");
-        AddOptionalBrowserCommandLineSwitch(args, "v");
+        AddOptionalBrowserCommandLineSwitches(
+            args,
+            "disable-dev-shm-usage",
+            "disable-features",
+            "disable-software-rasterizer",
+            "enable-features",
+            "enable-logging",
+            "log-file",
+            "no-sandbox",
+            "use-angle",
+            "use-gl",
+            "v");
+    }
+
+    private static void AddDefaultBrowserCommandLineSwitch(string[] args, string switchName, string value)
+    {
+        if (FindBrowserCommandLineSwitch(args, switchName) != null)
+            return;
+
+        WebView.Settings.AddCommandLineSwitch(switchName, value);
+    }
+
+    private static void AddOptionalBrowserCommandLineSwitches(string[] args, params string[] switchNames)
+    {
+        foreach (string switchName in switchNames)
+            AddOptionalBrowserCommandLineSwitch(args, switchName);
     }
 
     private static void AddOptionalBrowserCommandLineSwitch(string[] args, string switchName)
     {
-        string prefix = "--" + switchName;
-        string? argument = args.FirstOrDefault(arg =>
-            string.Equals(arg, prefix, StringComparison.OrdinalIgnoreCase)
-            || arg.StartsWith(prefix + "=", StringComparison.OrdinalIgnoreCase));
-
+        string? argument = FindBrowserCommandLineSwitch(args, switchName);
         if (argument == null)
             return;
 
@@ -184,6 +214,14 @@ internal static class Program
             value = argument[(equalsIndex + 1)..];
 
         WebView.Settings.AddCommandLineSwitch(switchName, value);
+    }
+
+    private static string? FindBrowserCommandLineSwitch(string[] args, string switchName)
+    {
+        string prefix = "--" + switchName;
+        return args.FirstOrDefault(arg =>
+            string.Equals(arg, prefix, StringComparison.OrdinalIgnoreCase)
+            || arg.StartsWith(prefix + "=", StringComparison.OrdinalIgnoreCase));
     }
 
     private static bool IsDisableGpuRequested(string[] args)
