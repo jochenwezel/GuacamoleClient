@@ -1,4 +1,5 @@
 using Avalonia;
+using Avalonia.Media;
 using GuacamoleClient.Common.Localization;
 using GuacamoleClient.Common.Settings;
 using GuacamoleClient.Common.Updates;
@@ -50,9 +51,20 @@ internal static class Program
     }
 
     public static AppBuilder BuildAvaloniaApp()
-        => AppBuilder.Configure<App>()
+        => ConfigureLinuxFontFallback(AppBuilder.Configure<App>())
             .UsePlatformDetect()
             .LogToTrace();
+
+    private static AppBuilder ConfigureLinuxFontFallback(AppBuilder builder)
+    {
+        if (!RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+            return builder;
+
+        return builder.With(new FontManagerOptions
+        {
+            DefaultFamilyName = "Liberation Sans"
+        });
+    }
 
     private static bool TryShowCommandLineHelp(string[] args)
     {
