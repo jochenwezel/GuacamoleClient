@@ -27,6 +27,9 @@ internal static class Program
 
         try
         {
+            if (TryShowCommandLineHelp(args))
+                return 0;
+
             if (TryRunLinuxLauncher(args, out int launcherExitCode))
                 return launcherExitCode;
 
@@ -45,6 +48,43 @@ internal static class Program
         => AppBuilder.Configure<App>()
             .UsePlatformDetect()
             .LogToTrace();
+
+    private static bool TryShowCommandLineHelp(string[] args)
+    {
+        if (!args.Any(IsHelpArgument))
+            return false;
+
+        Console.WriteLine("GuacamoleClient Avalonia");
+        Console.WriteLine();
+        Console.WriteLine("Usage:");
+        Console.WriteLine("  guacamoleclient [options]");
+        Console.WriteLine();
+        Console.WriteLine("Options:");
+        Console.WriteLine("  -h, --help                         Show this help text.");
+        Console.WriteLine("  --enable-gpu                       Start once with GPU hardware acceleration enabled.");
+        Console.WriteLine("  --disable-gpu                      Start once with GPU hardware acceleration disabled.");
+        Console.WriteLine();
+        Console.WriteLine("Linux CEF diagnostics:");
+        Console.WriteLine("  --no-sandbox                       Forward Chromium/CEF no-sandbox mode.");
+        Console.WriteLine("  --disable-dev-shm-usage            Avoid Chromium shared memory usage under /dev/shm.");
+        Console.WriteLine("  --disable-features=<features>      Disable Chromium/CEF features, for example Vulkan or VA-API.");
+        Console.WriteLine("  --enable-features=<features>       Enable Chromium/CEF features.");
+        Console.WriteLine("  --disable-software-rasterizer      Disable Chromium software rasterizer.");
+        Console.WriteLine("  --use-angle=<backend>              Select ANGLE backend, for example swiftshader.");
+        Console.WriteLine("  --use-gl=<backend>                 Select GL backend, for example swiftshader or desktop.");
+        Console.WriteLine("  --enable-logging[=stderr]          Enable Chromium/CEF logging.");
+        Console.WriteLine("  --log-file=<path>                  Write Chromium/CEF log output to a file.");
+        Console.WriteLine("  --v=<level>                        Set Chromium/CEF verbose logging level.");
+        Console.WriteLine();
+        Console.WriteLine("Environment:");
+        Console.WriteLine("  GUACAMOLECLIENT_DISABLE_GPU=1      Prefer disabled GPU hardware acceleration.");
+        return true;
+    }
+
+    private static bool IsHelpArgument(string arg)
+        => string.Equals(arg, "-h", StringComparison.OrdinalIgnoreCase)
+           || string.Equals(arg, "--help", StringComparison.OrdinalIgnoreCase)
+           || string.Equals(arg, "/?", StringComparison.OrdinalIgnoreCase);
 
     private static bool TryRunLinuxLauncher(string[] args, out int exitCode)
     {
