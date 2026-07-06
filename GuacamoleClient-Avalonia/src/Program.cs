@@ -145,10 +145,10 @@ internal static class Program
         if (!exitedEarly)
         {
             process.WaitForExit();
-            return new ChildRunResult(process.ExitCode, FailedEarly: false);
+            return new ChildRunResult(process.ExitCode, FailedEarly: false, args);
         }
 
-        return new ChildRunResult(process.ExitCode, FailedEarly: process.ExitCode != 0);
+        return new ChildRunResult(process.ExitCode, FailedEarly: process.ExitCode != 0, args);
     }
 
     private static Process StartChildProcess(string[] args)
@@ -291,6 +291,8 @@ internal static class Program
             + Environment.NewLine + Environment.NewLine
             + $"Startup mode: {mode}"
             + Environment.NewLine
+            + $"Startup arguments: {FormatStartupArguments(result.Arguments)}"
+            + Environment.NewLine
             + $"Exit code: {result.ExitCode}"
             + Environment.NewLine + Environment.NewLine
             + "The embedded Chromium/CEF browser process could not be started. "
@@ -298,6 +300,16 @@ internal static class Program
 
         StartupErrorDialog.Show("GuacamoleClient startup failed", message);
     }
+
+    private static string FormatStartupArguments(string[] args)
+        => args.Length == 0
+            ? "(none)"
+            : string.Join(" ", args.Select(QuoteArgumentIfNeeded));
+
+    private static string QuoteArgumentIfNeeded(string arg)
+        => arg.Any(char.IsWhiteSpace)
+            ? "\"" + arg.Replace("\"", "\\\"", StringComparison.Ordinal) + "\""
+            : arg;
 
     private static BrowserCompatibilityState LoadBrowserCompatibilityState()
     {
@@ -377,7 +389,7 @@ internal static class Program
             + ex;
     }
 
-    private sealed record ChildRunResult(int ExitCode, bool FailedEarly);
+    private sealed record ChildRunResult(int ExitCode, bool FailedEarly, string[] Arguments);
 
     private sealed class BrowserCompatibilityState
     {
