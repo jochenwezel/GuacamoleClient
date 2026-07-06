@@ -1,6 +1,7 @@
 using Avalonia;
 using GuacamoleClient.Common.Localization;
 using GuacamoleClient.Common.Settings;
+using GuacamoleClient.Common.Updates;
 using System;
 using System.Diagnostics;
 using System.IO;
@@ -18,6 +19,7 @@ internal static class Program
     private const string LauncherChildArgument = "--guacamoleclient-launcher-child";
     private const string LauncherModeVariable = "GUACAMOLECLIENT_LAUNCHER_CHILD";
     private const string DisableGpuVariable = "GUACAMOLECLIENT_DISABLE_GPU";
+    private const string AppDisplayName = "GuacamoleClient Avalonia";
     private static readonly TimeSpan EarlyStartupFailureWindow = TimeSpan.FromSeconds(10);
 
     [STAThread]
@@ -27,6 +29,9 @@ internal static class Program
 
         try
         {
+            if (TryShowCommandLineVersion(args))
+                return 0;
+
             if (TryShowCommandLineHelp(args))
                 return 0;
 
@@ -54,13 +59,14 @@ internal static class Program
         if (!args.Any(IsHelpArgument))
             return false;
 
-        Console.WriteLine("GuacamoleClient Avalonia");
+        Console.WriteLine(GetCommandLineVersionText());
         Console.WriteLine();
         Console.WriteLine("Usage:");
         Console.WriteLine("  guacamoleclient [options]");
         Console.WriteLine();
         Console.WriteLine("Options:");
         Console.WriteLine("  -h, --help                         Show this help text.");
+        Console.WriteLine("  --version                          Show version information.");
         Console.WriteLine("  --enable-gpu                       Start once with GPU hardware acceleration enabled.");
         Console.WriteLine("  --disable-gpu                      Start once with GPU hardware acceleration disabled.");
         Console.WriteLine();
@@ -81,10 +87,36 @@ internal static class Program
         return true;
     }
 
+    private static bool TryShowCommandLineVersion(string[] args)
+    {
+        if (!args.Any(IsVersionArgument))
+            return false;
+
+        Console.WriteLine(GetCommandLineVersionText());
+        return true;
+    }
+
+    private static string GetCommandLineVersionText()
+        => $"{AppDisplayName} v{GetApplicationVersion()}";
+
+    private static string GetApplicationVersion()
+        => AppInfo.Load(new AppInfo
+        {
+            AppId = "avalonia",
+            DeploymentType = "local-dev",
+            Channel = "dev",
+            Version = VersionUtil.InformationalVersion(),
+            UpdatesUrl = AppInfo.DefaultUpdatesUrl
+        }).CurrentVersion;
+
     private static bool IsHelpArgument(string arg)
         => string.Equals(arg, "-h", StringComparison.OrdinalIgnoreCase)
            || string.Equals(arg, "--help", StringComparison.OrdinalIgnoreCase)
            || string.Equals(arg, "/?", StringComparison.OrdinalIgnoreCase);
+
+    private static bool IsVersionArgument(string arg)
+        => string.Equals(arg, "--version", StringComparison.OrdinalIgnoreCase)
+           || string.Equals(arg, "-v", StringComparison.OrdinalIgnoreCase);
 
     private static bool TryRunLinuxLauncher(string[] args, out int exitCode)
     {
