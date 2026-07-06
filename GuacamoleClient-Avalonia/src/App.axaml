@@ -3,5 +3,8 @@
              x:Class="GuacClient.App">
   <Application.Styles>
     <FluentTheme />
+    <Style Selector="Window">
+      <Setter Property="FontFamily" Value="Liberation Sans" />
+    </Style>
   </Application.Styles>
 </Application>
