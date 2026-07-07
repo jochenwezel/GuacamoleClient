@@ -4,6 +4,8 @@
 
 The Avalonia client is the Linux-capable client. The WinForms client does not run on Linux.
 
+Current direct Linux packages target Linux x64 only.
+
 For the current quick-win package flow, download the `.deb` package from GitHub Releases and install it locally.
 
 ### Direct .deb Download
@@ -104,7 +106,7 @@ sudo apt --fix-broken install
 
 ## Fedora / Red Hat
 
-Use the x64 RPM package on Fedora/RHEL-compatible distributions:
+Use the Linux x64 RPM package on Fedora/RHEL-compatible distributions:
 
 Open the Dev channel on https://jochenwezel.github.io/GuacamoleClient/
 Copy the Fedora / Red Hat command block from there.
@@ -113,7 +115,7 @@ The package already includes .NET and the embedded Chromium/CEF browser. Require
 
 ## Other Linux distributions
 
-Use the portable x64 tarball on glibc-based desktop distributions when no native package is available.
+Use the portable Linux x64 tarball on glibc-based desktop distributions when no native package is available.
 
 Open the Dev channel on https://jochenwezel.github.io/GuacamoleClient/
 Copy the Other Linux distributions command block from there.
