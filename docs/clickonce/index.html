@@ -302,9 +302,9 @@
             <div class="distro-grid">
               <section class="distro" aria-labelledby="linux-debian-title">
                 <h3 id="linux-debian-title">Debian / Ubuntu</h3>
-                <pre><code id="linux-debian-command" data-stable-command='cd /tmp
+                <pre><code id="linux-debian-command" data-fallback-stable-command='cd /tmp
 wget "https://github.com/jochenwezel/GuacamoleClient/releases/download/__AVALONIA_DEB_RELEASE_TAG__/guacamoleclient-avalonia___AVALONIA_DEB_VERSION___amd64.deb"
-sudo apt install ./guacamoleclient-avalonia___AVALONIA_DEB_VERSION___amd64.deb' data-dev-command='Open the latest preview release on GitHub and download the guacamoleclient-avalonia_*_amd64.deb asset.
+sudo apt install ./guacamoleclient-avalonia___AVALONIA_DEB_VERSION___amd64.deb' data-fallback-dev-command='Open the latest preview release on GitHub and download the guacamoleclient-avalonia_*_amd64.deb asset.
 Then run:
 sudo apt install ./guacamoleclient-avalonia_*_amd64.deb'>cd /tmp
 wget "https://github.com/jochenwezel/GuacamoleClient/releases/download/__AVALONIA_DEB_RELEASE_TAG__/guacamoleclient-avalonia___AVALONIA_DEB_VERSION___amd64.deb"
@@ -376,13 +376,13 @@ sudo apt install ./guacamoleclient-avalonia___AVALONIA_DEB_VERSION___amd64.deb</
             clickOnceLabel: "Install Stable",
             windowsSummary: "Stable channel for regular Windows installations.",
             linuxSummary: "Stable Debian/Ubuntu package for regular Linux installations.",
-            linuxCommand: linuxCommand?.dataset.stableCommand || "",
+            linuxCommand: linuxCommand?.dataset.fallbackStableCommand || "",
           },
           dev: {
             clickOnceLabel: "Install Dev",
             windowsSummary: "Dev channel for preview builds and testing.",
             linuxSummary: "Dev builds are published as preview release assets for testing.",
-            linuxCommand: linuxCommand?.dataset.devCommand || "",
+            linuxCommand: linuxCommand?.dataset.fallbackDevCommand || "",
           },
         };
 
@@ -401,11 +401,24 @@ sudo apt install ./guacamoleclient-avalonia___AVALONIA_DEB_VERSION___amd64.deb</
           return 0;
         };
 
+        const buildLinuxDebCommand = deployment => {
+          const packageUrl = deployment?.packageUrl;
+          const packageFileName = deployment?.packageFileName;
+          if (!packageUrl || !packageFileName) {
+            return null;
+          }
+
+          return `cd /tmp
+wget "${packageUrl}"
+sudo apt install ./${packageFileName}`;
+        };
+
         const selectChannel = channel => {
           const selectedChannel = channel === "dev" ? "dev" : "stable";
           const text = channelText[selectedChannel];
           const winformsChannel = updateMetadata?.apps?.winforms?.channels?.[selectedChannel];
           const avaloniaChannel = updateMetadata?.apps?.avalonia?.channels?.[selectedChannel];
+          const linuxDebDeployment = avaloniaChannel?.deployments?.["linux-deb"];
 
           channelTabs.forEach(tab => {
             tab.setAttribute("aria-selected", tab.dataset.selectChannel === selectedChannel ? "true" : "false");
@@ -431,12 +444,12 @@ sudo apt install ./guacamoleclient-avalonia___AVALONIA_DEB_VERSION___amd64.deb</
           }
 
           if (linuxCommand) {
-            linuxCommand.textContent = text.linuxCommand;
+            linuxCommand.textContent = buildLinuxDebCommand(linuxDebDeployment) || text.linuxCommand;
           }
 
           if (linuxReleaseLink) {
             linuxReleaseLink.textContent = selectedChannel === "dev" ? "Open Preview Releases" : "Open GitHub Releases";
-            linuxReleaseLink.href = avaloniaChannel?.releasesUrl || "https://github.com/jochenwezel/GuacamoleClient/releases";
+            linuxReleaseLink.href = linuxDebDeployment?.packageUrl || avaloniaChannel?.releasesUrl || "https://github.com/jochenwezel/GuacamoleClient/releases";
           }
         };
 

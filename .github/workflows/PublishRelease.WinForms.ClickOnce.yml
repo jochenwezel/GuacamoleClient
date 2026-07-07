@@ -651,13 +651,18 @@ jobs:
             echo "DEV_VERSION=${{ needs.winforms-clickonce.outputs.version }}" >> "$GITHUB_ENV"
             echo "AVALONIA_STABLE_VERSION=${{ needs.winforms-clickonce.outputs.version }}" >> "$GITHUB_ENV"
             echo "AVALONIA_DEV_VERSION=${{ needs.winforms-clickonce.outputs.version }}" >> "$GITHUB_ENV"
+            echo "AVALONIA_STABLE_DEB_RELEASE_TAG=${{ github.event.release.tag_name }}" >> "$GITHUB_ENV"
+            echo "AVALONIA_DEV_DEB_RELEASE_TAG=${{ github.event.release.tag_name }}" >> "$GITHUB_ENV"
           else
             STABLE_VERSION=$(python -c 'import json, pathlib; p=pathlib.Path("public/app-updates.json"); print("unknown" if not p.exists() else json.loads(p.read_text(encoding="utf-8")).get("apps", {}).get("winforms", {}).get("channels", {}).get("stable", {}).get("version", "unknown"))')
             AVALONIA_STABLE_VERSION=$(python -c 'import json, pathlib; p=pathlib.Path("public/app-updates.json"); print("unknown" if not p.exists() else json.loads(p.read_text(encoding="utf-8")).get("apps", {}).get("avalonia", {}).get("channels", {}).get("stable", {}).get("version", "unknown"))')
+            AVALONIA_STABLE_DEB_RELEASE_TAG=$(python -c 'import json, pathlib; p=pathlib.Path("public/app-updates.json"); print("vunknown" if not p.exists() else json.loads(p.read_text(encoding="utf-8")).get("apps", {}).get("avalonia", {}).get("channels", {}).get("stable", {}).get("deployments", {}).get("linux-deb", {}).get("releaseTag", "vunknown"))')
             echo "STABLE_VERSION=${STABLE_VERSION}" >> "$GITHUB_ENV"
             echo "DEV_VERSION=${{ needs.winforms-clickonce.outputs.version }}" >> "$GITHUB_ENV"
             echo "AVALONIA_STABLE_VERSION=${AVALONIA_STABLE_VERSION}" >> "$GITHUB_ENV"
             echo "AVALONIA_DEV_VERSION=${{ needs.winforms-clickonce.outputs.version }}" >> "$GITHUB_ENV"
+            echo "AVALONIA_STABLE_DEB_RELEASE_TAG=${AVALONIA_STABLE_DEB_RELEASE_TAG}" >> "$GITHUB_ENV"
+            echo "AVALONIA_DEV_DEB_RELEASE_TAG=${{ github.event.release.tag_name }}" >> "$GITHUB_ENV"
           fi
 
       - name: Add .nojekyll + .gitattributes
@@ -699,6 +704,8 @@ jobs:
           sed -i "s/__WINFORMS_DEV_VERSION__/${DEV_VERSION}/g" "public/app-updates.json"
           sed -i "s/__AVALONIA_STABLE_VERSION__/${AVALONIA_STABLE_VERSION}/g" "public/app-updates.json"
           sed -i "s/__AVALONIA_DEV_VERSION__/${AVALONIA_DEV_VERSION}/g" "public/app-updates.json"
+          sed -i "s#__AVALONIA_STABLE_DEB_RELEASE_TAG__#${AVALONIA_STABLE_DEB_RELEASE_TAG}#g" "public/app-updates.json"
+          sed -i "s#__AVALONIA_DEV_DEB_RELEASE_TAG__#${AVALONIA_DEV_DEB_RELEASE_TAG}#g" "public/app-updates.json"
           AVALONIA_DEB_VERSION="${AVALONIA_STABLE_VERSION}"
           AVALONIA_DEB_RELEASE_TAG="${RELEASE_TAG:-v${AVALONIA_DEB_VERSION}}"
           sed -i "s/__AVALONIA_DEB_VERSION__/${AVALONIA_DEB_VERSION}/g" "public/install-linux.md" "public/index.html"
