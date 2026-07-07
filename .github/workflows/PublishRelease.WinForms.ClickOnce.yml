@@ -630,6 +630,47 @@ jobs:
             Save-PageFile "clickonce/stable/$relativeFilePath"
           }
 
+      - name: Wait for Avalonia release assets
+        if: ${{ github.event_name == 'release' }}
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ github.event.release.tag_name }}
+          VERSION: ${{ needs.winforms-clickonce.outputs.version }}
+        run: |
+          set -euo pipefail
+
+          expected_assets=(
+            "bin-avalonia-windows-${VERSION}.zip"
+            "bin-avalonia-linux-${VERSION}.zip"
+            "bin-avalonia-osx-arm64-${VERSION}.zip"
+            "bin-avalonia-osx-x64-${VERSION}.zip"
+            "guacamoleclient-avalonia_${VERSION}_amd64.deb"
+          )
+
+          deadline=$((SECONDS + 600))
+          while (( SECONDS < deadline )); do
+            asset_names="$(gh release view "$RELEASE_TAG" --json assets --jq '.assets[].name')"
+            missing=()
+
+            for expected_asset in "${expected_assets[@]}"; do
+              if ! grep -Fxq "$expected_asset" <<< "$asset_names"; then
+                missing+=("$expected_asset")
+              fi
+            done
+
+            if (( ${#missing[@]} == 0 )); then
+              echo "All expected Avalonia release assets are available."
+              exit 0
+            fi
+
+            echo "Waiting for Avalonia release assets: ${missing[*]}"
+            sleep 15
+          done
+
+          echo "Timed out waiting for Avalonia release assets for $RELEASE_TAG." >&2
+          exit 1
+
       - name: Prepare Pages site (place into subdir)
         shell: bash
         run: |
