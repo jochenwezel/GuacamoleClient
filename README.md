@@ -2,10 +2,10 @@
 
 ![GuacamoleClient Logo](./logos/guac-client-app_banner_1280x640.png)
 
-[![ClickOnce Installer](https://img.shields.io/badge/ClickOnce-Web%20Installer-blue)](https://jochenwezel.github.io/GuacamoleClient/)
+[![Download Page](https://img.shields.io/badge/Downloads-Install%20%26%20Download%20Page-blue)](https://jochenwezel.github.io/GuacamoleClient/)
 [![All Downloads](https://img.shields.io/badge/Downloads-All%20Downloads-green)](https://github.com/jochenwezel/GuacamoleClient/releases)
 
-➡️ **Web-Installer for Windows:** https://jochenwezel.github.io/GuacamoleClient/
+➡️ **Install and download page:** https://jochenwezel.github.io/GuacamoleClient/
 
 ## What is GuacamoleClient? Why we need it?
 
