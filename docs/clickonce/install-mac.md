@@ -1,11 +1,16 @@
 # GuacamoleClient - macOS Installation
 
-The Avalonia client is the macOS-capable client. Native macOS installation guidance is still being expanded.
+The Avalonia client is the macOS-capable client.
 
-For now, use the macOS Avalonia ZIP artifacts from GitHub Releases when available.
+macOS builds are experimental and intended for early testing. They are not yet officially supported.
 
-## Planned Work
+Use the macOS Avalonia ZIP artifacts from the installation page:
 
-- Document macOS ARM64 and Intel x64 installation steps.
-- Evaluate signing, notarization, and packaging options.
-- Keep update-channel behavior aligned with the other desktop deployment paths.
+- Apple Silicon: `bin-avalonia-osx-arm64-<version>.zip`
+- Intel x64: `bin-avalonia-osx-x64-<version>.zip`
+
+Open https://jochenwezel.github.io/GuacamoleClient/ and select the Stable or Dev channel.
+
+## Current Status
+
+The current macOS ZIP artifacts are technical Avalonia builds. Packaging, signing, notarization, platform-specific validation, and a polished installer format are still in progress.

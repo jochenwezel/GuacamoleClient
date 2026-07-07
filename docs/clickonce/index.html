@@ -459,6 +459,27 @@ rm -f "$HOME/.local/bin/guacamoleclient"</code></pre>
               </section>
             </div>
           </section>
+
+          <section class="linux-install" aria-labelledby="macos-install-title">
+            <h2 id="macos-install-title">macOS Installation</h2>
+            <p id="macos-channel-summary" class="channel-summary">macOS builds are experimental and intended for early testing.</p>
+            <div class="distro-grid">
+              <section class="distro" aria-labelledby="macos-arm64-title">
+                <h3 id="macos-arm64-title">Apple Silicon</h3>
+                <div class="actions">
+                  <a id="macos-arm64-link" class="button secondary" href="https://github.com/jochenwezel/GuacamoleClient/releases">Download Avalonia macOS ARM64 Stable</a>
+                </div>
+              </section>
+
+              <section class="distro" aria-labelledby="macos-x64-title">
+                <h3 id="macos-x64-title">Intel x64</h3>
+                <div class="actions">
+                  <a id="macos-x64-link" class="button secondary" href="https://github.com/jochenwezel/GuacamoleClient/releases">Download Avalonia macOS x64 Stable</a>
+                </div>
+              </section>
+            </div>
+            <p class="inline-note">macOS builds are not yet officially supported. Packaging, signing, notarization, and platform-specific validation are still in progress.</p>
+          </section>
         </div>
 
         <aside class="panel" aria-labelledby="resources-title">
@@ -493,6 +514,7 @@ rm -f "$HOME/.local/bin/guacamoleclient"</code></pre>
         const windowsAvaloniaLink = document.getElementById("windows-avalonia-link");
         const windowsSummary = document.getElementById("windows-channel-summary");
         const linuxSummary = document.getElementById("linux-channel-summary");
+        const macosSummary = document.getElementById("macos-channel-summary");
         const linuxCommand = document.getElementById("linux-debian-command");
         const linuxRpmCommand = document.getElementById("linux-rpm-command");
         const linuxTarballCommand = document.getElementById("linux-tarball-command");
@@ -501,6 +523,8 @@ rm -f "$HOME/.local/bin/guacamoleclient"</code></pre>
         const linuxTarballUserUninstallCommand = document.getElementById("linux-tarball-user-uninstall-command");
         const linuxReleaseLink = document.getElementById("linux-release-link");
         const linuxRpmReleaseLink = document.getElementById("linux-rpm-release-link");
+        const macosArm64Link = document.getElementById("macos-arm64-link");
+        const macosX64Link = document.getElementById("macos-x64-link");
         const copyLinuxCommandButton = document.getElementById("copy-linux-command");
         const copyLinuxRpmCommandButton = document.getElementById("copy-linux-rpm-command");
         const copyLinuxTarballCommandButton = document.getElementById("copy-linux-tarball-command");
@@ -516,6 +540,7 @@ rm -f "$HOME/.local/bin/guacamoleclient"</code></pre>
             clickOnceLabel: "Install WinForms Stable",
             windowsSummary: "Stable channel for regular Windows installations.",
             linuxSummary: "Stable Linux x64 Debian/Ubuntu package for regular Linux installations.",
+            macosSummary: "macOS builds are experimental and intended for early testing.",
             linuxCommand: linuxCommand?.dataset.fallbackStableCommand || "",
             linuxRpmCommand: linuxRpmCommand?.dataset.fallbackStableCommand || "",
             linuxTarballCommand: linuxTarballCommand?.dataset.fallbackStableCommand || "",
@@ -525,6 +550,7 @@ rm -f "$HOME/.local/bin/guacamoleclient"</code></pre>
             clickOnceLabel: "Install WinForms Dev",
             windowsSummary: "Dev channel for preview builds and testing.",
             linuxSummary: "Dev Linux x64 builds are published as preview release assets for testing.",
+            macosSummary: "macOS builds are experimental and intended for early testing.",
             linuxCommand: linuxCommand?.dataset.fallbackDevCommand || "",
             linuxRpmCommand: linuxRpmCommand?.dataset.fallbackDevCommand || "",
             linuxTarballCommand: linuxTarballCommand?.dataset.fallbackDevCommand || "",
@@ -623,6 +649,8 @@ ln -sfn "$HOME/.local/opt/${directoryName}/guacamoleclient" "$HOME/.local/bin/gu
           const linuxDebDeployment = avaloniaChannel?.deployments?.["linux-deb-direct"];
           const linuxRpmDeployment = avaloniaChannel?.deployments?.["linux-rpm-direct"];
           const linuxTarballDeployment = avaloniaChannel?.deployments?.["linux-tarball-direct"];
+          const macosArm64Deployment = avaloniaChannel?.deployments?.["macos-arm64-zip"];
+          const macosX64Deployment = avaloniaChannel?.deployments?.["macos-x64-zip"];
 
           channelTabs.forEach(tab => {
             tab.setAttribute("aria-selected", tab.dataset.selectChannel === selectedChannel ? "true" : "false");
@@ -638,6 +666,12 @@ ln -sfn "$HOME/.local/opt/${directoryName}/guacamoleclient" "$HOME/.local/bin/gu
             linuxSummary.textContent = avaloniaChannel?.version
               ? `${text.linuxSummary} Current version: v${avaloniaChannel.version}.`
               : text.linuxSummary;
+          }
+
+          if (macosSummary) {
+            macosSummary.textContent = avaloniaChannel?.version
+              ? `${text.macosSummary} Current version: v${avaloniaChannel.version}.`
+              : text.macosSummary;
           }
 
           if (clickOnceButton) {
@@ -687,6 +721,26 @@ ln -sfn "$HOME/.local/opt/${directoryName}/guacamoleclient" "$HOME/.local/bin/gu
               : linuxRpmPackageLabel;
             linuxRpmReleaseLink.href = hasUsablePackageDeployment(linuxRpmDeployment)
               ? linuxRpmDeployment.packageUrl
+              : avaloniaChannel?.releasesUrl || "https://github.com/jochenwezel/GuacamoleClient/releases";
+          }
+
+          if (macosArm64Link) {
+            const macosArm64Label = selectedChannel === "dev" ? "Download Avalonia macOS ARM64 Dev" : "Download Avalonia macOS ARM64 Stable";
+            macosArm64Link.textContent = hasUsablePackageDeployment(macosArm64Deployment) && avaloniaChannel?.version
+              ? `${macosArm64Label} v${avaloniaChannel.version} (.zip)`
+              : macosArm64Label;
+            macosArm64Link.href = hasUsablePackageDeployment(macosArm64Deployment)
+              ? macosArm64Deployment.packageUrl
+              : avaloniaChannel?.releasesUrl || "https://github.com/jochenwezel/GuacamoleClient/releases";
+          }
+
+          if (macosX64Link) {
+            const macosX64Label = selectedChannel === "dev" ? "Download Avalonia macOS x64 Dev" : "Download Avalonia macOS x64 Stable";
+            macosX64Link.textContent = hasUsablePackageDeployment(macosX64Deployment) && avaloniaChannel?.version
+              ? `${macosX64Label} v${avaloniaChannel.version} (.zip)`
+              : macosX64Label;
+            macosX64Link.href = hasUsablePackageDeployment(macosX64Deployment)
+              ? macosX64Deployment.packageUrl
               : avaloniaChannel?.releasesUrl || "https://github.com/jochenwezel/GuacamoleClient/releases";
           }
         };
