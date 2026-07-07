@@ -184,6 +184,30 @@
         font-size: 1rem;
       }
 
+      .command-header {
+        display: flex;
+        justify-content: flex-end;
+        margin: 8px 0 -6px;
+      }
+
+      .copy-button {
+        min-height: 34px;
+        padding: 6px 11px;
+        border: 1px solid var(--line);
+        border-radius: 5px;
+        background: var(--panel);
+        color: var(--green-dark);
+        cursor: pointer;
+        font: inherit;
+        font-size: 0.9rem;
+        font-weight: 650;
+      }
+
+      .copy-button:focus-visible {
+        outline: 3px solid rgba(51, 122, 54, 0.28);
+        outline-offset: 2px;
+      }
+
       code {
         display: inline-block;
         max-width: 100%;
@@ -302,6 +326,9 @@
             <div class="distro-grid">
               <section class="distro" aria-labelledby="linux-debian-title">
                 <h3 id="linux-debian-title">Debian / Ubuntu</h3>
+                <div class="command-header">
+                  <button id="copy-linux-command" class="copy-button" type="button" data-default-label="Copy" data-copied-label="Copied">Copy</button>
+                </div>
                 <pre><code id="linux-debian-command" data-fallback-stable-command='cd /tmp
 wget "https://github.com/jochenwezel/GuacamoleClient/releases/download/__AVALONIA_DEB_RELEASE_TAG__/guacamoleclient-avalonia___AVALONIA_DEB_VERSION___amd64.deb"
 sudo apt install ./guacamoleclient-avalonia___AVALONIA_DEB_VERSION___amd64.deb' data-fallback-dev-command='Open the latest preview release on GitHub and download the guacamoleclient-avalonia_*_amd64.deb asset.
@@ -367,6 +394,7 @@ sudo apt install ./guacamoleclient-avalonia___AVALONIA_DEB_VERSION___amd64.deb</
         const linuxSummary = document.getElementById("linux-channel-summary");
         const linuxCommand = document.getElementById("linux-debian-command");
         const linuxReleaseLink = document.getElementById("linux-release-link");
+        const copyLinuxCommandButton = document.getElementById("copy-linux-command");
         const requestedChannel = params.get("channel") === "dev" ? "dev" : "stable";
 
         let updateMetadata = null;
@@ -458,6 +486,40 @@ sudo apt install ./${packageFileName}`;
             const selectedChannel = tab.dataset.selectChannel || "stable";
             selectChannel(selectedChannel);
           });
+        });
+
+        const copyText = async text => {
+          if (navigator.clipboard?.writeText) {
+            await navigator.clipboard.writeText(text);
+            return;
+          }
+
+          const textarea = document.createElement("textarea");
+          textarea.value = text;
+          textarea.setAttribute("readonly", "");
+          textarea.style.position = "fixed";
+          textarea.style.left = "-9999px";
+          document.body.appendChild(textarea);
+          textarea.select();
+          document.execCommand("copy");
+          textarea.remove();
+        };
+
+        copyLinuxCommandButton?.addEventListener("click", async () => {
+          const command = linuxCommand?.textContent || "";
+          if (!command.trim()) {
+            return;
+          }
+
+          try {
+            await copyText(command);
+            copyLinuxCommandButton.textContent = copyLinuxCommandButton.dataset.copiedLabel || "Copied";
+            window.setTimeout(() => {
+              copyLinuxCommandButton.textContent = copyLinuxCommandButton.dataset.defaultLabel || "Copy";
+            }, 1800);
+          } catch {
+            copyLinuxCommandButton.textContent = "Copy failed";
+          }
         });
 
         selectChannel(requestedChannel);
