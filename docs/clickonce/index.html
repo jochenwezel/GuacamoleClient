@@ -521,7 +521,10 @@ sudo apt install ./${packageFileName}`;
           }
 
           if (windowsAvaloniaLink) {
-            windowsAvaloniaLink.textContent = selectedChannel === "dev" ? "Download Avalonia Dev" : "Download Avalonia Stable";
+            const avaloniaLabel = selectedChannel === "dev" ? "Download Avalonia Dev" : "Download Avalonia Stable";
+            windowsAvaloniaLink.textContent = avaloniaChannel?.version
+              ? `${avaloniaLabel} v${avaloniaChannel.version}`
+              : avaloniaLabel;
             windowsAvaloniaLink.href = avaloniaChannel?.deployments?.zip?.releasesUrl || avaloniaChannel?.releasesUrl || "https://github.com/jochenwezel/GuacamoleClient/releases";
           }
 
