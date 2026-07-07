@@ -139,7 +139,7 @@
 
   <Target Name="SeedMacCefGlueBrowserProcessDylibs"
           Condition="'$(CefGlueTargetPlatform)'=='osx-arm64' or '$(CefGlueTargetPlatform)'=='osx-x64'"
-          BeforeTargets="CopyFilesToOutputDirectory;ComputeFilesToPublish">
+          BeforeTargets="GetCopyToOutputDirectoryItems;_CopyOutOfDateSourceItemsToOutputDirectory;ComputeFilesToPublish">
     <ItemGroup>
       <MacCefGlueBrowserProcessDylibs Include="@(CefRedistOSXARM64)"
                                       Condition="'$(CefGlueTargetPlatform)'=='osx-arm64' and ('%(FileName)%(Extension)'=='libEGL.dylib' or '%(FileName)%(Extension)'=='libGLESv2.dylib' or '%(FileName)%(Extension)'=='libvk_swiftshader.dylib')" />
