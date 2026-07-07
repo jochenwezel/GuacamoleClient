@@ -1,4 +1,4 @@
-name: PublishRelease - GitHub Pages
+﻿name: PublishRelease - GitHub Pages
 
 on:
   release:
@@ -16,6 +16,7 @@ concurrency:
 
 env:
   CLICKONCE_APP_NAME: GuacamoleClient
+  AVALONIA_CLICKONCE_APP_NAME: GuacamoleClient-Avalonia
 
 jobs:
   publish-pages:
@@ -112,6 +113,51 @@ jobs:
           echo "Timed out waiting for WinForms ClickOnce workflow." >&2
           exit 1
 
+      - name: Wait for Avalonia ClickOnce artifact
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TARGET_SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+
+          deadline=$((SECONDS + 600))
+          run_id=""
+
+          while (( SECONDS < deadline )); do
+            run_id="$(gh run list \
+              --workflow "PublishRelease - Avalonia ClickOnce" \
+              --commit "$TARGET_SHA" \
+              --event release \
+              --limit 20 \
+              --json databaseId \
+              --jq '.[0].databaseId // ""')"
+
+            if [[ -n "$run_id" ]]; then
+              status="$(gh run view "$run_id" --json status --jq '.status')"
+              conclusion="$(gh run view "$run_id" --json conclusion --jq '.conclusion')"
+
+              if [[ "$status" == "completed" && "$conclusion" == "success" ]]; then
+                echo "AVALONIA_CLICKONCE_RUN_ID=$run_id" >> "$GITHUB_ENV"
+                exit 0
+              fi
+
+              if [[ "$status" == "completed" ]]; then
+                echo "Avalonia ClickOnce workflow failed with conclusion: $conclusion" >&2
+                exit 1
+              fi
+
+              echo "Waiting for Avalonia ClickOnce workflow run $run_id to complete..."
+            else
+              echo "Waiting for Avalonia ClickOnce workflow run for $TARGET_SHA..."
+            fi
+
+            sleep 15
+          done
+
+          echo "Timed out waiting for Avalonia ClickOnce workflow." >&2
+          exit 1
+
       - name: Download ClickOnce folder artifact
         shell: bash
         env:
@@ -119,8 +165,10 @@ jobs:
         run: |
           set -euo pipefail
           gh run download "$CLICKONCE_RUN_ID" --name clickonce-folder --dir site
+          gh run download "$AVALONIA_CLICKONCE_RUN_ID" --name clickonce-avalonia-folder --dir site-avalonia
           if [[ "$PUBLISH_BOTH_CHANNELS" == "true" ]]; then
             gh run download "$CLICKONCE_RUN_ID" --name clickonce-folder-dev --dir site-dev
+            gh run download "$AVALONIA_CLICKONCE_RUN_ID" --name clickonce-avalonia-folder-dev --dir site-avalonia-dev
           fi
 
       - name: Download current GitHub Pages site
@@ -166,7 +214,8 @@ jobs:
             "index.html",
             "app-updates.json",
             "assets/guac-client-app_banner_1280x640.png",
-            "clickonce/stable/${{ env.CLICKONCE_APP_NAME }}.application"
+            "clickonce/stable/${{ env.CLICKONCE_APP_NAME }}.application",
+            "clickonce/avalonia/stable/${{ env.AVALONIA_CLICKONCE_APP_NAME }}.application"
           )) {
             Save-PageFile $relativePath
           }
@@ -237,6 +286,72 @@ jobs:
             Save-PageFile "clickonce/stable/$relativeFilePath"
           }
 
+          $avaloniaStableRoot = Join-Path $publicRoot "clickonce/avalonia/stable"
+          $avaloniaDeploymentPath = Join-Path $avaloniaStableRoot "${{ env.AVALONIA_CLICKONCE_APP_NAME }}.application"
+
+          [xml]$avaloniaDeploymentXml = Get-Content -LiteralPath $avaloniaDeploymentPath
+          $avaloniaAppManifestNode = $avaloniaDeploymentXml.SelectSingleNode("/*[local-name()='assembly']/*[local-name()='dependency']/*[local-name()='dependentAssembly']")
+          if ($null -eq $avaloniaAppManifestNode -or $avaloniaAppManifestNode -isnot [System.Xml.XmlElement]) {
+            throw "Unable to locate the stable Avalonia application manifest entry."
+          }
+
+          $avaloniaAppManifestElement = [System.Xml.XmlElement]$avaloniaAppManifestNode
+          $avaloniaAppManifestRelativePath = $avaloniaAppManifestElement.GetAttribute("codebase")
+          if ([string]::IsNullOrWhiteSpace($avaloniaAppManifestRelativePath)) {
+            throw "Stable Avalonia deployment manifest does not contain an application manifest codebase."
+          }
+          $avaloniaAppManifestRelativePath = $avaloniaAppManifestRelativePath -replace '\\', '/'
+
+          Save-PageFile "clickonce/avalonia/stable/$avaloniaAppManifestRelativePath"
+          $avaloniaAppManifestPath = Join-Path $avaloniaStableRoot ($avaloniaAppManifestRelativePath -replace '/', [IO.Path]::DirectorySeparatorChar)
+
+          [xml]$avaloniaAppManifestXml = Get-Content -LiteralPath $avaloniaAppManifestPath
+          $avaloniaAppManifestRelativeDirectory = Split-Path -Parent $avaloniaAppManifestRelativePath
+          $avaloniaRelativeFilesToRestore = New-Object 'System.Collections.Generic.HashSet[string]' ([System.StringComparer]::OrdinalIgnoreCase)
+
+          $avaloniaFileNodes = $avaloniaAppManifestXml.SelectNodes("//*[local-name()='assembly']/*[local-name()='file']")
+          foreach ($fileNode in $avaloniaFileNodes) {
+            if ($fileNode -isnot [System.Xml.XmlElement]) {
+              continue
+            }
+
+            $fileElement = [System.Xml.XmlElement]$fileNode
+            $fileName = $fileElement.GetAttribute("name")
+            if ([string]::IsNullOrWhiteSpace($fileName)) {
+              continue
+            }
+
+            $relativeFilePath = [IO.Path]::Combine($avaloniaAppManifestRelativeDirectory, $fileName)
+            $relativeFilePath = $relativeFilePath -replace '\\', '/'
+            [void]$avaloniaRelativeFilesToRestore.Add($relativeFilePath)
+          }
+
+          $avaloniaDependencyNodes = $avaloniaAppManifestXml.SelectNodes("//*[local-name()='assembly']/*[local-name()='dependency']/*[local-name()='dependentAssembly' and @codebase]")
+          foreach ($dependencyNode in $avaloniaDependencyNodes) {
+            if ($dependencyNode -isnot [System.Xml.XmlElement]) {
+              continue
+            }
+
+            $dependencyElement = [System.Xml.XmlElement]$dependencyNode
+            $dependencyType = $dependencyElement.GetAttribute("dependencyType")
+            if (-not [string]::IsNullOrWhiteSpace($dependencyType) -and $dependencyType -ne "install") {
+              continue
+            }
+
+            $codebase = $dependencyElement.GetAttribute("codebase")
+            if ([string]::IsNullOrWhiteSpace($codebase)) {
+              continue
+            }
+
+            $relativeDependencyPath = [IO.Path]::Combine($avaloniaAppManifestRelativeDirectory, $codebase)
+            $relativeDependencyPath = $relativeDependencyPath -replace '\\', '/'
+            [void]$avaloniaRelativeFilesToRestore.Add($relativeDependencyPath)
+          }
+
+          foreach ($relativeFilePath in $avaloniaRelativeFilesToRestore) {
+            Save-PageFile "clickonce/avalonia/stable/$relativeFilePath"
+          }
+
       - name: Wait for Avalonia release assets
         shell: bash
         env:
@@ -283,12 +398,19 @@ jobs:
           set -euo pipefail
           mkdir -p "public"
           mkdir -p "public/${PAGES_SUBDIR}"
+          AVALONIA_PAGES_SUBDIR="clickonce/avalonia/${PAGES_SUBDIR##*/}"
+          mkdir -p "public/${AVALONIA_PAGES_SUBDIR}"
           find "public/${PAGES_SUBDIR}" -mindepth 1 -delete
           cp -R "site/." "public/${PAGES_SUBDIR}/"
+          find "public/${AVALONIA_PAGES_SUBDIR}" -mindepth 1 -delete
+          cp -R "site-avalonia/." "public/${AVALONIA_PAGES_SUBDIR}/"
           if [[ "$PUBLISH_BOTH_CHANNELS" == "true" ]]; then
             mkdir -p "public/clickonce/dev"
+            mkdir -p "public/clickonce/avalonia/dev"
             find "public/clickonce/dev" -mindepth 1 -delete
             cp -R "site-dev/." "public/clickonce/dev/"
+            find "public/clickonce/avalonia/dev" -mindepth 1 -delete
+            cp -R "site-avalonia-dev/." "public/clickonce/avalonia/dev/"
           fi
 
       - name: Set channel versions for landing page
@@ -363,7 +485,8 @@ jobs:
               echo
             fi
             echo "## Installation (Stable)"
-            echo "- https://jochenwezel.github.io/GuacamoleClient/clickonce/stable/GuacamoleClient.application"
+            echo "- WinForms: https://jochenwezel.github.io/GuacamoleClient/clickonce/stable/GuacamoleClient.application"
+            echo "- Avalonia Windows: https://jochenwezel.github.io/GuacamoleClient/clickonce/avalonia/stable/GuacamoleClient-Avalonia.application"
             echo
             echo "## Release Notes"
             echo

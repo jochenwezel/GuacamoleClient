@@ -1,4 +1,4 @@
-# GuacamoleClient - Installation
+﻿# GuacamoleClient - Installation
 
 GuacamoleClient is published through different installation paths depending on the operating system and application variant.
 
@@ -8,7 +8,7 @@ GuacamoleClient is published through different installation paths depending on t
 
 ## Recommended Clients
 
-- Windows: use the WinForms ClickOnce client for the primary Windows installation path.
+- Windows: use the WinForms ClickOnce client for the primary Windows installation path, or Avalonia ClickOnce when you specifically want the cross-platform Avalonia client on Windows.
 - Linux: use the Avalonia client. The WinForms client does not run on Linux.
 - macOS: use the Avalonia client. Native installation guidance is still being expanded.
 

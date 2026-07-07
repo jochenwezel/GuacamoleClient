@@ -109,6 +109,7 @@ namespace GuacClient
             UpdatesUrl = AppInfo.DefaultUpdatesUrl
         });
         private readonly AppUpdateChecker _appUpdateChecker;
+        private readonly AvaloniaClickOnceCleanupManager _clickOnceCleanupManager;
 
         public MainWindow()
             : this(null, null)
@@ -121,6 +122,10 @@ namespace GuacClient
             _initialUrlOverride = initialUrlOverride;
             _settingsManager = AvaloniaSettingsManagerFactory.LoadAsync().GetAwaiter().GetResult();
             _appUpdateChecker = new AppUpdateChecker(_appInfo, "GuacamoleClient-Avalonia");
+            _clickOnceCleanupManager = new AvaloniaClickOnceCleanupManager(
+                ClickOnceCleanupStateStore.CreateForSettingsAppName("GuacamoleClient-Avalonia"),
+                _appInfo,
+                AppContext.BaseDirectory);
             ConfigureBrowserCacheBeforeWebViewCreation();
             InitializeComponent();
 
@@ -196,6 +201,7 @@ namespace GuacClient
                 await EnsureAndLoadUrlAsync();
                 UpdateKeyboardHookState();
                 UpdateViewMenuState();
+                await _clickOnceCleanupManager.ProcessPendingCleanupAsync(this).ConfigureAwait(true);
                 _ = CheckForUpdatesOnStartupAsync();
             };
             this.Activated += (_, __) =>
@@ -945,6 +951,7 @@ namespace GuacClient
             string? action = await dialog.ShowDialog<string?>(this).ConfigureAwait(true);
             if (string.Equals(action, "update", StringComparison.Ordinal))
             {
+                await _clickOnceCleanupManager.RegisterCurrentDirectoryForCleanupAsync().ConfigureAwait(true);
                 _appUpdateChecker.StartUpdate(result);
             }
             else if (string.Equals(action, "skip", StringComparison.Ordinal))

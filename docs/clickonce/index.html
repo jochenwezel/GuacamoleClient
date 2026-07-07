@@ -368,7 +368,7 @@
                 <h3 id="windows-avalonia-title">Avalonia</h3>
                 <p>Same app family as Linux and macOS. Uses bundled Chromium/CEF, so browser updates arrive with GuacamoleClient releases.</p>
                 <div class="actions">
-                  <a id="windows-avalonia-link" class="button secondary" href="https://github.com/jochenwezel/GuacamoleClient/releases">Download Avalonia for Windows</a>
+                  <a id="windows-avalonia-link" class="button secondary" href="./clickonce/avalonia/stable/GuacamoleClient-Avalonia.application">Install Avalonia Stable</a>
                 </div>
               </section>
             </div>
@@ -602,12 +602,12 @@ ln -sfn "$HOME/.local/opt/${directoryName}/guacamoleclient" "$HOME/.local/bin/gu
           }
 
           if (windowsAvaloniaLink) {
-            const avaloniaZipDeployment = avaloniaChannel?.deployments?.zip;
-            const avaloniaLabel = selectedChannel === "dev" ? "Download Avalonia Windows Dev" : "Download Avalonia Windows Stable";
+            const avaloniaClickOnceDeployment = avaloniaChannel?.deployments?.clickonce;
+            const avaloniaLabel = selectedChannel === "dev" ? "Install Avalonia Dev" : "Install Avalonia Stable";
             windowsAvaloniaLink.textContent = avaloniaChannel?.version
               ? `${avaloniaLabel} v${avaloniaChannel.version}`
               : avaloniaLabel;
-            windowsAvaloniaLink.href = avaloniaZipDeployment?.packageUrl || avaloniaZipDeployment?.releasesUrl || avaloniaChannel?.releasesUrl || "https://github.com/jochenwezel/GuacamoleClient/releases";
+            windowsAvaloniaLink.href = avaloniaClickOnceDeployment?.manifestUrl || `./clickonce/avalonia/${selectedChannel}/GuacamoleClient-Avalonia.application`;
           }
 
           if (linuxCommand) {

@@ -1,4 +1,4 @@
-{
+﻿{
   "schemaVersion": 1,
   "generatedBy": "PublishRelease.WinForms.ClickOnce",
   "apps": {
@@ -71,6 +71,11 @@
           "channel": "stable",
           "version": "__AVALONIA_STABLE_VERSION__",
           "deployments": {
+            "clickonce": {
+              "deploymentType": "clickonce",
+              "manifestUrl": "./clickonce/avalonia/stable/GuacamoleClient-Avalonia.application",
+              "updatePageUrl": "https://jochenwezel.github.io/GuacamoleClient/?app=avalonia-clickonce&channel=stable&version=__AVALONIA_STABLE_VERSION__"
+            },
             "zip": {
               "deploymentType": "zip",
               "releaseTag": "__AVALONIA_STABLE_DEB_RELEASE_TAG__",
@@ -109,6 +114,11 @@
           "channel": "dev",
           "version": "__AVALONIA_DEV_VERSION__",
           "deployments": {
+            "clickonce": {
+              "deploymentType": "clickonce",
+              "manifestUrl": "./clickonce/avalonia/dev/GuacamoleClient-Avalonia.application",
+              "updatePageUrl": "https://jochenwezel.github.io/GuacamoleClient/?app=avalonia-clickonce&channel=dev&version=__AVALONIA_DEV_VERSION__"
+            },
             "zip": {
               "deploymentType": "zip",
               "releaseTag": "__AVALONIA_DEV_DEB_RELEASE_TAG__",
