@@ -218,6 +218,13 @@
         font-size: 1rem;
       }
 
+      .command-title {
+        margin: 14px 0 4px;
+        color: var(--muted);
+        font-size: 0.92rem;
+        font-weight: 700;
+      }
+
       .command-header {
         display: flex;
         justify-content: flex-end;
@@ -374,6 +381,10 @@
             <div class="distro-grid">
               <section class="distro" aria-labelledby="linux-debian-title">
                 <h3 id="linux-debian-title">Debian / Ubuntu</h3>
+                <div class="actions">
+                  <a id="linux-release-link" class="button secondary" href="https://github.com/jochenwezel/GuacamoleClient/releases">Download Avalonia Stable</a>
+                </div>
+                <p class="command-title">Manual installation</p>
                 <div class="command-header">
                   <button id="copy-linux-command" class="copy-button" type="button" data-default-label="Copy" data-copied-label="Copied">Copy</button>
                 </div>
@@ -386,14 +397,15 @@ wget "https://github.com/jochenwezel/GuacamoleClient/releases/download/__AVALONI
 sudo apt install ./guacamoleclient-avalonia___AVALONIA_DEB_VERSION___amd64.deb</code></pre>
                 <p>Start it from the application menu or run <code>guacamoleclient</code>.</p>
                 <p>The package already includes .NET and the embedded Chromium/CEF browser. Required Linux desktop libraries are installed automatically by apt as package dependencies.</p>
-                <div class="actions">
-                  <a id="linux-release-link" class="button secondary" href="https://github.com/jochenwezel/GuacamoleClient/releases">Download Avalonia Stable</a>
-                </div>
               </section>
 
               <section class="distro" aria-labelledby="linux-rpm-title">
                 <h3 id="linux-rpm-title">Fedora / Red Hat</h3>
                 <p>Use the x64 RPM package on Fedora/RHEL-compatible distributions.</p>
+                <div class="actions">
+                  <a id="linux-rpm-release-link" class="button secondary" href="https://github.com/jochenwezel/GuacamoleClient/releases">Download Avalonia Dev</a>
+                </div>
+                <p class="command-title">Manual installation</p>
                 <div class="command-header">
                   <button id="copy-linux-rpm-command" class="copy-button" type="button" data-default-label="Copy" data-copied-label="Copied">Copy</button>
                 </div>
@@ -406,6 +418,7 @@ sudo dnf install ./guacamoleclient-avalonia-*.x86_64.rpm'>RPM packages are avail
               <section class="distro" aria-labelledby="linux-arch-title">
                 <h3 id="linux-arch-title">Other Linux distributions</h3>
                 <p>Use the portable x64 tarball on glibc-based desktop distributions when no native package is available.</p>
+                <p class="command-title">Manual per-user installation</p>
                 <div class="command-header">
                   <button id="copy-linux-tarball-command" class="copy-button" type="button" data-default-label="Copy" data-copied-label="Copied">Copy</button>
                 </div>
@@ -415,7 +428,7 @@ mkdir -p "$HOME/.local/opt" "$HOME/.local/bin"
 tar -xzf guacamoleclient-avalonia-linux-x64-*.tar.gz -C "$HOME/.local/opt"
 ln -sfn "$HOME/.local/opt"/guacamoleclient-avalonia-linux-x64-*/guacamoleclient "$HOME/.local/bin/guacamoleclient"
 "$HOME/.local/bin/guacamoleclient"'>Portable tarballs are available in the Dev channel for testing. Stable tarballs will appear here after the next Stable release.</code></pre>
-                <p>The tarball already includes .NET and the embedded Chromium/CEF browser. Required Linux desktop libraries must be available on the target system.</p>
+                <p>The tarball already includes .NET and the embedded Chromium/CEF browser. The target system still needs common Linux desktop libraries such as GTK 3, NSS, ALSA, CUPS, Mesa/GL/GBM, fontconfig, and X11/XCB libraries. Package names vary by distribution.</p>
               </section>
 
               <section class="distro" aria-labelledby="linux-universal-title">
@@ -462,6 +475,7 @@ ln -sfn "$HOME/.local/opt"/guacamoleclient-avalonia-linux-x64-*/guacamoleclient 
         const linuxRpmCommand = document.getElementById("linux-rpm-command");
         const linuxTarballCommand = document.getElementById("linux-tarball-command");
         const linuxReleaseLink = document.getElementById("linux-release-link");
+        const linuxRpmReleaseLink = document.getElementById("linux-rpm-release-link");
         const copyLinuxCommandButton = document.getElementById("copy-linux-command");
         const copyLinuxRpmCommandButton = document.getElementById("copy-linux-rpm-command");
         const copyLinuxTarballCommandButton = document.getElementById("copy-linux-tarball-command");
@@ -613,6 +627,16 @@ ln -sfn "$HOME/.local/opt/${directoryName}/guacamoleclient" "$HOME/.local/bin/gu
               ? `${linuxPackageLabel} v${avaloniaChannel.version} (.deb)`
               : linuxPackageLabel;
             linuxReleaseLink.href = linuxDebDeployment?.packageUrl || avaloniaChannel?.releasesUrl || "https://github.com/jochenwezel/GuacamoleClient/releases";
+          }
+
+          if (linuxRpmReleaseLink) {
+            const linuxRpmPackageLabel = selectedChannel === "dev" ? "Download Avalonia Dev" : "Download Avalonia Stable";
+            linuxRpmReleaseLink.textContent = hasUsablePackageDeployment(linuxRpmDeployment) && avaloniaChannel?.version
+              ? `${linuxRpmPackageLabel} v${avaloniaChannel.version} (.rpm)`
+              : linuxRpmPackageLabel;
+            linuxRpmReleaseLink.href = hasUsablePackageDeployment(linuxRpmDeployment)
+              ? linuxRpmDeployment.packageUrl
+              : avaloniaChannel?.releasesUrl || "https://github.com/jochenwezel/GuacamoleClient/releases";
           }
         };
 

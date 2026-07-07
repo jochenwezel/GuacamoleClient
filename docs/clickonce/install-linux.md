@@ -127,7 +127,7 @@ ln -sfn "$HOME/.local/opt/guacamoleclient-avalonia-linux-x64-<version>/guacamole
 "$HOME/.local/bin/guacamoleclient"
 ```
 
-The tarball already includes .NET and the embedded Chromium/CEF browser. Required Linux desktop libraries must be available on the target system.
+The tarball already includes .NET and the embedded Chromium/CEF browser. The target system still needs common Linux desktop libraries such as GTK 3, NSS, ALSA, CUPS, Mesa/GL/GBM, fontconfig, and X11/XCB libraries. Package names vary by distribution.
 
 The per-user tarball installation uses `~/.local/opt` for the extracted application files and `~/.local/bin` for the launcher symlink. Many desktop Linux distributions already include `~/.local/bin` in `PATH`; if not, start the client with the full path or add that directory to your shell profile.
 
