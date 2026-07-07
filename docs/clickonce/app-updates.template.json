@@ -75,8 +75,8 @@
               "deploymentType": "zip",
               "releasesUrl": "https://github.com/jochenwezel/GuacamoleClient/releases"
             },
-            "linux-deb": {
-              "deploymentType": "linux-deb",
+            "linux-deb-direct": {
+              "deploymentType": "linux-deb-direct",
               "releaseTag": "__AVALONIA_STABLE_DEB_RELEASE_TAG__",
               "packageFileName": "guacamoleclient-avalonia___AVALONIA_STABLE_VERSION___amd64.deb",
               "packageUrl": "https://github.com/jochenwezel/GuacamoleClient/releases/download/__AVALONIA_STABLE_DEB_RELEASE_TAG__/guacamoleclient-avalonia___AVALONIA_STABLE_VERSION___amd64.deb",
@@ -94,8 +94,8 @@
               "deploymentType": "zip",
               "releasesUrl": "https://github.com/jochenwezel/GuacamoleClient/releases"
             },
-            "linux-deb": {
-              "deploymentType": "linux-deb",
+            "linux-deb-direct": {
+              "deploymentType": "linux-deb-direct",
               "releaseTag": "__AVALONIA_DEV_DEB_RELEASE_TAG__",
               "packageFileName": "guacamoleclient-avalonia___AVALONIA_DEV_VERSION___amd64.deb",
               "packageUrl": "https://github.com/jochenwezel/GuacamoleClient/releases/download/__AVALONIA_DEV_DEB_RELEASE_TAG__/guacamoleclient-avalonia___AVALONIA_DEV_VERSION___amd64.deb",

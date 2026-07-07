@@ -656,7 +656,7 @@ jobs:
           else
             STABLE_VERSION=$(python -c 'import json, pathlib; p=pathlib.Path("public/app-updates.json"); print("unknown" if not p.exists() else json.loads(p.read_text(encoding="utf-8")).get("apps", {}).get("winforms", {}).get("channels", {}).get("stable", {}).get("version", "unknown"))')
             AVALONIA_STABLE_VERSION=$(python -c 'import json, pathlib; p=pathlib.Path("public/app-updates.json"); print("unknown" if not p.exists() else json.loads(p.read_text(encoding="utf-8")).get("apps", {}).get("avalonia", {}).get("channels", {}).get("stable", {}).get("version", "unknown"))')
-            AVALONIA_STABLE_DEB_RELEASE_TAG=$(python -c 'import json, pathlib; p=pathlib.Path("public/app-updates.json"); print("vunknown" if not p.exists() else json.loads(p.read_text(encoding="utf-8")).get("apps", {}).get("avalonia", {}).get("channels", {}).get("stable", {}).get("deployments", {}).get("linux-deb", {}).get("releaseTag", "vunknown"))')
+            AVALONIA_STABLE_DEB_RELEASE_TAG=$(python -c 'import json, pathlib; p=pathlib.Path("public/app-updates.json"); print("vunknown" if not p.exists() else json.loads(p.read_text(encoding="utf-8")).get("apps", {}).get("avalonia", {}).get("channels", {}).get("stable", {}).get("deployments", {}).get("linux-deb-direct", {}).get("releaseTag", "vunknown"))')
             echo "STABLE_VERSION=${STABLE_VERSION}" >> "$GITHUB_ENV"
             echo "DEV_VERSION=${{ needs.winforms-clickonce.outputs.version }}" >> "$GITHUB_ENV"
             echo "AVALONIA_STABLE_VERSION=${AVALONIA_STABLE_VERSION}" >> "$GITHUB_ENV"

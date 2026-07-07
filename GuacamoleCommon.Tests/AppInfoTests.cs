@@ -5,7 +5,7 @@ namespace GuacamoleCommon.Tests;
 
 public class AppInfoTests
 {
-    [TestCase("linux-deb")]
+    [TestCase("linux-deb-repository")]
     [TestCase("linux-rpm")]
     [TestCase("snap")]
     [TestCase("flatpak")]
@@ -20,6 +20,7 @@ public class AppInfoTests
     [TestCase("clickonce")]
     [TestCase("portable")]
     [TestCase("local-dev")]
+    [TestCase("linux-deb-direct")]
     public void SuppressAutomaticUpdateChecks_IsFalse_ForSelfManagedDeployments(string deploymentType)
     {
         var appInfo = new AppInfo { DeploymentType = deploymentType };

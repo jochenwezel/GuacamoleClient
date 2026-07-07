@@ -237,7 +237,7 @@ jobs:
           {
             "schemaVersion": 1,
             "appId": "avalonia",
-            "deploymentType": "linux-deb",
+            "deploymentType": "linux-deb-direct",
             "channel": "${CHANNEL}",
             "version": "${VERSION}",
             "updatesUrl": "https://jochenwezel.github.io/GuacamoleClient/app-updates.json"

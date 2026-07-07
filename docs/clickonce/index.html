@@ -446,7 +446,7 @@ sudo apt install ./${packageFileName}`;
           const text = channelText[selectedChannel];
           const winformsChannel = updateMetadata?.apps?.winforms?.channels?.[selectedChannel];
           const avaloniaChannel = updateMetadata?.apps?.avalonia?.channels?.[selectedChannel];
-          const linuxDebDeployment = avaloniaChannel?.deployments?.["linux-deb"];
+          const linuxDebDeployment = avaloniaChannel?.deployments?.["linux-deb-direct"];
 
           channelTabs.forEach(tab => {
             tab.setAttribute("aria-selected", tab.dataset.selectChannel === selectedChannel ? "true" : "false");

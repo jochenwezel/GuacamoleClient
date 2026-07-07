@@ -27,6 +27,8 @@ Install the downloaded package with `apt`:
 sudo apt install ./guacamoleclient-avalonia___AVALONIA_DEB_VERSION___amd64.deb
 ```
 
+Directly downloaded `.deb` packages are not tied to an APT repository yet. The client can therefore use its in-app update check to guide users back to the installation page when a newer direct-download package is available.
+
 Start the application from the desktop application menu or from a terminal:
 
 ```bash
@@ -118,3 +120,5 @@ A package repository is not available yet. Once a zero-cost repository/channel s
 sudo apt update
 sudo apt install guacamoleclient-avalonia
 ```
+
+Repository-managed packages should use a distinct deployment marker and suppress automatic startup update checks because updates are delivered by `apt`.

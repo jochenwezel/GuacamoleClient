@@ -37,7 +37,7 @@ namespace GuacamoleClient.Common.Updates
             if (string.IsNullOrWhiteSpace(deploymentType))
                 return false;
 
-            return deploymentType.Equals("linux-deb", StringComparison.OrdinalIgnoreCase)
+            return deploymentType.Equals("linux-deb-repository", StringComparison.OrdinalIgnoreCase)
                 || deploymentType.Equals("linux-rpm", StringComparison.OrdinalIgnoreCase)
                 || deploymentType.Equals("snap", StringComparison.OrdinalIgnoreCase)
                 || deploymentType.Equals("flatpak", StringComparison.OrdinalIgnoreCase);
