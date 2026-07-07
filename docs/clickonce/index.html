@@ -356,6 +356,9 @@
             <button id="channel-stable" class="channel-tab" type="button" role="tab" aria-selected="true" data-select-channel="stable">Stable</button>
             <button id="channel-dev" class="channel-tab" type="button" role="tab" aria-selected="false" data-select-channel="dev">Dev</button>
           </div>
+          <div class="actions">
+            <a id="all-install-options-link" class="button secondary" href="https://github.com/jochenwezel/GuacamoleClient/releases">All install options</a>
+          </div>
 
           <section class="install" aria-labelledby="windows-install-title">
             <p id="update-status" class="update-status" hidden></p>
@@ -515,6 +518,7 @@ rm -f "$HOME/.local/bin/guacamoleclient"</code></pre>
         const params = new URLSearchParams(window.location.search);
         const statusEl = document.getElementById("update-status");
         const channelTabs = Array.from(document.querySelectorAll("[data-select-channel]"));
+        const allInstallOptionsLink = document.getElementById("all-install-options-link");
         const clickOnceButton = document.getElementById("install-clickonce");
         const windowsAvaloniaLink = document.getElementById("windows-avalonia-link");
         const windowsSummary = document.getElementById("windows-channel-summary");
@@ -602,6 +606,14 @@ sudo apt install ./${packageFileName}`;
             && releaseTag !== "vunknown";
         };
 
+        const buildReleaseUrl = version => {
+          if (!version || version === "unknown") {
+            return "https://github.com/jochenwezel/GuacamoleClient/releases";
+          }
+
+          return `https://github.com/jochenwezel/GuacamoleClient/releases/tag/${version}`;
+        };
+
         const buildLinuxRpmCommand = deployment => {
           if (!hasUsablePackageDeployment(deployment)) {
             return null;
@@ -677,6 +689,15 @@ ln -sfn "$HOME/.local/opt/${directoryName}/guacamoleclient" "$HOME/.local/bin/gu
             macosSummary.textContent = avaloniaChannel?.version
               ? `${text.macosSummary} Current version: v${avaloniaChannel.version}.`
               : text.macosSummary;
+          }
+
+          if (allInstallOptionsLink) {
+            const releaseVersion = avaloniaChannel?.version || winformsChannel?.version;
+            const label = selectedChannel === "dev" ? "All Dev install options" : "All Stable install options";
+            allInstallOptionsLink.textContent = releaseVersion
+              ? `${label} v${releaseVersion}`
+              : label;
+            allInstallOptionsLink.href = buildReleaseUrl(releaseVersion);
           }
 
           if (clickOnceButton) {
