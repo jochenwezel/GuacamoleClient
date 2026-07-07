@@ -91,6 +91,33 @@
         margin-top: 12px;
       }
 
+      .channel-tabs {
+        display: inline-flex;
+        gap: 4px;
+        margin: 24px 0 0;
+        padding: 4px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--panel);
+      }
+
+      .channel-tab {
+        min-height: 38px;
+        padding: 8px 14px;
+        border: 0;
+        border-radius: 5px;
+        background: transparent;
+        color: var(--green-dark);
+        cursor: pointer;
+        font: inherit;
+        font-weight: 650;
+      }
+
+      .channel-tab[aria-selected="true"] {
+        background: var(--green);
+        color: #fff;
+      }
+
       .button {
         display: inline-flex;
         align-items: center;
@@ -133,6 +160,11 @@
 
       .linux-install {
         margin-top: 32px;
+      }
+
+      .channel-summary {
+        margin-bottom: 12px;
+        color: var(--muted);
       }
 
       .distro-grid {
@@ -250,25 +282,38 @@
             A lightweight desktop client for Apache Guacamole that runs remote sessions in their own app window and reduces keyboard shortcut conflicts between the remote session and your local computer.
           </p>
 
+          <div class="channel-tabs" role="tablist" aria-label="Installation channel">
+            <button id="channel-stable" class="channel-tab" type="button" role="tab" aria-selected="true" data-select-channel="stable">Stable</button>
+            <button id="channel-dev" class="channel-tab" type="button" role="tab" aria-selected="false" data-select-channel="dev">Dev</button>
+          </div>
+
           <section class="install" aria-labelledby="windows-clickonce-title">
             <p id="update-status" class="update-status" hidden></p>
             <h2 id="windows-clickonce-title">Windows ClickOnce Installation</h2>
+            <p id="windows-channel-summary" class="channel-summary">Stable channel for regular Windows installations.</p>
             <div class="actions" aria-label="Windows ClickOnce installation options">
-              <a id="install-stable" class="button" data-channel="stable" href="./clickonce/stable/GuacamoleClient.application">Install Stable</a>
-              <a id="install-dev" class="button secondary" data-channel="dev" href="./clickonce/dev/GuacamoleClient.application">Install Dev</a>
+              <a id="install-clickonce" class="button" data-channel-link="winforms" href="./clickonce/stable/GuacamoleClient.application">Install Stable</a>
             </div>
           </section>
 
           <section class="linux-install" aria-labelledby="linux-install-title">
             <h2 id="linux-install-title">Linux Installation</h2>
+            <p id="linux-channel-summary" class="channel-summary">Stable Debian/Ubuntu package for regular Linux installations.</p>
             <div class="distro-grid">
               <section class="distro" aria-labelledby="linux-debian-title">
                 <h3 id="linux-debian-title">Debian / Ubuntu</h3>
-                <pre><code>cd /tmp
+                <pre><code id="linux-debian-command" data-stable-command='cd /tmp
+wget "https://github.com/jochenwezel/GuacamoleClient/releases/download/__AVALONIA_DEB_RELEASE_TAG__/guacamoleclient-avalonia___AVALONIA_DEB_VERSION___amd64.deb"
+sudo apt install ./guacamoleclient-avalonia___AVALONIA_DEB_VERSION___amd64.deb' data-dev-command='Open the latest preview release on GitHub and download the guacamoleclient-avalonia_*_amd64.deb asset.
+Then run:
+sudo apt install ./guacamoleclient-avalonia_*_amd64.deb'>cd /tmp
 wget "https://github.com/jochenwezel/GuacamoleClient/releases/download/__AVALONIA_DEB_RELEASE_TAG__/guacamoleclient-avalonia___AVALONIA_DEB_VERSION___amd64.deb"
 sudo apt install ./guacamoleclient-avalonia___AVALONIA_DEB_VERSION___amd64.deb</code></pre>
                 <p>Start it from the application menu or run <code>guacamoleclient</code>.</p>
                 <p>The package includes the .NET runtime and declares the required Linux desktop libraries as package dependencies.</p>
+                <div class="actions">
+                  <a id="linux-release-link" class="button secondary" href="https://github.com/jochenwezel/GuacamoleClient/releases">Open GitHub Releases</a>
+                </div>
               </section>
 
               <section class="distro" aria-labelledby="linux-rpm-title">
@@ -316,7 +361,30 @@ sudo apt install ./guacamoleclient-avalonia___AVALONIA_DEB_VERSION___amd64.deb</
       (() => {
         const params = new URLSearchParams(window.location.search);
         const statusEl = document.getElementById("update-status");
-        const installButtons = Array.from(document.querySelectorAll("[data-channel]"));
+        const channelTabs = Array.from(document.querySelectorAll("[data-select-channel]"));
+        const clickOnceButton = document.getElementById("install-clickonce");
+        const windowsSummary = document.getElementById("windows-channel-summary");
+        const linuxSummary = document.getElementById("linux-channel-summary");
+        const linuxCommand = document.getElementById("linux-debian-command");
+        const linuxReleaseLink = document.getElementById("linux-release-link");
+        const requestedChannel = params.get("channel") === "dev" ? "dev" : "stable";
+
+        let updateMetadata = null;
+
+        const channelText = {
+          stable: {
+            clickOnceLabel: "Install Stable",
+            windowsSummary: "Stable channel for regular Windows installations.",
+            linuxSummary: "Stable Debian/Ubuntu package for regular Linux installations.",
+            linuxCommand: linuxCommand?.dataset.stableCommand || "",
+          },
+          dev: {
+            clickOnceLabel: "Install Dev",
+            windowsSummary: "Dev channel for preview builds and testing.",
+            linuxSummary: "Dev builds are published as preview release assets for testing.",
+            linuxCommand: linuxCommand?.dataset.devCommand || "",
+          },
+        };
 
         const compareVersions = (left, right) => {
           const a = String(left || "").split(".").map(value => Number.parseInt(value, 10) || 0);
@@ -333,6 +401,54 @@ sudo apt install ./guacamoleclient-avalonia___AVALONIA_DEB_VERSION___amd64.deb</
           return 0;
         };
 
+        const selectChannel = channel => {
+          const selectedChannel = channel === "dev" ? "dev" : "stable";
+          const text = channelText[selectedChannel];
+          const winformsChannel = updateMetadata?.apps?.winforms?.channels?.[selectedChannel];
+          const avaloniaChannel = updateMetadata?.apps?.avalonia?.channels?.[selectedChannel];
+
+          channelTabs.forEach(tab => {
+            tab.setAttribute("aria-selected", tab.dataset.selectChannel === selectedChannel ? "true" : "false");
+          });
+
+          if (windowsSummary) {
+            windowsSummary.textContent = winformsChannel?.version
+              ? `${text.windowsSummary} Current version: v${winformsChannel.version}.`
+              : text.windowsSummary;
+          }
+
+          if (linuxSummary) {
+            linuxSummary.textContent = avaloniaChannel?.version
+              ? `${text.linuxSummary} Current version: v${avaloniaChannel.version}.`
+              : text.linuxSummary;
+          }
+
+          if (clickOnceButton) {
+            clickOnceButton.textContent = winformsChannel?.version
+              ? `${text.clickOnceLabel} v${winformsChannel.version}`
+              : text.clickOnceLabel;
+            clickOnceButton.href = winformsChannel?.manifestUrl || `./clickonce/${selectedChannel}/GuacamoleClient.application`;
+          }
+
+          if (linuxCommand) {
+            linuxCommand.textContent = text.linuxCommand;
+          }
+
+          if (linuxReleaseLink) {
+            linuxReleaseLink.textContent = selectedChannel === "dev" ? "Open Preview Releases" : "Open GitHub Releases";
+            linuxReleaseLink.href = avaloniaChannel?.releasesUrl || "https://github.com/jochenwezel/GuacamoleClient/releases";
+          }
+        };
+
+        channelTabs.forEach(tab => {
+          tab.addEventListener("click", () => {
+            const selectedChannel = tab.dataset.selectChannel || "stable";
+            selectChannel(selectedChannel);
+          });
+        });
+
+        selectChannel(requestedChannel);
+
         fetch("./app-updates.json", { cache: "no-store" })
           .then(response => {
             if (!response.ok) {
@@ -341,29 +457,9 @@ sudo apt install ./guacamoleclient-avalonia___AVALONIA_DEB_VERSION___amd64.deb</
             return response.json();
           })
           .then(meta => {
+            updateMetadata = meta;
             const channels = meta?.apps?.winforms?.channels;
-            const requestedChannel = params.get("channel");
-
-            installButtons.forEach(button => {
-              const channel = button.dataset.channel;
-              const info = channels?.[channel];
-              if (!info) {
-                return;
-              }
-
-              const label = channel === "stable" ? "Install Stable" : "Install Dev";
-              button.textContent = `${label} v${info.version}`;
-              if (info.manifestUrl) {
-                button.href = info.manifestUrl;
-              }
-            });
-
-            const stableButton = document.getElementById("install-stable");
-            const devButton = document.getElementById("install-dev");
-            if (requestedChannel === "dev" && stableButton && devButton) {
-              stableButton.classList.add("secondary");
-              devButton.classList.remove("secondary");
-            }
+            selectChannel(requestedChannel);
 
             if (params.get("app") !== "winforms-clickonce") {
               return;
