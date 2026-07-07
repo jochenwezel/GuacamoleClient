@@ -1,8 +1,15 @@
 # GuacamoleClient - Windows Installation
 
-## Windows ClickOnce
+## Windows clients
 
-ClickOnce is the primary installation path for the WinForms client on Windows.
+Both Windows clients are supported long-term.
+
+- WinForms is recommended for most Windows users. It uses Microsoft WebView2, so browser security updates come through Windows/Edge.
+- Avalonia is the same app family as Linux and macOS. It uses bundled Chromium/CEF, so browser updates arrive with GuacamoleClient releases.
+
+## WinForms ClickOnce
+
+ClickOnce is the primary installation path for the recommended WinForms client on Windows.
 
 ### Stable
 

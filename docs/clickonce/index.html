@@ -91,6 +91,34 @@
         margin-top: 12px;
       }
 
+      .windows-options {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+        gap: 18px;
+        margin-top: 16px;
+      }
+
+      .client-option {
+        border-top: 1px solid var(--line);
+        padding-top: 16px;
+      }
+
+      .client-option h3 {
+        margin: 0 0 8px;
+        font-size: 1rem;
+      }
+
+      .badge {
+        display: inline-block;
+        margin-left: 6px;
+        padding: 2px 7px;
+        border-radius: 999px;
+        background: #eaf3e6;
+        color: var(--green-dark);
+        font-size: 0.78rem;
+        font-weight: 700;
+      }
+
       .channel-tabs {
         display: inline-flex;
         gap: 4px;
@@ -311,12 +339,25 @@
             <button id="channel-dev" class="channel-tab" type="button" role="tab" aria-selected="false" data-select-channel="dev">Dev</button>
           </div>
 
-          <section class="install" aria-labelledby="windows-clickonce-title">
+          <section class="install" aria-labelledby="windows-install-title">
             <p id="update-status" class="update-status" hidden></p>
-            <h2 id="windows-clickonce-title">Windows ClickOnce Installation</h2>
+            <h2 id="windows-install-title">Windows Installation</h2>
             <p id="windows-channel-summary" class="channel-summary">Stable channel for regular Windows installations.</p>
-            <div class="actions" aria-label="Windows ClickOnce installation options">
-              <a id="install-clickonce" class="button" data-channel-link="winforms" href="./clickonce/stable/GuacamoleClient.application">Install Stable</a>
+            <div class="windows-options" aria-label="Windows installation options">
+              <section class="client-option" aria-labelledby="windows-winforms-title">
+                <h3 id="windows-winforms-title">WinForms <span class="badge">Recommended</span></h3>
+                <p>Best choice for most Windows users. Uses Microsoft WebView2, so browser security updates come through Windows/Edge.</p>
+                <div class="actions">
+                  <a id="install-clickonce" class="button" data-channel-link="winforms" href="./clickonce/stable/GuacamoleClient.application">Install WinForms Stable</a>
+                </div>
+              </section>
+              <section class="client-option" aria-labelledby="windows-avalonia-title">
+                <h3 id="windows-avalonia-title">Avalonia</h3>
+                <p>Same app family as Linux and macOS. Uses bundled Chromium/CEF, so browser updates arrive with GuacamoleClient releases.</p>
+                <div class="actions">
+                  <a id="windows-avalonia-link" class="button secondary" href="https://github.com/jochenwezel/GuacamoleClient/releases">Download Avalonia for Windows</a>
+                </div>
+              </section>
             </div>
           </section>
 
@@ -390,6 +431,7 @@ sudo apt install ./guacamoleclient-avalonia___AVALONIA_DEB_VERSION___amd64.deb</
         const statusEl = document.getElementById("update-status");
         const channelTabs = Array.from(document.querySelectorAll("[data-select-channel]"));
         const clickOnceButton = document.getElementById("install-clickonce");
+        const windowsAvaloniaLink = document.getElementById("windows-avalonia-link");
         const windowsSummary = document.getElementById("windows-channel-summary");
         const linuxSummary = document.getElementById("linux-channel-summary");
         const linuxCommand = document.getElementById("linux-debian-command");
@@ -401,13 +443,13 @@ sudo apt install ./guacamoleclient-avalonia___AVALONIA_DEB_VERSION___amd64.deb</
 
         const channelText = {
           stable: {
-            clickOnceLabel: "Install Stable",
+            clickOnceLabel: "Install WinForms Stable",
             windowsSummary: "Stable channel for regular Windows installations.",
             linuxSummary: "Stable Debian/Ubuntu package for regular Linux installations.",
             linuxCommand: linuxCommand?.dataset.fallbackStableCommand || "",
           },
           dev: {
-            clickOnceLabel: "Install Dev",
+            clickOnceLabel: "Install WinForms Dev",
             windowsSummary: "Dev channel for preview builds and testing.",
             linuxSummary: "Dev builds are published as preview release assets for testing.",
             linuxCommand: linuxCommand?.dataset.fallbackDevCommand || "",
@@ -469,6 +511,11 @@ sudo apt install ./${packageFileName}`;
               ? `${text.clickOnceLabel} v${winformsChannel.version}`
               : text.clickOnceLabel;
             clickOnceButton.href = winformsChannel?.manifestUrl || `./clickonce/${selectedChannel}/GuacamoleClient.application`;
+          }
+
+          if (windowsAvaloniaLink) {
+            windowsAvaloniaLink.textContent = selectedChannel === "dev" ? "Download Avalonia Dev" : "Download Avalonia Stable";
+            windowsAvaloniaLink.href = avaloniaChannel?.deployments?.zip?.releasesUrl || avaloniaChannel?.releasesUrl || "https://github.com/jochenwezel/GuacamoleClient/releases";
           }
 
           if (linuxCommand) {
