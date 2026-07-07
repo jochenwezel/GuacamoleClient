@@ -385,7 +385,7 @@ sudo apt install ./guacamoleclient-avalonia_*_amd64.deb'>cd /tmp
 wget "https://github.com/jochenwezel/GuacamoleClient/releases/download/__AVALONIA_DEB_RELEASE_TAG__/guacamoleclient-avalonia___AVALONIA_DEB_VERSION___amd64.deb"
 sudo apt install ./guacamoleclient-avalonia___AVALONIA_DEB_VERSION___amd64.deb</code></pre>
                 <p>Start it from the application menu or run <code>guacamoleclient</code>.</p>
-                <p>The Debian package already includes .NET and the embedded Chromium/CEF browser. Required Linux desktop libraries are installed automatically by apt as package dependencies.</p>
+                <p>The package already includes .NET and the embedded Chromium/CEF browser. Required Linux desktop libraries are installed automatically by apt as package dependencies.</p>
                 <div class="actions">
                   <a id="linux-release-link" class="button secondary" href="https://github.com/jochenwezel/GuacamoleClient/releases">Open GitHub Releases</a>
                 </div>
@@ -397,13 +397,10 @@ sudo apt install ./guacamoleclient-avalonia___AVALONIA_DEB_VERSION___amd64.deb</
                 <div class="command-header">
                   <button id="copy-linux-rpm-command" class="copy-button" type="button" data-default-label="Copy" data-copied-label="Copied">Copy</button>
                 </div>
-                <pre><code id="linux-rpm-command" data-fallback-stable-command='cd /tmp
-wget "https://github.com/jochenwezel/GuacamoleClient/releases/download/__AVALONIA_DEB_RELEASE_TAG__/guacamoleclient-avalonia-__AVALONIA_DEB_VERSION__-1.x86_64.rpm"
-sudo dnf install ./guacamoleclient-avalonia-__AVALONIA_DEB_VERSION__-1.x86_64.rpm' data-fallback-dev-command='Open the latest preview release on GitHub and download the guacamoleclient-avalonia-*.x86_64.rpm asset.
+                <pre><code id="linux-rpm-command" data-fallback-stable-command='RPM packages are available in the Dev channel for testing. Stable RPM packages will appear here after the next Stable release.' data-fallback-dev-command='Open the latest preview release on GitHub and download the guacamoleclient-avalonia-*.x86_64.rpm asset.
 Then run:
-sudo dnf install ./guacamoleclient-avalonia-*.x86_64.rpm'>cd /tmp
-wget "https://github.com/jochenwezel/GuacamoleClient/releases/download/__AVALONIA_DEB_RELEASE_TAG__/guacamoleclient-avalonia-__AVALONIA_DEB_VERSION__-1.x86_64.rpm"
-sudo dnf install ./guacamoleclient-avalonia-__AVALONIA_DEB_VERSION__-1.x86_64.rpm</code></pre>
+sudo dnf install ./guacamoleclient-avalonia-*.x86_64.rpm'>RPM packages are available in the Dev channel for testing. Stable RPM packages will appear here after the next Stable release.</code></pre>
+                <p>The package already includes .NET and the embedded Chromium/CEF browser. Required Linux desktop libraries are installed automatically by dnf as package dependencies.</p>
               </section>
 
               <section class="distro" aria-labelledby="linux-arch-title">
@@ -412,19 +409,13 @@ sudo dnf install ./guacamoleclient-avalonia-__AVALONIA_DEB_VERSION__-1.x86_64.rp
                 <div class="command-header">
                   <button id="copy-linux-tarball-command" class="copy-button" type="button" data-default-label="Copy" data-copied-label="Copied">Copy</button>
                 </div>
-                <pre><code id="linux-tarball-command" data-fallback-stable-command='cd /tmp
-wget "https://github.com/jochenwezel/GuacamoleClient/releases/download/__AVALONIA_DEB_RELEASE_TAG__/guacamoleclient-avalonia-linux-x64-__AVALONIA_DEB_VERSION__.tar.gz"
-tar -xzf guacamoleclient-avalonia-linux-x64-__AVALONIA_DEB_VERSION__.tar.gz
-cd guacamoleclient-avalonia-linux-x64-__AVALONIA_DEB_VERSION__
-./guacamoleclient' data-fallback-dev-command='Open the latest preview release on GitHub and download the guacamoleclient-avalonia-linux-x64-*.tar.gz asset.
+                <pre><code id="linux-tarball-command" data-fallback-stable-command='Portable tarballs are available in the Dev channel for testing. Stable tarballs will appear here after the next Stable release.' data-fallback-dev-command='Open the latest preview release on GitHub and download the guacamoleclient-avalonia-linux-x64-*.tar.gz asset.
 Then extract it and run:
-tar -xzf guacamoleclient-avalonia-linux-x64-*.tar.gz
-cd guacamoleclient-avalonia-linux-x64-*
-./guacamoleclient'>cd /tmp
-wget "https://github.com/jochenwezel/GuacamoleClient/releases/download/__AVALONIA_DEB_RELEASE_TAG__/guacamoleclient-avalonia-linux-x64-__AVALONIA_DEB_VERSION__.tar.gz"
-tar -xzf guacamoleclient-avalonia-linux-x64-__AVALONIA_DEB_VERSION__.tar.gz
-cd guacamoleclient-avalonia-linux-x64-__AVALONIA_DEB_VERSION__
-./guacamoleclient</code></pre>
+mkdir -p "$HOME/.local/opt" "$HOME/.local/bin"
+tar -xzf guacamoleclient-avalonia-linux-x64-*.tar.gz -C "$HOME/.local/opt"
+ln -sfn "$HOME/.local/opt"/guacamoleclient-avalonia-linux-x64-*/guacamoleclient "$HOME/.local/bin/guacamoleclient"
+"$HOME/.local/bin/guacamoleclient"'>Portable tarballs are available in the Dev channel for testing. Stable tarballs will appear here after the next Stable release.</code></pre>
+                <p>The tarball already includes .NET and the embedded Chromium/CEF browser. Required Linux desktop libraries must be available on the target system.</p>
               </section>
 
               <section class="distro" aria-labelledby="linux-universal-title">
@@ -524,31 +515,44 @@ wget "${packageUrl}"
 sudo apt install ./${packageFileName}`;
         };
 
+        const hasUsablePackageDeployment = deployment => {
+          const packageUrl = deployment?.packageUrl || "";
+          const packageFileName = deployment?.packageFileName || "";
+          const releaseTag = deployment?.releaseTag || "";
+
+          return packageUrl
+            && packageFileName
+            && !packageUrl.includes("vunknown")
+            && !packageFileName.includes("unknown")
+            && releaseTag !== "vunknown";
+        };
+
         const buildLinuxRpmCommand = deployment => {
-          const packageUrl = deployment?.packageUrl;
-          const packageFileName = deployment?.packageFileName;
-          if (!packageUrl || !packageFileName) {
+          if (!hasUsablePackageDeployment(deployment)) {
             return null;
           }
 
+          const packageUrl = deployment.packageUrl;
+          const packageFileName = deployment.packageFileName;
           return `cd /tmp
 wget "${packageUrl}"
 sudo dnf install ./${packageFileName}`;
         };
 
         const buildLinuxTarballCommand = deployment => {
-          const packageUrl = deployment?.packageUrl;
-          const packageFileName = deployment?.packageFileName;
-          if (!packageUrl || !packageFileName) {
+          if (!hasUsablePackageDeployment(deployment)) {
             return null;
           }
 
+          const packageUrl = deployment.packageUrl;
+          const packageFileName = deployment.packageFileName;
           const directoryName = packageFileName.replace(/\.tar\.gz$/, "");
           return `cd /tmp
 wget "${packageUrl}"
-tar -xzf ${packageFileName}
-cd ${directoryName}
-./guacamoleclient`;
+mkdir -p "$HOME/.local/opt" "$HOME/.local/bin"
+tar -xzf ${packageFileName} -C "$HOME/.local/opt"
+ln -sfn "$HOME/.local/opt/${directoryName}/guacamoleclient" "$HOME/.local/bin/guacamoleclient"
+"$HOME/.local/bin/guacamoleclient"`;
         };
 
         const selectChannel = channel => {

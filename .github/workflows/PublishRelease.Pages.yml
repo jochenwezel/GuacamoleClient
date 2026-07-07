@@ -351,7 +351,7 @@ jobs:
           sed -i "s#__AVALONIA_STABLE_DEB_RELEASE_TAG__#${AVALONIA_STABLE_DEB_RELEASE_TAG}#g" "public/app-updates.json"
           sed -i "s#__AVALONIA_DEV_DEB_RELEASE_TAG__#${AVALONIA_DEV_DEB_RELEASE_TAG}#g" "public/app-updates.json"
           AVALONIA_DEB_VERSION="${AVALONIA_STABLE_VERSION}"
-          AVALONIA_DEB_RELEASE_TAG="${RELEASE_TAG:-v${AVALONIA_DEB_VERSION}}"
+          AVALONIA_DEB_RELEASE_TAG="${AVALONIA_STABLE_DEB_RELEASE_TAG}"
           sed -i "s/__AVALONIA_DEB_VERSION__/${AVALONIA_DEB_VERSION}/g" "public/install-linux.md" "public/index.html"
           sed -i "s#__AVALONIA_DEB_RELEASE_TAG__#${AVALONIA_DEB_RELEASE_TAG}#g" "public/install-linux.md" "public/index.html"
 

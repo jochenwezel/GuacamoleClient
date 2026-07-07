@@ -27,7 +27,7 @@ Install the downloaded package with `apt`:
 sudo apt install ./guacamoleclient-avalonia___AVALONIA_DEB_VERSION___amd64.deb
 ```
 
-The Debian package already includes .NET and the embedded Chromium/CEF browser. Required Linux desktop libraries are installed automatically by apt as package dependencies.
+The package already includes .NET and the embedded Chromium/CEF browser. Required Linux desktop libraries are installed automatically by apt as package dependencies.
 
 Directly downloaded `.deb` packages are not tied to an APT repository yet. The client can therefore use its in-app update check to guide users back to the installation page when a newer direct-download package is available.
 
@@ -106,27 +106,30 @@ sudo apt --fix-broken install
 
 Use the x64 RPM package on Fedora/RHEL-compatible distributions:
 
-```bash
-cd /tmp
-wget https://github.com/jochenwezel/GuacamoleClient/releases/download/__AVALONIA_DEB_RELEASE_TAG__/guacamoleclient-avalonia-__AVALONIA_DEB_VERSION__-1.x86_64.rpm
-sudo dnf install ./guacamoleclient-avalonia-__AVALONIA_DEB_VERSION__-1.x86_64.rpm
-```
+Open the Dev channel on https://jochenwezel.github.io/GuacamoleClient/
+Copy the Fedora / Red Hat command block from there.
 
-The RPM package already includes .NET and the embedded Chromium/CEF browser. Required Linux desktop libraries are installed automatically by `dnf` as package dependencies.
+The package already includes .NET and the embedded Chromium/CEF browser. Required Linux desktop libraries are installed automatically by `dnf` as package dependencies.
 
 ## Other Linux distributions
 
 Use the portable x64 tarball on glibc-based desktop distributions when no native package is available.
 
+Open the Dev channel on https://jochenwezel.github.io/GuacamoleClient/
+Copy the Other Linux distributions command block from there.
+
+The generated command installs the application for the current user like this:
+
 ```bash
-cd /tmp
-wget https://github.com/jochenwezel/GuacamoleClient/releases/download/__AVALONIA_DEB_RELEASE_TAG__/guacamoleclient-avalonia-linux-x64-__AVALONIA_DEB_VERSION__.tar.gz
-tar -xzf guacamoleclient-avalonia-linux-x64-__AVALONIA_DEB_VERSION__.tar.gz
-cd guacamoleclient-avalonia-linux-x64-__AVALONIA_DEB_VERSION__
-./guacamoleclient
+mkdir -p "$HOME/.local/opt" "$HOME/.local/bin"
+tar -xzf guacamoleclient-avalonia-linux-x64-<version>.tar.gz -C "$HOME/.local/opt"
+ln -sfn "$HOME/.local/opt/guacamoleclient-avalonia-linux-x64-<version>/guacamoleclient" "$HOME/.local/bin/guacamoleclient"
+"$HOME/.local/bin/guacamoleclient"
 ```
 
 The tarball already includes .NET and the embedded Chromium/CEF browser. Required Linux desktop libraries must be available on the target system.
+
+The per-user tarball installation uses `~/.local/opt` for the extracted application files and `~/.local/bin` for the launcher symlink. Many desktop Linux distributions already include `~/.local/bin` in `PATH`; if not, start the client with the full path or add that directory to your shell profile.
 
 ## Snap / Flatpak / AppImage
 
