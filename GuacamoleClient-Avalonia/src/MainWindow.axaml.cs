@@ -962,9 +962,15 @@ namespace GuacClient
                 RuntimeInformation.FrameworkDescription,
                 RuntimeInformation.OSDescription,
                 RuntimeInformation.ProcessArchitecture.ToString());
+            var diagnostics = Program.GetBrowserStartupDiagnostics();
+            var runtimeDiagnosticsText = LocalizationProvider.Get(
+                LocalizationKeys.Help_About_RuntimeDiagnostics_Text,
+                diagnostics.StartupMode,
+                diagnostics.StartupArguments,
+                diagnostics.CefSwitches);
             var licenseText = LocalizationProvider.Get(LocalizationKeys.Help_About_License_Text);
             var thirdPartyText = LocalizationProvider.Get(LocalizationKeys.Help_About_Avalonia_ThirdParty_Text);
-            var text = string.Join("\n\n", detailsText, licenseText, thirdPartyText);
+            var text = string.Join("\n\n", detailsText, runtimeDiagnosticsText, licenseText, thirdPartyText);
 
             await MessageBoxSimple.Show(
                 this,
@@ -1586,6 +1592,9 @@ namespace GuacClient
 
         private static int BuildNativeKeyCode(int virtualKey, Key key, CefKeyEventType eventType)
         {
+            if (!OperatingSystem.IsWindows())
+                return 0;
+
             uint scanCode = NativeKeyboardMethods.MapVirtualKey((uint)virtualKey, NativeKeyboardMethods.MAPVK_VK_TO_VSC);
             bool isExtended = key is Key.RightAlt or Key.RightCtrl or Key.Insert or Key.Delete or
                               Key.Home or Key.End or Key.PageUp or Key.PageDown or

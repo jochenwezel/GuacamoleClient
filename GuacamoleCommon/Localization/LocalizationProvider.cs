@@ -182,6 +182,8 @@ namespace GuacamoleClient.Common.Localization
                         return "Info zu GuacamoleClient";
                     case LocalizationKeys.Help_About_Text:
                         return "GuacamoleClient\n\nVariante: {0}\nVersion: {1}\nFramework: {2}\nBetriebssystem: {3}\nArchitektur: {4}";
+                    case LocalizationKeys.Help_About_RuntimeDiagnostics_Text:
+                        return "Start-/Browser-Diagnose\n\nStartmodus: {0}\nStartargumente: {1}\nCEF/GPU-Switches: {2}";
                     case LocalizationKeys.Help_About_License_Text:
                         return "Dieses Projekt ist unter der Apache License 2.0 lizenziert.\nSiehe LICENSE im Installationsverzeichnis.";
                     case LocalizationKeys.Help_About_Avalonia_ThirdParty_Text:
@@ -463,6 +465,8 @@ namespace GuacamoleClient.Common.Localization
                     return "About GuacamoleClient";
                 case LocalizationKeys.Help_About_Text:
                     return "GuacamoleClient\n\nVariant: {0}\nVersion: {1}\nFramework: {2}\nOperating system: {3}\nArchitecture: {4}";
+                case LocalizationKeys.Help_About_RuntimeDiagnostics_Text:
+                    return "Startup/browser diagnostics\n\nStartup mode: {0}\nStartup arguments: {1}\nCEF/GPU switches: {2}";
                 case LocalizationKeys.Help_About_License_Text:
                     return "This project is licensed under the Apache License 2.0.\nSee LICENSE in the installation directory.";
                 case LocalizationKeys.Help_About_Avalonia_ThirdParty_Text:

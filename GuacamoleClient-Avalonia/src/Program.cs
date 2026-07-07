@@ -4,6 +4,7 @@ using GuacamoleClient.Common.Localization;
 using GuacamoleClient.Common.Settings;
 using GuacamoleClient.Common.Updates;
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
@@ -22,6 +23,33 @@ internal static class Program
     private const string DisableGpuVariable = "GUACAMOLECLIENT_DISABLE_GPU";
     private const string AppDisplayName = "GuacamoleClient Avalonia";
     private static readonly TimeSpan EarlyStartupFailureWindow = TimeSpan.FromSeconds(10);
+    private static readonly BrowserSwitch[] DisableGpuDefaultBrowserSwitches =
+    {
+        new("disable-accelerated-2d-canvas", string.Empty),
+        new("disable-accelerated-video-decode", string.Empty),
+        new("disable-accelerated-video-encode", string.Empty),
+        new("disable-dev-shm-usage", string.Empty),
+        new("disable-features", "Vulkan"),
+        new("disable-gpu", string.Empty),
+        new("disable-gpu-compositing", string.Empty),
+        new("disable-gpu-rasterization", string.Empty),
+        new("ignore-gpu-blocklist", string.Empty),
+        new("use-angle", "swiftshader"),
+        new("use-gl", "swiftshader"),
+    };
+    private static readonly string[] OptionalBrowserSwitchNames =
+    {
+        "disable-dev-shm-usage",
+        "disable-features",
+        "disable-software-rasterizer",
+        "enable-features",
+        "enable-logging",
+        "log-file",
+        "no-sandbox",
+        "use-angle",
+        "use-gl",
+        "v",
+    };
 
     [STAThread]
     public static int Main(string[] args)
@@ -238,6 +266,19 @@ internal static class Program
         Process.Start(startInfo);
     }
 
+    internal static BrowserStartupDiagnostics GetBrowserStartupDiagnostics()
+    {
+        string[] args = Environment.GetCommandLineArgs()
+            .Skip(1)
+            .Where(IsPublicArgument)
+            .ToArray();
+
+        string startupMode = BuildStartupModeDescription(args);
+        string startupArguments = FormatStartupArguments(args);
+        string cefSwitches = FormatEffectiveBrowserSwitches(args);
+        return new BrowserStartupDiagnostics(startupMode, startupArguments, cefSwitches);
+    }
+
     private static void ConfigureBrowserCompatibilitySwitches(string[] args)
     {
         if (!RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
@@ -245,32 +286,60 @@ internal static class Program
 
         if (IsDisableGpuRequested(args))
         {
-            AddDefaultBrowserCommandLineSwitch(args, "disable-accelerated-2d-canvas", string.Empty);
-            AddDefaultBrowserCommandLineSwitch(args, "disable-accelerated-video-decode", string.Empty);
-            AddDefaultBrowserCommandLineSwitch(args, "disable-accelerated-video-encode", string.Empty);
-            AddDefaultBrowserCommandLineSwitch(args, "disable-dev-shm-usage", string.Empty);
-            AddDefaultBrowserCommandLineSwitch(args, "disable-features", "Vulkan");
-            AddDefaultBrowserCommandLineSwitch(args, "disable-gpu", string.Empty);
-            AddDefaultBrowserCommandLineSwitch(args, "disable-gpu-compositing", string.Empty);
-            AddDefaultBrowserCommandLineSwitch(args, "disable-gpu-rasterization", string.Empty);
-            AddDefaultBrowserCommandLineSwitch(args, "ignore-gpu-blocklist", string.Empty);
-            AddDefaultBrowserCommandLineSwitch(args, "use-angle", "swiftshader");
-            AddDefaultBrowserCommandLineSwitch(args, "use-gl", "swiftshader");
+            foreach (var browserSwitch in DisableGpuDefaultBrowserSwitches)
+                AddDefaultBrowserCommandLineSwitch(args, browserSwitch.Name, browserSwitch.Value);
         }
 
-        AddOptionalBrowserCommandLineSwitches(
-            args,
-            "disable-dev-shm-usage",
-            "disable-features",
-            "disable-software-rasterizer",
-            "enable-features",
-            "enable-logging",
-            "log-file",
-            "no-sandbox",
-            "use-angle",
-            "use-gl",
-            "v");
+        AddOptionalBrowserCommandLineSwitches(args, OptionalBrowserSwitchNames);
     }
+
+    private static string BuildStartupModeDescription(string[] args)
+    {
+        if (!RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+            return "Platform default";
+
+        if (IsDisableGpuRequested(args))
+            return "GPU hardware acceleration disabled";
+
+        if (IsEnableGpuRequested(args))
+            return "GPU hardware acceleration enabled";
+
+        return "Automatic GPU mode";
+    }
+
+    private static string FormatEffectiveBrowserSwitches(string[] args)
+    {
+        if (!RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+            return "(platform default)";
+
+        var browserSwitches = new List<string>();
+
+        if (IsDisableGpuRequested(args))
+        {
+            foreach (var browserSwitch in DisableGpuDefaultBrowserSwitches)
+            {
+                string? argument = FindBrowserCommandLineSwitch(args, browserSwitch.Name);
+                if (argument != null)
+                    browserSwitches.Add(argument);
+                else
+                    browserSwitches.Add(FormatBrowserSwitch(browserSwitch.Name, browserSwitch.Value));
+            }
+        }
+
+        foreach (string switchName in OptionalBrowserSwitchNames)
+        {
+            string? argument = FindBrowserCommandLineSwitch(args, switchName);
+            if (argument != null)
+                browserSwitches.Add(argument);
+        }
+
+        return browserSwitches.Count == 0
+            ? "(none)"
+            : string.Join(" ", browserSwitches.Distinct(StringComparer.OrdinalIgnoreCase));
+    }
+
+    private static string FormatBrowserSwitch(string name, string value)
+        => string.IsNullOrEmpty(value) ? "--" + name : "--" + name + "=" + value;
 
     private static void AddDefaultBrowserCommandLineSwitch(string[] args, string switchName, string value)
     {
@@ -432,6 +501,10 @@ internal static class Program
             + "\r\n"
             + ex;
     }
+
+    internal sealed record BrowserStartupDiagnostics(string StartupMode, string StartupArguments, string CefSwitches);
+
+    private sealed record BrowserSwitch(string Name, string Value);
 
     private sealed record ChildRunResult(int ExitCode, bool FailedEarly, string[] Arguments);
 

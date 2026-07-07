@@ -90,6 +90,7 @@
         Help_RdpResize_Link,
         Help_About_Title,
         Help_About_Text,
+        Help_About_RuntimeDiagnostics_Text,
         Help_About_License_Text,
         Help_About_Avalonia_ThirdParty_Text,
         Help_ProjectWebsite_Link,
