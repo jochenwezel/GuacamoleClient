@@ -1,0 +1,387 @@
+name: PublishRelease - GitHub Pages
+
+on:
+  release:
+    types: [created]
+
+permissions:
+  contents: read
+  actions: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  CLICKONCE_APP_NAME: GuacamoleClient
+
+jobs:
+  publish-pages:
+    runs-on: ubuntu-latest
+
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Configure GitHub Pages
+        uses: actions/configure-pages@v6
+
+      - name: Resolve release channel
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          RAW_TAG="${{ github.event.release.tag_name }}"
+          VER="${RAW_TAG#v}"
+
+          IFS='.' read -ra VERSION_PARTS <<< "$VER"
+          if (( ${#VERSION_PARTS[@]} > 4 )); then
+            echo "Version '$VER' has more than four parts and cannot be used for .NET/ClickOnce manifests." >&2
+            exit 1
+          fi
+          for part in "${VERSION_PARTS[@]}"; do
+            if [[ ! "$part" =~ ^[0-9]+$ ]]; then
+              echo "Version '$VER' contains a non-numeric part '$part' and cannot be used for .NET/ClickOnce manifests." >&2
+              exit 1
+            fi
+          done
+          while (( ${#VERSION_PARTS[@]} < 4 )); do
+            VERSION_PARTS+=("0")
+          done
+          VERSION="$(IFS=.; echo "${VERSION_PARTS[*]}")"
+
+          if [[ "${{ github.event.release.prerelease }}" == "true" ]]; then
+            echo "PAGES_SUBDIR=clickonce/dev" >> "$GITHUB_ENV"
+            echo "PUBLISH_BOTH_CHANNELS=false" >> "$GITHUB_ENV"
+          else
+            echo "PAGES_SUBDIR=clickonce/stable" >> "$GITHUB_ENV"
+            echo "PUBLISH_BOTH_CHANNELS=true" >> "$GITHUB_ENV"
+          fi
+
+          echo "VERSION=$VERSION" >> "$GITHUB_ENV"
+          echo "RELEASE_TAG=${{ github.event.release.tag_name }}" >> "$GITHUB_ENV"
+
+      - name: Wait for WinForms ClickOnce artifact
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TARGET_SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+
+          deadline=$((SECONDS + 600))
+          run_id=""
+
+          while (( SECONDS < deadline )); do
+            run_id="$(gh run list \
+              --workflow "PublishRelease - WinForms ClickOnce" \
+              --commit "$TARGET_SHA" \
+              --event release \
+              --limit 20 \
+              --json databaseId \
+              --jq '.[0].databaseId // ""')"
+
+            if [[ -n "$run_id" ]]; then
+              status="$(gh run view "$run_id" --json status --jq '.status')"
+              conclusion="$(gh run view "$run_id" --json conclusion --jq '.conclusion')"
+
+              if [[ "$status" == "completed" && "$conclusion" == "success" ]]; then
+                echo "CLICKONCE_RUN_ID=$run_id" >> "$GITHUB_ENV"
+                exit 0
+              fi
+
+              if [[ "$status" == "completed" ]]; then
+                echo "ClickOnce workflow failed with conclusion: $conclusion" >&2
+                exit 1
+              fi
+
+              echo "Waiting for ClickOnce workflow run $run_id to complete..."
+            else
+              echo "Waiting for ClickOnce workflow run for $TARGET_SHA..."
+            fi
+
+            sleep 15
+          done
+
+          echo "Timed out waiting for WinForms ClickOnce workflow." >&2
+          exit 1
+
+      - name: Download ClickOnce folder artifact
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          gh run download "$CLICKONCE_RUN_ID" --name clickonce-folder --dir site
+          if [[ "$PUBLISH_BOTH_CHANNELS" == "true" ]]; then
+            gh run download "$CLICKONCE_RUN_ID" --name clickonce-folder-dev --dir site-dev
+          fi
+
+      - name: Download current GitHub Pages site
+        if: ${{ github.event.release.prerelease == true }}
+        shell: pwsh
+        run: |
+          $publicRoot = Join-Path $env:GITHUB_WORKSPACE "public"
+          New-Item -ItemType Directory -Force -Path $publicRoot | Out-Null
+
+          $baseUrl = "https://jochenwezel.github.io/GuacamoleClient"
+
+          function Save-PageFile([string]$RelativePath) {
+            $normalizedRelativePath = $RelativePath -replace '\\', '/'
+            $escapedRelativePath = (($normalizedRelativePath -split '/') | ForEach-Object { [Uri]::EscapeDataString($_) }) -join '/'
+            $sourceUrl = "$baseUrl/$escapedRelativePath"
+            $targetPath = Join-Path $publicRoot ($RelativePath -replace '/', [IO.Path]::DirectorySeparatorChar)
+            $targetDirectory = Split-Path -Parent $targetPath
+            New-Item -ItemType Directory -Force -Path $targetDirectory | Out-Null
+            try {
+              Invoke-WebRequest -Uri $sourceUrl -OutFile $targetPath -ErrorAction Stop
+            }
+            catch {
+              $statusCode = $null
+              if ($null -ne $_.Exception.Response -and $null -ne $_.Exception.Response.StatusCode) {
+                $statusCode = [int]$_.Exception.Response.StatusCode
+              }
+
+              if ($statusCode -eq 404) {
+                Write-Host "Skipping missing existing GitHub Pages file: $normalizedRelativePath"
+                return
+              }
+
+              throw
+            }
+          }
+
+          foreach ($relativePath in @(
+            "INSTALL.md",
+            "install-windows.md",
+            "install-linux.md",
+            "install-mac.md",
+            "RELEASE.md",
+            "index.html",
+            "app-updates.json",
+            "assets/guac-client-app_banner_1280x640.png",
+            "clickonce/stable/${{ env.CLICKONCE_APP_NAME }}.application"
+          )) {
+            Save-PageFile $relativePath
+          }
+
+          $stableRoot = Join-Path $publicRoot "clickonce/stable"
+          $deploymentPath = Join-Path $stableRoot "${{ env.CLICKONCE_APP_NAME }}.application"
+
+          [xml]$deploymentXml = Get-Content -LiteralPath $deploymentPath
+          $appManifestNode = $deploymentXml.SelectSingleNode("/*[local-name()='assembly']/*[local-name()='dependency']/*[local-name()='dependentAssembly']")
+          if ($null -eq $appManifestNode -or $appManifestNode -isnot [System.Xml.XmlElement]) {
+            throw "Unable to locate the stable application manifest entry."
+          }
+
+          $appManifestElement = [System.Xml.XmlElement]$appManifestNode
+          $appManifestRelativePath = $appManifestElement.GetAttribute("codebase")
+          if ([string]::IsNullOrWhiteSpace($appManifestRelativePath)) {
+            throw "Stable deployment manifest does not contain an application manifest codebase."
+          }
+          $appManifestRelativePath = $appManifestRelativePath -replace '\\', '/'
+
+          Save-PageFile "clickonce/stable/$appManifestRelativePath"
+          $appManifestPath = Join-Path $stableRoot ($appManifestRelativePath -replace '/', [IO.Path]::DirectorySeparatorChar)
+
+          [xml]$appManifestXml = Get-Content -LiteralPath $appManifestPath
+          $appManifestRelativeDirectory = Split-Path -Parent $appManifestRelativePath
+          $relativeFilesToRestore = New-Object 'System.Collections.Generic.HashSet[string]' ([System.StringComparer]::OrdinalIgnoreCase)
+
+          $fileNodes = $appManifestXml.SelectNodes("//*[local-name()='assembly']/*[local-name()='file']")
+          foreach ($fileNode in $fileNodes) {
+            if ($fileNode -isnot [System.Xml.XmlElement]) {
+              continue
+            }
+
+            $fileElement = [System.Xml.XmlElement]$fileNode
+            $fileName = $fileElement.GetAttribute("name")
+            if ([string]::IsNullOrWhiteSpace($fileName)) {
+              continue
+            }
+
+            $relativeFilePath = [IO.Path]::Combine($appManifestRelativeDirectory, $fileName)
+            $relativeFilePath = $relativeFilePath -replace '\\', '/'
+            [void]$relativeFilesToRestore.Add($relativeFilePath)
+          }
+
+          $dependencyNodes = $appManifestXml.SelectNodes("//*[local-name()='assembly']/*[local-name()='dependency']/*[local-name()='dependentAssembly' and @codebase]")
+          foreach ($dependencyNode in $dependencyNodes) {
+            if ($dependencyNode -isnot [System.Xml.XmlElement]) {
+              continue
+            }
+
+            $dependencyElement = [System.Xml.XmlElement]$dependencyNode
+            $dependencyType = $dependencyElement.GetAttribute("dependencyType")
+            if (-not [string]::IsNullOrWhiteSpace($dependencyType) -and $dependencyType -ne "install") {
+              continue
+            }
+
+            $codebase = $dependencyElement.GetAttribute("codebase")
+            if ([string]::IsNullOrWhiteSpace($codebase)) {
+              continue
+            }
+
+            $relativeDependencyPath = [IO.Path]::Combine($appManifestRelativeDirectory, $codebase)
+            $relativeDependencyPath = $relativeDependencyPath -replace '\\', '/'
+            [void]$relativeFilesToRestore.Add($relativeDependencyPath)
+          }
+
+          foreach ($relativeFilePath in $relativeFilesToRestore) {
+            Save-PageFile "clickonce/stable/$relativeFilePath"
+          }
+
+      - name: Wait for Avalonia release assets
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+
+          expected_assets=(
+            "bin-avalonia-windows-${VERSION}.zip"
+            "bin-avalonia-linux-${VERSION}.zip"
+            "bin-avalonia-osx-arm64-${VERSION}.zip"
+            "bin-avalonia-osx-x64-${VERSION}.zip"
+            "guacamoleclient-avalonia_${VERSION}_amd64.deb"
+          )
+
+          deadline=$((SECONDS + 600))
+          while (( SECONDS < deadline )); do
+            asset_names="$(gh release view "$RELEASE_TAG" --json assets --jq '.assets[].name')"
+            missing=()
+
+            for expected_asset in "${expected_assets[@]}"; do
+              if ! grep -Fxq "$expected_asset" <<< "$asset_names"; then
+                missing+=("$expected_asset")
+              fi
+            done
+
+            if (( ${#missing[@]} == 0 )); then
+              echo "All expected Avalonia release assets are available."
+              exit 0
+            fi
+
+            echo "Waiting for Avalonia release assets: ${missing[*]}"
+            sleep 15
+          done
+
+          echo "Timed out waiting for Avalonia release assets for $RELEASE_TAG." >&2
+          exit 1
+
+      - name: Prepare Pages site
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "public"
+          mkdir -p "public/${PAGES_SUBDIR}"
+          find "public/${PAGES_SUBDIR}" -mindepth 1 -delete
+          cp -R "site/." "public/${PAGES_SUBDIR}/"
+          if [[ "$PUBLISH_BOTH_CHANNELS" == "true" ]]; then
+            mkdir -p "public/clickonce/dev"
+            find "public/clickonce/dev" -mindepth 1 -delete
+            cp -R "site-dev/." "public/clickonce/dev/"
+          fi
+
+      - name: Set channel versions for landing page
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ "$PUBLISH_BOTH_CHANNELS" == "true" ]]; then
+            echo "STABLE_VERSION=${VERSION}" >> "$GITHUB_ENV"
+            echo "DEV_VERSION=${VERSION}" >> "$GITHUB_ENV"
+            echo "AVALONIA_STABLE_VERSION=${VERSION}" >> "$GITHUB_ENV"
+            echo "AVALONIA_DEV_VERSION=${VERSION}" >> "$GITHUB_ENV"
+            echo "AVALONIA_STABLE_DEB_RELEASE_TAG=${RELEASE_TAG}" >> "$GITHUB_ENV"
+            echo "AVALONIA_DEV_DEB_RELEASE_TAG=${RELEASE_TAG}" >> "$GITHUB_ENV"
+          else
+            STABLE_VERSION=$(python -c 'import json, pathlib; p=pathlib.Path("public/app-updates.json"); print("unknown" if not p.exists() else json.loads(p.read_text(encoding="utf-8")).get("apps", {}).get("winforms", {}).get("channels", {}).get("stable", {}).get("version", "unknown"))')
+            AVALONIA_STABLE_VERSION=$(python -c 'import json, pathlib; p=pathlib.Path("public/app-updates.json"); print("unknown" if not p.exists() else json.loads(p.read_text(encoding="utf-8")).get("apps", {}).get("avalonia", {}).get("channels", {}).get("stable", {}).get("version", "unknown"))')
+            AVALONIA_STABLE_DEB_RELEASE_TAG=$(python -c 'import json, pathlib; p=pathlib.Path("public/app-updates.json"); print("vunknown" if not p.exists() else json.loads(p.read_text(encoding="utf-8")).get("apps", {}).get("avalonia", {}).get("channels", {}).get("stable", {}).get("deployments", {}).get("linux-deb-direct", {}).get("releaseTag", "vunknown"))')
+            echo "STABLE_VERSION=${STABLE_VERSION}" >> "$GITHUB_ENV"
+            echo "DEV_VERSION=${VERSION}" >> "$GITHUB_ENV"
+            echo "AVALONIA_STABLE_VERSION=${AVALONIA_STABLE_VERSION}" >> "$GITHUB_ENV"
+            echo "AVALONIA_DEV_VERSION=${VERSION}" >> "$GITHUB_ENV"
+            echo "AVALONIA_STABLE_DEB_RELEASE_TAG=${AVALONIA_STABLE_DEB_RELEASE_TAG}" >> "$GITHUB_ENV"
+            echo "AVALONIA_DEV_DEB_RELEASE_TAG=${RELEASE_TAG}" >> "$GITHUB_ENV"
+          fi
+
+      - name: Add .nojekyll + .gitattributes
+        shell: bash
+        run: |
+          : > "public/.nojekyll"
+          if [[ -f ".gitattributes" ]]; then
+            cp -f ".gitattributes" "public/.gitattributes"
+          fi
+
+      - name: Add installation docs, release notes and landing page
+        shell: bash
+        env:
+          RELEASE_NAME: ${{ github.event.release.name }}
+          RELEASE_BODY: ${{ github.event.release.body }}
+        run: |
+          set -euo pipefail
+          cp -f "docs/clickonce/INSTALL.md" "public/INSTALL.md"
+          cp -f "docs/clickonce/install-windows.md" "public/install-windows.md"
+          cp -f "docs/clickonce/install-linux.md" "public/install-linux.md"
+          cp -f "docs/clickonce/install-mac.md" "public/install-mac.md"
+          cp -f "docs/clickonce/index.html" "public/index.html"
+          cp -f "docs/clickonce/app-updates.template.json" "public/app-updates.json"
+          cp -f "logos/favicon-guac-tricolor-logo/favicon.ico" "public/favicon.ico"
+          cp -f "logos/favicon-guac-tricolor-logo/favicon.svg" "public/favicon.svg"
+          cp -f "logos/favicon-guac-tricolor-logo/favicon-96x96.png" "public/favicon-96x96.png"
+          cp -f "logos/favicon-guac-tricolor-logo/apple-touch-icon.png" "public/apple-touch-icon.png"
+          cp -f "logos/favicon-guac-tricolor-logo/site.webmanifest" "public/site.webmanifest"
+          cp -f "logos/favicon-guac-tricolor-logo/web-app-manifest-192x192.png" "public/web-app-manifest-192x192.png"
+          cp -f "logos/favicon-guac-tricolor-logo/web-app-manifest-512x512.png" "public/web-app-manifest-512x512.png"
+          mkdir -p "public/assets"
+          cp -f "logos/guac-client-app_banner_1280x640.png" "public/assets/guac-client-app_banner_1280x640.png"
+          sed -i "s/__WINFORMS_STABLE_VERSION__/${STABLE_VERSION}/g" "public/app-updates.json"
+          sed -i "s/__WINFORMS_DEV_VERSION__/${DEV_VERSION}/g" "public/app-updates.json"
+          sed -i "s/__AVALONIA_STABLE_VERSION__/${AVALONIA_STABLE_VERSION}/g" "public/app-updates.json"
+          sed -i "s/__AVALONIA_DEV_VERSION__/${AVALONIA_DEV_VERSION}/g" "public/app-updates.json"
+          sed -i "s#__AVALONIA_STABLE_DEB_RELEASE_TAG__#${AVALONIA_STABLE_DEB_RELEASE_TAG}#g" "public/app-updates.json"
+          sed -i "s#__AVALONIA_DEV_DEB_RELEASE_TAG__#${AVALONIA_DEV_DEB_RELEASE_TAG}#g" "public/app-updates.json"
+          AVALONIA_DEB_VERSION="${AVALONIA_STABLE_VERSION}"
+          AVALONIA_DEB_RELEASE_TAG="${RELEASE_TAG:-v${AVALONIA_DEB_VERSION}}"
+          sed -i "s/__AVALONIA_DEB_VERSION__/${AVALONIA_DEB_VERSION}/g" "public/install-linux.md" "public/index.html"
+          sed -i "s#__AVALONIA_DEB_RELEASE_TAG__#${AVALONIA_DEB_RELEASE_TAG}#g" "public/install-linux.md" "public/index.html"
+
+          {
+            echo "# Release ${RELEASE_TAG#v}"
+            echo
+            if [[ -n "$RELEASE_NAME" ]]; then
+              echo "## ${RELEASE_NAME}"
+              echo
+            fi
+            echo "## Installation (Stable)"
+            echo "- https://jochenwezel.github.io/GuacamoleClient/clickonce/stable/GuacamoleClient.application"
+            echo
+            echo "## Release Notes"
+            echo
+            echo "$RELEASE_BODY"
+          } > "public/RELEASE.md"
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v5
+        with:
+          path: public
+
+      - name: Upload Pages preview artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: github-pages-preview-${{ github.event.release.tag_name }}
+          path: public/**
+          if-no-files-found: error
+          retention-days: 14
+          include-hidden-files: true
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v5
