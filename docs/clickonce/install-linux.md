@@ -27,6 +27,8 @@ Install the downloaded package with `apt`:
 sudo apt install ./guacamoleclient-avalonia___AVALONIA_DEB_VERSION___amd64.deb
 ```
 
+The Debian package already includes .NET and the embedded Chromium/CEF browser. Required Linux desktop libraries are installed automatically by apt as package dependencies.
+
 Directly downloaded `.deb` packages are not tied to an APT repository yet. The client can therefore use its in-app update check to guide users back to the installation page when a newer direct-download package is available.
 
 Start the application from the desktop application menu or from a terminal:
