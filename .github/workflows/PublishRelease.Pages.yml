@@ -289,6 +289,11 @@ jobs:
           $avaloniaStableRoot = Join-Path $publicRoot "clickonce/avalonia/stable"
           $avaloniaDeploymentPath = Join-Path $avaloniaStableRoot "${{ env.AVALONIA_CLICKONCE_APP_NAME }}.application"
 
+          if (-not (Test-Path -LiteralPath $avaloniaDeploymentPath)) {
+            Write-Host "No existing stable Avalonia ClickOnce deployment found to restore."
+            return
+          }
+
           [xml]$avaloniaDeploymentXml = Get-Content -LiteralPath $avaloniaDeploymentPath
           $avaloniaAppManifestNode = $avaloniaDeploymentXml.SelectSingleNode("/*[local-name()='assembly']/*[local-name()='dependency']/*[local-name()='dependentAssembly']")
           if ($null -eq $avaloniaAppManifestNode -or $avaloniaAppManifestNode -isnot [System.Xml.XmlElement]) {
