@@ -383,6 +383,27 @@
             <p class="inline-note">Windows may show an unknown publisher warning for self-signed open-source builds.</p>
           </section>
 
+          <section class="linux-install" aria-labelledby="macos-install-title">
+            <h2 id="macos-install-title">macOS Installation</h2>
+            <p id="macos-channel-summary" class="channel-summary">macOS builds are experimental and intended for early testing.</p>
+            <div class="distro-grid">
+              <section class="distro" aria-labelledby="macos-arm64-title">
+                <h3 id="macos-arm64-title">Apple Silicon</h3>
+                <div class="actions">
+                  <a id="macos-arm64-link" class="button secondary" href="https://github.com/jochenwezel/GuacamoleClient/releases">Download Avalonia macOS ARM64 Stable</a>
+                </div>
+              </section>
+
+              <section class="distro" aria-labelledby="macos-x64-title">
+                <h3 id="macos-x64-title">Intel x64</h3>
+                <div class="actions">
+                  <a id="macos-x64-link" class="button secondary" href="https://github.com/jochenwezel/GuacamoleClient/releases">Download Avalonia macOS x64 Stable</a>
+                </div>
+              </section>
+            </div>
+            <p class="inline-note">macOS builds are not yet officially supported. Packaging, signing, notarization, and platform-specific validation are still in progress.</p>
+          </section>
+
           <section class="linux-install" aria-labelledby="linux-install-title">
             <h2 id="linux-install-title">Linux Installation</h2>
             <p id="linux-channel-summary" class="channel-summary">Stable Debian/Ubuntu package for regular Linux installations.</p>
@@ -468,26 +489,6 @@ rm -f "$HOME/.local/bin/guacamoleclient"</code></pre>
             </div>
           </section>
 
-          <section class="linux-install" aria-labelledby="macos-install-title">
-            <h2 id="macos-install-title">macOS Installation</h2>
-            <p id="macos-channel-summary" class="channel-summary">macOS builds are experimental and intended for early testing.</p>
-            <div class="distro-grid">
-              <section class="distro" aria-labelledby="macos-arm64-title">
-                <h3 id="macos-arm64-title">Apple Silicon</h3>
-                <div class="actions">
-                  <a id="macos-arm64-link" class="button secondary" href="https://github.com/jochenwezel/GuacamoleClient/releases">Download Avalonia macOS ARM64 Stable</a>
-                </div>
-              </section>
-
-              <section class="distro" aria-labelledby="macos-x64-title">
-                <h3 id="macos-x64-title">Intel x64</h3>
-                <div class="actions">
-                  <a id="macos-x64-link" class="button secondary" href="https://github.com/jochenwezel/GuacamoleClient/releases">Download Avalonia macOS x64 Stable</a>
-                </div>
-              </section>
-            </div>
-            <p class="inline-note">macOS builds are not yet officially supported. Packaging, signing, notarization, and platform-specific validation are still in progress.</p>
-          </section>
         </div>
 
         <aside class="panel" aria-labelledby="resources-title">
