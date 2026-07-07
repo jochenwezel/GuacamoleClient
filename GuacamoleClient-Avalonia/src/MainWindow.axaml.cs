@@ -632,12 +632,16 @@ namespace GuacClient
 
         private void ShowEmptyState()
         {
+            _web.IsVisible = false;
             _emptyStateOverlay.IsVisible = true;
             Title = $"GuacamoleClient v{VersionUtil.InformationalVersion()}";
         }
 
         private void HideEmptyState()
-            => _emptyStateOverlay.IsVisible = false;
+        {
+            _emptyStateOverlay.IsVisible = false;
+            _web.IsVisible = true;
+        }
 
         private void ConfigureBrowserCacheBeforeWebViewCreation()
         {
@@ -1118,6 +1122,7 @@ namespace GuacClient
             if (!UrlInputDialog.IsValidUrl(url))
                 return;
 
+            HideEmptyState();
             _web.Address = url;
             UpdateWindowTitle(url!, _web.Title);
             _web.Focus();
@@ -1154,6 +1159,7 @@ namespace GuacClient
             if (!UrlInputDialog.IsValidUrl(url))
                 return;
 
+            HideEmptyState();
             _web.Address = new Uri(new Uri(url!), "#/settings/preferences").ToString();
             UpdateWindowTitle(_web.Address, _web.Title);
             _web.Focus();
@@ -1165,6 +1171,7 @@ namespace GuacClient
             if (!UrlInputDialog.IsValidUrl(url))
                 return;
 
+            HideEmptyState();
             _web.Address = new Uri(new Uri(url!), "#/settings/connections").ToString();
             UpdateWindowTitle(_web.Address, _web.Title);
             _web.Focus();
