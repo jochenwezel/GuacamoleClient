@@ -195,6 +195,12 @@
         color: var(--muted);
       }
 
+      .inline-note {
+        margin-top: 14px;
+        color: var(--muted);
+        font-size: 0.95rem;
+      }
+
       .distro-grid {
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
@@ -359,6 +365,7 @@
                 </div>
               </section>
             </div>
+            <p class="inline-note">Windows may show an unknown publisher warning for self-signed open-source builds.</p>
           </section>
 
           <section class="linux-install" aria-labelledby="linux-install-title">
@@ -417,8 +424,8 @@ sudo apt install ./guacamoleclient-avalonia___AVALONIA_DEB_VERSION___amd64.deb</
         </aside>
       </section>
 
-      <section class="note" aria-label="Windows security note">
-        Windows may show an unknown publisher warning for self-signed open-source builds. Linux package-manager builds suppress automatic startup update checks because updates should be handled by the package manager.
+      <section class="note" aria-label="Linux package-manager note">
+        Linux package-manager builds suppress automatic startup update checks because updates should be handled by the package manager.
       </section>
 
       <footer>
