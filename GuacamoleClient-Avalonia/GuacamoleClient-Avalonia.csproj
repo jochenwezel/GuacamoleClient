@@ -137,6 +137,20 @@
           SkipUnchangedFiles="true" />
   </Target>
 
+  <Target Name="SeedMacCefGlueBrowserProcessDylibs"
+          Condition="'$(CefGlueTargetPlatform)'=='osx-arm64' or '$(CefGlueTargetPlatform)'=='osx-x64'"
+          BeforeTargets="CopyFilesToOutputDirectory;ComputeFilesToPublish">
+    <ItemGroup>
+      <MacCefGlueBrowserProcessDylibs Include="@(CefRedistOSXARM64)"
+                                      Condition="'$(CefGlueTargetPlatform)'=='osx-arm64' and ('%(FileName)%(Extension)'=='libEGL.dylib' or '%(FileName)%(Extension)'=='libGLESv2.dylib' or '%(FileName)%(Extension)'=='libvk_swiftshader.dylib')" />
+      <MacCefGlueBrowserProcessDylibs Include="@(CefRedistOSX64)"
+                                      Condition="'$(CefGlueTargetPlatform)'=='osx-x64' and ('%(FileName)%(Extension)'=='libEGL.dylib' or '%(FileName)%(Extension)'=='libGLESv2.dylib' or '%(FileName)%(Extension)'=='libvk_swiftshader.dylib')" />
+    </ItemGroup>
+    <Copy SourceFiles="@(MacCefGlueBrowserProcessDylibs)"
+          DestinationFolder="$(OutDir)"
+          SkipUnchangedFiles="true" />
+  </Target>
+
   <ItemGroup>
     <ProjectReference Include="..\GuacamoleCommon\GuacamoleCommon.csproj" />
   </ItemGroup>
