@@ -102,6 +102,14 @@
         UpdateCheck_Button_UpdateNow,
         UpdateCheck_Button_RemindLater,
         UpdateCheck_Button_SkipVersion,
+        /// <summary>
+        /// Gets the ClickOnce cleanup dialog title.
+        /// </summary>
+        ClickOnceCleanup_Title,
+        /// <summary>
+        /// Gets the ClickOnce cleanup confirmation text.
+        /// </summary>
+        ClickOnceCleanup_Confirm_Text,
 
         // Choose/Manage servers dialog
         ChooseServer_Column_Name,

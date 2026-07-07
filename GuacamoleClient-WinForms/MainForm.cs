@@ -48,6 +48,7 @@ namespace GuacamoleClient.WinForms
         private readonly ClickOnceDeploymentInfo? _clickOnceDeploymentInfo = ClickOnceDeploymentInfo.TryCreate();
         private readonly AppInfo _appInfo = AppInfo.Load(CreateFallbackAppInfo());
         private readonly AppUpdateChecker _appUpdateChecker;
+        private readonly ClickOnceCleanupManager _clickOnceCleanupManager;
 
         public MainForm(GuacamoleClient.Common.Settings.GuacamoleSettingsManager settings, GuacamoleClient.Common.Settings.GuacamoleServerProfile serverProfile) : this(settings, serverProfile, new Uri(serverProfile.Url))
         { }
@@ -57,6 +58,10 @@ namespace GuacamoleClient.WinForms
             _settings = settings ?? throw new ArgumentNullException(nameof(settings));
             ServerProfile = serverProfile ?? throw new ArgumentNullException(nameof(serverProfile));
             _appUpdateChecker = new AppUpdateChecker(_appInfo, "GuacamoleClient");
+            _clickOnceCleanupManager = new ClickOnceCleanupManager(
+                ClickOnceCleanupStateStore.CreateForSettingsAppName("GuacamoleClient"),
+                _appInfo,
+                AppContext.BaseDirectory);
             this.HomeUrl = new Uri(serverProfile.Url);
             this.StartUrl = startUrl;
             _trustedHosts.Add(this.HomeUrl.Host);
@@ -336,6 +341,7 @@ namespace GuacamoleClient.WinForms
             };
 
             RefreshFaviconAsync();
+            await _clickOnceCleanupManager.ProcessPendingCleanupAsync(this).ConfigureAwait(true);
             _ = CheckForUpdatesOnStartupAsync();
         }
 
@@ -807,7 +813,7 @@ namespace GuacamoleClient.WinForms
                 if (!result.IsUpdateAvailable || await _appUpdateChecker.IsSkippedAsync(result.LatestVersion).ConfigureAwait(true))
                     return;
 
-                ShowUpdateAvailableDialog(result);
+                await ShowUpdateAvailableDialogAsync(result).ConfigureAwait(true);
             }
             catch
             {
@@ -822,7 +828,7 @@ namespace GuacamoleClient.WinForms
                 AppUpdateCheckResult result = await _appUpdateChecker.CheckAsync().ConfigureAwait(true);
                 if (result.IsUpdateAvailable)
                 {
-                    ShowUpdateAvailableDialog(result);
+                    await ShowUpdateAvailableDialogAsync(result).ConfigureAwait(true);
                     return;
                 }
 
@@ -845,7 +851,7 @@ namespace GuacamoleClient.WinForms
             }
         }
 
-        private void ShowUpdateAvailableDialog(AppUpdateCheckResult result)
+        private async Task ShowUpdateAvailableDialogAsync(AppUpdateCheckResult result)
         {
             using var dialog = new Form
             {
@@ -914,6 +920,7 @@ namespace GuacamoleClient.WinForms
             DialogResult dialogResult = dialog.ShowDialog(this);
             if (dialogResult == DialogResult.Yes)
             {
+                await _clickOnceCleanupManager.RegisterCurrentDirectoryForCleanupAsync().ConfigureAwait(true);
                 _appUpdateChecker.StartUpdate(result);
             }
             else if (dialogResult == DialogResult.Ignore)

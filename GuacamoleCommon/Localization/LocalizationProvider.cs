@@ -206,6 +206,10 @@ namespace GuacamoleClient.Common.Localization
                         return "Später erinnern";
                     case LocalizationKeys.UpdateCheck_Button_SkipVersion:
                         return "Diese Version überspringen";
+                    case LocalizationKeys.ClickOnceCleanup_Title:
+                        return "ClickOnce-Bereinigung";
+                    case LocalizationKeys.ClickOnceCleanup_Confirm_Text:
+                        return "Eine ältere ClickOnce-Installation kann bereinigt werden.\n\nVersion: {0}\nPfad: {1}\n\nDieses alte Installationsverzeichnis jetzt löschen?";
 
                     // Choose server dialog
                     case LocalizationKeys.ChooseServer_Column_Name:
@@ -489,6 +493,10 @@ namespace GuacamoleClient.Common.Localization
                     return "Remind me later";
                 case LocalizationKeys.UpdateCheck_Button_SkipVersion:
                     return "Skip this version";
+                case LocalizationKeys.ClickOnceCleanup_Title:
+                    return "ClickOnce cleanup";
+                case LocalizationKeys.ClickOnceCleanup_Confirm_Text:
+                    return "An older ClickOnce installation can be cleaned up.\n\nVersion: {0}\nPath: {1}\n\nDelete this old installation directory now?";
 
                 // Choose server dialog
                 case LocalizationKeys.ChooseServer_Column_Name:
