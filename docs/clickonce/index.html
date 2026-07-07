@@ -602,11 +602,12 @@ ln -sfn "$HOME/.local/opt/${directoryName}/guacamoleclient" "$HOME/.local/bin/gu
           }
 
           if (windowsAvaloniaLink) {
-            const avaloniaLabel = selectedChannel === "dev" ? "Download Avalonia Dev" : "Download Avalonia Stable";
+            const avaloniaZipDeployment = avaloniaChannel?.deployments?.zip;
+            const avaloniaLabel = selectedChannel === "dev" ? "Download Avalonia Windows Dev" : "Download Avalonia Windows Stable";
             windowsAvaloniaLink.textContent = avaloniaChannel?.version
               ? `${avaloniaLabel} v${avaloniaChannel.version}`
               : avaloniaLabel;
-            windowsAvaloniaLink.href = avaloniaChannel?.deployments?.zip?.releasesUrl || avaloniaChannel?.releasesUrl || "https://github.com/jochenwezel/GuacamoleClient/releases";
+            windowsAvaloniaLink.href = avaloniaZipDeployment?.packageUrl || avaloniaZipDeployment?.releasesUrl || avaloniaChannel?.releasesUrl || "https://github.com/jochenwezel/GuacamoleClient/releases";
           }
 
           if (linuxCommand) {

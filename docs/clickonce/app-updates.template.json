@@ -73,6 +73,9 @@
           "deployments": {
             "zip": {
               "deploymentType": "zip",
+              "releaseTag": "__AVALONIA_STABLE_DEB_RELEASE_TAG__",
+              "packageFileName": "bin-avalonia-windows-__AVALONIA_STABLE_VERSION__.zip",
+              "packageUrl": "https://github.com/jochenwezel/GuacamoleClient/releases/download/__AVALONIA_STABLE_DEB_RELEASE_TAG__/bin-avalonia-windows-__AVALONIA_STABLE_VERSION__.zip",
               "releasesUrl": "https://github.com/jochenwezel/GuacamoleClient/releases"
             },
             "linux-deb-direct": {
@@ -108,6 +111,9 @@
           "deployments": {
             "zip": {
               "deploymentType": "zip",
+              "releaseTag": "__AVALONIA_DEV_DEB_RELEASE_TAG__",
+              "packageFileName": "bin-avalonia-windows-__AVALONIA_DEV_VERSION__.zip",
+              "packageUrl": "https://github.com/jochenwezel/GuacamoleClient/releases/download/__AVALONIA_DEV_DEB_RELEASE_TAG__/bin-avalonia-windows-__AVALONIA_DEV_VERSION__.zip",
               "releasesUrl": "https://github.com/jochenwezel/GuacamoleClient/releases"
             },
             "linux-deb-direct": {
