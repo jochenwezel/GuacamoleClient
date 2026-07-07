@@ -50,6 +50,10 @@ namespace GuacClient
 
         private WebView _web = default!;
         private Menu _mainMenu = default!;
+        private Border _emptyStateOverlay = default!;
+        private TextBlock _emptyStateTitleTextBlock = default!;
+        private TextBlock _emptyStateMessageTextBlock = default!;
+        private Button _emptyStateAddProfileButton = default!;
         private Border _hintOverlay = default!;
         private TextBlock _hintOverlayText = default!;
         private MenuItem _connectionMenuItem = default!;
@@ -122,6 +126,10 @@ namespace GuacClient
 
             _web = this.FindControl<WebView>("Web")!;
             _mainMenu = this.FindControl<Menu>("MainMenu")!;
+            _emptyStateOverlay = this.FindControl<Border>("EmptyStateOverlay")!;
+            _emptyStateTitleTextBlock = this.FindControl<TextBlock>("EmptyStateTitleTextBlock")!;
+            _emptyStateMessageTextBlock = this.FindControl<TextBlock>("EmptyStateMessageTextBlock")!;
+            _emptyStateAddProfileButton = this.FindControl<Button>("EmptyStateAddProfileButton")!;
             _hintOverlay = this.FindControl<Border>("HintOverlay")!;
             _hintOverlayText = this.FindControl<TextBlock>("HintOverlayText")!;
             _connectionMenuItem = this.FindControl<MenuItem>("ConnectionMenuItem")!;
@@ -181,6 +189,7 @@ namespace GuacClient
             _projectWebsiteHelpMenuItem.Click += ProjectWebsiteHelpMenuItem_Click;
             _checkForUpdatesHelpMenuItem.Click += CheckForUpdatesHelpMenuItem_Click;
             _aboutMenuItem.Click += AboutMenuItem_Click;
+            _emptyStateAddProfileButton.Click += EmptyStateAddProfileButton_Click;
             _keyboardCaptureStatusMenuItem.Click += KeyboardCaptureStatusMenuItem_Click;
             this.Opened += async (_, __) =>
             {
@@ -228,6 +237,9 @@ namespace GuacClient
         private void InitializeLocalization()
         {
             _connectionMenuItem.Header = LocalizationProvider.Get(LocalizationKeys.Menu_Connection);
+            _emptyStateTitleTextBlock.Text = LocalizationProvider.Get(LocalizationKeys.AppStart_EmptyState_Title);
+            _emptyStateMessageTextBlock.Text = LocalizationProvider.Get(LocalizationKeys.AppStart_EmptyState_Text);
+            _emptyStateAddProfileButton.Content = LocalizationProvider.Get(LocalizationKeys.AppStart_EmptyState_Button_AddProfile);
             _manageServersMenuItem.Header = LocalizationProvider.Get(LocalizationKeys.Menu_OpenAnotherGuacamoleServer);
             _connectionHomeMenuItem.Header = BuildMenuHeaderWithShortcut(
                 LocalizationProvider.Get(LocalizationKeys.Menu_ConnectionHome),
@@ -569,14 +581,10 @@ namespace GuacClient
 
             if (profile == null && !UrlInputDialog.IsValidUrl(_initialUrlOverride))
             {
+                ShowEmptyState();
                 var selected = await ShowChooseServerDialogAsync().ConfigureAwait(true);
                 if (selected == null)
                 {
-                    await MessageBoxSimple.Show(
-                        this,
-                        LocalizationProvider.Get(LocalizationKeys.AppStart_StartUrlRequired_Title),
-                        LocalizationProvider.Get(LocalizationKeys.AppStart_StartUrlRequired_Text));
-                    Close();
                     return;
                 }
                 profile = selected;
@@ -584,8 +592,24 @@ namespace GuacClient
 
             var url = _initialUrlOverride ?? profile?.Url;
             if (!UrlInputDialog.IsValidUrl(url))
+            {
+                ShowEmptyState();
                 return;
+            }
 
+            await LoadProfileAsync(profile, url).ConfigureAwait(true);
+        }
+
+        private async Task LoadProfileAsync(GuacamoleServerProfile? profile, string? url = null)
+        {
+            url ??= profile?.Url;
+            if (!UrlInputDialog.IsValidUrl(url))
+            {
+                ShowEmptyState();
+                return;
+            }
+
+            HideEmptyState();
             _activeProfile = profile;
             _trustedHosts.Clear();
             _trustedHosts.Add(new Uri(url!).Host);
@@ -605,6 +629,15 @@ namespace GuacClient
                 Close();
             }
         }
+
+        private void ShowEmptyState()
+        {
+            _emptyStateOverlay.IsVisible = true;
+            Title = $"GuacamoleClient v{VersionUtil.InformationalVersion()}";
+        }
+
+        private void HideEmptyState()
+            => _emptyStateOverlay.IsVisible = false;
 
         private void ConfigureBrowserCacheBeforeWebViewCreation()
         {
@@ -647,6 +680,15 @@ namespace GuacClient
                 Icon = this.Icon
             };
             window.Show();
+        }
+
+        private async void EmptyStateAddProfileButton_Click(object? sender, RoutedEventArgs e)
+        {
+            var selected = await ShowChooseServerDialogAsync().ConfigureAwait(true);
+            if (selected == null)
+                return;
+
+            await LoadProfileAsync(selected).ConfigureAwait(true);
         }
 
         private void ConnectionHomeMenuItem_Click(object? sender, RoutedEventArgs e)

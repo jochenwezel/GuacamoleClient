@@ -70,6 +70,32 @@
     <Grid>
       <wv:WebView x:Name="Web" />
 
+      <Border x:Name="EmptyStateOverlay"
+              IsVisible="False"
+              Background="#FFF8FAFC"
+              Padding="32">
+        <StackPanel HorizontalAlignment="Center"
+                    VerticalAlignment="Center"
+                    MaxWidth="560"
+                    Spacing="16">
+          <TextBlock x:Name="EmptyStateTitleTextBlock"
+                     HorizontalAlignment="Center"
+                     FontSize="24"
+                     FontWeight="SemiBold"
+                     Foreground="#111827"
+                     TextAlignment="Center" />
+          <TextBlock x:Name="EmptyStateMessageTextBlock"
+                     HorizontalAlignment="Center"
+                     FontSize="15"
+                     Foreground="#4B5563"
+                     TextAlignment="Center"
+                     TextWrapping="Wrap" />
+          <Button x:Name="EmptyStateAddProfileButton"
+                  HorizontalAlignment="Center"
+                  MinWidth="220" />
+        </StackPanel>
+      </Border>
+
       <Border x:Name="HintOverlay"
               IsVisible="False"
               HorizontalAlignment="Left"

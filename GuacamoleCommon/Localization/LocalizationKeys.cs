@@ -151,6 +151,9 @@
         AppStart_ErrorDetails_Label,
         AppStart_StartUrlRequired_Text,
         AppStart_UnexpectedErrorWillClose_Text,
+        AppStart_EmptyState_Title,
+        AppStart_EmptyState_Text,
+        AppStart_EmptyState_Button_AddProfile,
 
         // Common buttons and labels
         /// <summary>

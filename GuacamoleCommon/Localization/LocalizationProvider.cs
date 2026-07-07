@@ -304,6 +304,12 @@ namespace GuacamoleClient.Common.Localization
                         return "Ohne gültige Start-URL kann die Anwendung nicht fortfahren.";
                     case LocalizationKeys.AppStart_UnexpectedErrorWillClose_Text:
                         return "Ein unerwarteter Fehler ist aufgetreten und die Anwendung muss geschlossen werden.";
+                    case LocalizationKeys.AppStart_EmptyState_Title:
+                        return "Noch keine Verbindung hinzugefügt";
+                    case LocalizationKeys.AppStart_EmptyState_Text:
+                        return "Erstelle zuerst ein Verbindungsprofil für deinen Apache Guacamole Server. Danach kannst du die Verbindung hier öffnen.";
+                    case LocalizationKeys.AppStart_EmptyState_Button_AddProfile:
+                        return "Verbindungsprofil hinzufügen…";
 
                     // Suffixes
                     case LocalizationKeys.Common_Suffix_Default:
@@ -579,6 +585,12 @@ namespace GuacamoleClient.Common.Localization
                     return "The application cannot continue without a valid start URL.";
                 case LocalizationKeys.AppStart_UnexpectedErrorWillClose_Text:
                     return "An unexpected error occurred and the application must close.";
+                case LocalizationKeys.AppStart_EmptyState_Title:
+                    return "No connection has been added yet";
+                case LocalizationKeys.AppStart_EmptyState_Text:
+                    return "Create a connection profile for your Apache Guacamole server first. You can then open the connection from here.";
+                case LocalizationKeys.AppStart_EmptyState_Button_AddProfile:
+                    return "Add connection profile…";
 
                 // Suffixes
                 case LocalizationKeys.Common_Suffix_Default:
