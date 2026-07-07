@@ -7,6 +7,14 @@ Both Windows clients are supported long-term.
 - WinForms is recommended for most Windows users. It uses Microsoft WebView2, so browser security updates come through Windows/Edge.
 - Avalonia is the same app family as Linux and macOS. It uses bundled Chromium/CEF, so browser updates arrive with GuacamoleClient releases.
 
+## Windows delivery options
+
+- WinForms ClickOnce is the recommended installer for regular Windows users.
+- WinForms portable ZIP is useful for manual testing or systems where an installer is not wanted.
+- WinForms framework-dependent ZIP is available for users who already manage the required .NET runtime themselves.
+- WinForms MSIX is published as an experimental package artifact. It is not the recommended path until signing and installation trust are solved.
+- Avalonia ZIP is available for Windows users who want the cross-platform client variant.
+
 ## WinForms ClickOnce
 
 ClickOnce is the primary installation path for the recommended WinForms client on Windows.
