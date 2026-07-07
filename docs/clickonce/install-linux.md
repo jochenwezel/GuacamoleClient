@@ -120,7 +120,23 @@ Use the portable Linux x64 tarball on glibc-based desktop distributions when no 
 Open the Dev channel on https://jochenwezel.github.io/GuacamoleClient/
 Copy the Other Linux distributions command block from there.
 
-The generated command installs the application for the current user like this:
+The generated command installs the application system-wide like this:
+
+```bash
+sudo mkdir -p /opt/guacamoleclient
+sudo tar -xzf guacamoleclient-avalonia-linux-x64-<version>.tar.gz -C /opt/guacamoleclient --strip-components=1
+sudo ln -sfn /opt/guacamoleclient/guacamoleclient /usr/local/bin/guacamoleclient
+guacamoleclient
+```
+
+System-wide uninstall:
+
+```bash
+sudo rm -rf /opt/guacamoleclient
+sudo rm -f /usr/local/bin/guacamoleclient
+```
+
+If you do not have administrator rights, install the application for the current user like this:
 
 ```bash
 mkdir -p "$HOME/.local/opt" "$HOME/.local/bin"
@@ -129,9 +145,16 @@ ln -sfn "$HOME/.local/opt/guacamoleclient-avalonia-linux-x64-<version>/guacamole
 "$HOME/.local/bin/guacamoleclient"
 ```
 
+Per-user uninstall:
+
+```bash
+rm -rf "$HOME/.local/opt"/guacamoleclient-avalonia-linux-x64-*
+rm -f "$HOME/.local/bin/guacamoleclient"
+```
+
 The tarball already includes .NET and the embedded Chromium/CEF browser. The target system still needs common Linux desktop libraries such as GTK 3, NSS, ALSA, CUPS, Mesa/GL/GBM, fontconfig, and X11/XCB libraries. Package names vary by distribution.
 
-The per-user tarball installation uses `~/.local/opt` for the extracted application files and `~/.local/bin` for the launcher symlink. Many desktop Linux distributions already include `~/.local/bin` in `PATH`; if not, start the client with the full path or add that directory to your shell profile.
+The system-wide tarball installation uses `/opt/guacamoleclient` for the extracted application files and `/usr/local/bin` for the launcher symlink. The per-user tarball installation uses `~/.local/opt` and `~/.local/bin`. Many desktop Linux distributions already include `~/.local/bin` in `PATH`; if not, start the client with the full path or add that directory to your shell profile.
 
 ## Snap / Flatpak / AppImage
 

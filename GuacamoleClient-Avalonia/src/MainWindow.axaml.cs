@@ -201,7 +201,8 @@ namespace GuacClient
                 await EnsureAndLoadUrlAsync();
                 UpdateKeyboardHookState();
                 UpdateViewMenuState();
-                await _clickOnceCleanupManager.ProcessPendingCleanupAsync(this).ConfigureAwait(true);
+                if (IsClickOnceDeployment())
+                    await _clickOnceCleanupManager.ProcessPendingCleanupAsync(this).ConfigureAwait(true);
                 _ = CheckForUpdatesOnStartupAsync();
             };
             this.Activated += (_, __) =>
@@ -835,6 +836,10 @@ namespace GuacClient
             await CheckForUpdatesManuallyAsync().ConfigureAwait(true);
         }
 
+        private bool IsClickOnceDeployment()
+            => OperatingSystem.IsWindows()
+                && string.Equals(_appInfo.DeploymentType, "clickonce", StringComparison.OrdinalIgnoreCase);
+
         private async Task CheckForUpdatesOnStartupAsync()
         {
             try
@@ -951,7 +956,8 @@ namespace GuacClient
             string? action = await dialog.ShowDialog<string?>(this).ConfigureAwait(true);
             if (string.Equals(action, "update", StringComparison.Ordinal))
             {
-                await _clickOnceCleanupManager.RegisterCurrentDirectoryForCleanupAsync().ConfigureAwait(true);
+                if (IsClickOnceDeployment())
+                    await _clickOnceCleanupManager.RegisterCurrentDirectoryForCleanupAsync().ConfigureAwait(true);
                 _appUpdateChecker.StartUpdate(result);
             }
             else if (string.Equals(action, "skip", StringComparison.Ordinal))

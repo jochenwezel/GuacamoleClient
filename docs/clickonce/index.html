@@ -418,16 +418,38 @@ sudo dnf install ./guacamoleclient-avalonia-*.x86_64.rpm'>RPM packages are avail
               <section class="distro" aria-labelledby="linux-arch-title">
                 <h3 id="linux-arch-title">Other Linux distributions</h3>
                 <p>Use the portable Linux x64 tarball on glibc-based desktop distributions when no native package is available.</p>
-                <p class="command-title">Manual Linux x64 per-user installation</p>
+                <p class="command-title">Manual Linux x64 system-wide installation</p>
                 <div class="command-header">
                   <button id="copy-linux-tarball-command" class="copy-button" type="button" data-default-label="Copy" data-copied-label="Copied">Copy</button>
                 </div>
                 <pre><code id="linux-tarball-command" data-fallback-stable-command='Portable tarballs are available in the Dev channel for testing. Stable tarballs will appear here after the next Stable release.' data-fallback-dev-command='Open the latest preview release on GitHub and download the guacamoleclient-avalonia-linux-x64-*.tar.gz asset.
 Then extract it and run:
+sudo mkdir -p /opt/guacamoleclient
+sudo tar -xzf guacamoleclient-avalonia-linux-x64-*.tar.gz -C /opt/guacamoleclient --strip-components=1
+sudo ln -sfn /opt/guacamoleclient/guacamoleclient /usr/local/bin/guacamoleclient
+guacamoleclient'>Portable tarballs are available in the Dev channel for testing. Stable tarballs will appear here after the next Stable release.</code></pre>
+                <p class="command-title">Manual Linux x64 system-wide uninstall</p>
+                <div class="command-header">
+                  <button id="copy-linux-tarball-uninstall-command" class="copy-button" type="button" data-default-label="Copy" data-copied-label="Copied">Copy</button>
+                </div>
+                <pre><code id="linux-tarball-uninstall-command">sudo rm -rf /opt/guacamoleclient
+sudo rm -f /usr/local/bin/guacamoleclient</code></pre>
+                <p class="command-title">Manual Linux x64 per-user installation</p>
+                <div class="command-header">
+                  <button id="copy-linux-tarball-user-command" class="copy-button" type="button" data-default-label="Copy" data-copied-label="Copied">Copy</button>
+                </div>
+                <pre><code id="linux-tarball-user-command" data-fallback-stable-command='Portable tarballs are available in the Dev channel for testing. Stable tarballs will appear here after the next Stable release.' data-fallback-dev-command='Open the latest preview release on GitHub and download the guacamoleclient-avalonia-linux-x64-*.tar.gz asset.
+Then extract it and run:
 mkdir -p "$HOME/.local/opt" "$HOME/.local/bin"
 tar -xzf guacamoleclient-avalonia-linux-x64-*.tar.gz -C "$HOME/.local/opt"
 ln -sfn "$HOME/.local/opt"/guacamoleclient-avalonia-linux-x64-*/guacamoleclient "$HOME/.local/bin/guacamoleclient"
 "$HOME/.local/bin/guacamoleclient"'>Portable tarballs are available in the Dev channel for testing. Stable tarballs will appear here after the next Stable release.</code></pre>
+                <p class="command-title">Manual Linux x64 per-user uninstall</p>
+                <div class="command-header">
+                  <button id="copy-linux-tarball-user-uninstall-command" class="copy-button" type="button" data-default-label="Copy" data-copied-label="Copied">Copy</button>
+                </div>
+                <pre><code id="linux-tarball-user-uninstall-command">rm -rf "$HOME/.local/opt"/guacamoleclient-avalonia-linux-x64-*
+rm -f "$HOME/.local/bin/guacamoleclient"</code></pre>
                 <p>The tarball already includes .NET and the embedded Chromium/CEF browser. The target system still needs common Linux desktop libraries such as GTK 3, NSS, ALSA, CUPS, Mesa/GL/GBM, fontconfig, and X11/XCB libraries. Package names vary by distribution.</p>
               </section>
 
@@ -474,11 +496,17 @@ ln -sfn "$HOME/.local/opt"/guacamoleclient-avalonia-linux-x64-*/guacamoleclient 
         const linuxCommand = document.getElementById("linux-debian-command");
         const linuxRpmCommand = document.getElementById("linux-rpm-command");
         const linuxTarballCommand = document.getElementById("linux-tarball-command");
+        const linuxTarballUserCommand = document.getElementById("linux-tarball-user-command");
+        const linuxTarballUninstallCommand = document.getElementById("linux-tarball-uninstall-command");
+        const linuxTarballUserUninstallCommand = document.getElementById("linux-tarball-user-uninstall-command");
         const linuxReleaseLink = document.getElementById("linux-release-link");
         const linuxRpmReleaseLink = document.getElementById("linux-rpm-release-link");
         const copyLinuxCommandButton = document.getElementById("copy-linux-command");
         const copyLinuxRpmCommandButton = document.getElementById("copy-linux-rpm-command");
         const copyLinuxTarballCommandButton = document.getElementById("copy-linux-tarball-command");
+        const copyLinuxTarballUserCommandButton = document.getElementById("copy-linux-tarball-user-command");
+        const copyLinuxTarballUninstallCommandButton = document.getElementById("copy-linux-tarball-uninstall-command");
+        const copyLinuxTarballUserUninstallCommandButton = document.getElementById("copy-linux-tarball-user-uninstall-command");
         const requestedChannel = params.get("channel") === "dev" ? "dev" : "stable";
 
         let updateMetadata = null;
@@ -491,6 +519,7 @@ ln -sfn "$HOME/.local/opt"/guacamoleclient-avalonia-linux-x64-*/guacamoleclient 
             linuxCommand: linuxCommand?.dataset.fallbackStableCommand || "",
             linuxRpmCommand: linuxRpmCommand?.dataset.fallbackStableCommand || "",
             linuxTarballCommand: linuxTarballCommand?.dataset.fallbackStableCommand || "",
+            linuxTarballUserCommand: linuxTarballUserCommand?.dataset.fallbackStableCommand || "",
           },
           dev: {
             clickOnceLabel: "Install WinForms Dev",
@@ -499,6 +528,7 @@ ln -sfn "$HOME/.local/opt"/guacamoleclient-avalonia-linux-x64-*/guacamoleclient 
             linuxCommand: linuxCommand?.dataset.fallbackDevCommand || "",
             linuxRpmCommand: linuxRpmCommand?.dataset.fallbackDevCommand || "",
             linuxTarballCommand: linuxTarballCommand?.dataset.fallbackDevCommand || "",
+            linuxTarballUserCommand: linuxTarballUserCommand?.dataset.fallbackDevCommand || "",
           },
         };
 
@@ -554,6 +584,22 @@ sudo dnf install ./${packageFileName}`;
         };
 
         const buildLinuxTarballCommand = deployment => {
+          if (!hasUsablePackageDeployment(deployment)) {
+            return null;
+          }
+
+          const packageUrl = deployment.packageUrl;
+          const packageFileName = deployment.packageFileName;
+          const directoryName = packageFileName.replace(/\.tar\.gz$/, "");
+          return `cd /tmp
+wget "${packageUrl}"
+sudo mkdir -p /opt/guacamoleclient
+sudo tar -xzf ${packageFileName} -C /opt/guacamoleclient --strip-components=1
+sudo ln -sfn /opt/guacamoleclient/guacamoleclient /usr/local/bin/guacamoleclient
+guacamoleclient`;
+        };
+
+        const buildLinuxTarballUserCommand = deployment => {
           if (!hasUsablePackageDeployment(deployment)) {
             return null;
           }
@@ -622,6 +668,10 @@ ln -sfn "$HOME/.local/opt/${directoryName}/guacamoleclient" "$HOME/.local/bin/gu
             linuxTarballCommand.textContent = buildLinuxTarballCommand(linuxTarballDeployment) || text.linuxTarballCommand;
           }
 
+          if (linuxTarballUserCommand) {
+            linuxTarballUserCommand.textContent = buildLinuxTarballUserCommand(linuxTarballDeployment) || text.linuxTarballUserCommand;
+          }
+
           if (linuxReleaseLink) {
             const linuxPackageLabel = selectedChannel === "dev" ? "Download Avalonia Linux x64 Dev" : "Download Avalonia Linux x64 Stable";
             linuxReleaseLink.textContent = linuxDebDeployment?.packageFileName && avaloniaChannel?.version
@@ -665,6 +715,25 @@ ln -sfn "$HOME/.local/opt/${directoryName}/guacamoleclient" "$HOME/.local/bin/gu
           textarea.remove();
         };
 
+        const wireCopyButton = (button, commandElement) => {
+          button?.addEventListener("click", async () => {
+            const command = commandElement?.textContent || "";
+            if (!command.trim()) {
+              return;
+            }
+
+            try {
+              await copyText(command);
+              button.textContent = button.dataset.copiedLabel || "Copied";
+              window.setTimeout(() => {
+                button.textContent = button.dataset.defaultLabel || "Copy";
+              }, 1800);
+            } catch {
+              button.textContent = "Copy failed";
+            }
+          });
+        };
+
         copyLinuxCommandButton?.addEventListener("click", async () => {
           const command = linuxCommand?.textContent || "";
           if (!command.trim()) {
@@ -699,22 +768,10 @@ ln -sfn "$HOME/.local/opt/${directoryName}/guacamoleclient" "$HOME/.local/bin/gu
           }
         });
 
-        copyLinuxTarballCommandButton?.addEventListener("click", async () => {
-          const command = linuxTarballCommand?.textContent || "";
-          if (!command.trim()) {
-            return;
-          }
-
-          try {
-            await copyText(command);
-            copyLinuxTarballCommandButton.textContent = copyLinuxTarballCommandButton.dataset.copiedLabel || "Copied";
-            window.setTimeout(() => {
-              copyLinuxTarballCommandButton.textContent = copyLinuxTarballCommandButton.dataset.defaultLabel || "Copy";
-            }, 1800);
-          } catch {
-            copyLinuxTarballCommandButton.textContent = "Copy failed";
-          }
-        });
+        wireCopyButton(copyLinuxTarballCommandButton, linuxTarballCommand);
+        wireCopyButton(copyLinuxTarballUserCommandButton, linuxTarballUserCommand);
+        wireCopyButton(copyLinuxTarballUninstallCommandButton, linuxTarballUninstallCommand);
+        wireCopyButton(copyLinuxTarballUserUninstallCommandButton, linuxTarballUserUninstallCommand);
 
         selectChannel(requestedChannel);
 
