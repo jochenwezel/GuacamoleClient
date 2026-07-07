@@ -247,6 +247,8 @@ jobs:
           expected_assets=(
             "bin-avalonia-windows-${VERSION}.zip"
             "bin-avalonia-linux-${VERSION}.zip"
+            "guacamoleclient-avalonia-linux-x64-${VERSION}.tar.gz"
+            "guacamoleclient-avalonia-${VERSION}-1.x86_64.rpm"
             "bin-avalonia-osx-arm64-${VERSION}.zip"
             "bin-avalonia-osx-x64-${VERSION}.zip"
             "guacamoleclient-avalonia_${VERSION}_amd64.deb"

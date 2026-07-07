@@ -102,13 +102,31 @@ sudo dpkg -i guacamoleclient-avalonia___AVALONIA_DEB_VERSION___amd64.deb
 sudo apt --fix-broken install
 ```
 
-## Fedora / Red Hat / openSUSE
+## Fedora / Red Hat
 
-RPM packaging is planned. Until then, use the Linux zip release artifact when available.
+Use the x64 RPM package on Fedora/RHEL-compatible distributions:
 
-## Arch / Manjaro
+```bash
+cd /tmp
+wget https://github.com/jochenwezel/GuacamoleClient/releases/download/__AVALONIA_DEB_RELEASE_TAG__/guacamoleclient-avalonia-__AVALONIA_DEB_VERSION__-1.x86_64.rpm
+sudo dnf install ./guacamoleclient-avalonia-__AVALONIA_DEB_VERSION__-1.x86_64.rpm
+```
 
-Native package instructions are planned. Until then, use the Linux zip release artifact when available.
+The RPM package already includes .NET and the embedded Chromium/CEF browser. Required Linux desktop libraries are installed automatically by `dnf` as package dependencies.
+
+## Other Linux distributions
+
+Use the portable x64 tarball on glibc-based desktop distributions when no native package is available.
+
+```bash
+cd /tmp
+wget https://github.com/jochenwezel/GuacamoleClient/releases/download/__AVALONIA_DEB_RELEASE_TAG__/guacamoleclient-avalonia-linux-x64-__AVALONIA_DEB_VERSION__.tar.gz
+tar -xzf guacamoleclient-avalonia-linux-x64-__AVALONIA_DEB_VERSION__.tar.gz
+cd guacamoleclient-avalonia-linux-x64-__AVALONIA_DEB_VERSION__
+./guacamoleclient
+```
+
+The tarball already includes .NET and the embedded Chromium/CEF browser. Required Linux desktop libraries must be available on the target system.
 
 ## Snap / Flatpak / AppImage
 

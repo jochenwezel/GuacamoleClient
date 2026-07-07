@@ -392,13 +392,39 @@ sudo apt install ./guacamoleclient-avalonia___AVALONIA_DEB_VERSION___amd64.deb</
               </section>
 
               <section class="distro" aria-labelledby="linux-rpm-title">
-                <h3 id="linux-rpm-title">Fedora / Red Hat / openSUSE</h3>
-                <p>RPM packaging is planned. Until then, use the Linux zip release artifact when available.</p>
+                <h3 id="linux-rpm-title">Fedora / Red Hat</h3>
+                <p>Use the x64 RPM package on Fedora/RHEL-compatible distributions.</p>
+                <div class="command-header">
+                  <button id="copy-linux-rpm-command" class="copy-button" type="button" data-default-label="Copy" data-copied-label="Copied">Copy</button>
+                </div>
+                <pre><code id="linux-rpm-command" data-fallback-stable-command='cd /tmp
+wget "https://github.com/jochenwezel/GuacamoleClient/releases/download/__AVALONIA_DEB_RELEASE_TAG__/guacamoleclient-avalonia-__AVALONIA_DEB_VERSION__-1.x86_64.rpm"
+sudo dnf install ./guacamoleclient-avalonia-__AVALONIA_DEB_VERSION__-1.x86_64.rpm' data-fallback-dev-command='Open the latest preview release on GitHub and download the guacamoleclient-avalonia-*.x86_64.rpm asset.
+Then run:
+sudo dnf install ./guacamoleclient-avalonia-*.x86_64.rpm'>cd /tmp
+wget "https://github.com/jochenwezel/GuacamoleClient/releases/download/__AVALONIA_DEB_RELEASE_TAG__/guacamoleclient-avalonia-__AVALONIA_DEB_VERSION__-1.x86_64.rpm"
+sudo dnf install ./guacamoleclient-avalonia-__AVALONIA_DEB_VERSION__-1.x86_64.rpm</code></pre>
               </section>
 
               <section class="distro" aria-labelledby="linux-arch-title">
-                <h3 id="linux-arch-title">Arch / Manjaro</h3>
-                <p>Native package instructions are planned. Until then, use the Linux zip release artifact when available.</p>
+                <h3 id="linux-arch-title">Other Linux distributions</h3>
+                <p>Use the portable x64 tarball on glibc-based desktop distributions when no native package is available.</p>
+                <div class="command-header">
+                  <button id="copy-linux-tarball-command" class="copy-button" type="button" data-default-label="Copy" data-copied-label="Copied">Copy</button>
+                </div>
+                <pre><code id="linux-tarball-command" data-fallback-stable-command='cd /tmp
+wget "https://github.com/jochenwezel/GuacamoleClient/releases/download/__AVALONIA_DEB_RELEASE_TAG__/guacamoleclient-avalonia-linux-x64-__AVALONIA_DEB_VERSION__.tar.gz"
+tar -xzf guacamoleclient-avalonia-linux-x64-__AVALONIA_DEB_VERSION__.tar.gz
+cd guacamoleclient-avalonia-linux-x64-__AVALONIA_DEB_VERSION__
+./guacamoleclient' data-fallback-dev-command='Open the latest preview release on GitHub and download the guacamoleclient-avalonia-linux-x64-*.tar.gz asset.
+Then extract it and run:
+tar -xzf guacamoleclient-avalonia-linux-x64-*.tar.gz
+cd guacamoleclient-avalonia-linux-x64-*
+./guacamoleclient'>cd /tmp
+wget "https://github.com/jochenwezel/GuacamoleClient/releases/download/__AVALONIA_DEB_RELEASE_TAG__/guacamoleclient-avalonia-linux-x64-__AVALONIA_DEB_VERSION__.tar.gz"
+tar -xzf guacamoleclient-avalonia-linux-x64-__AVALONIA_DEB_VERSION__.tar.gz
+cd guacamoleclient-avalonia-linux-x64-__AVALONIA_DEB_VERSION__
+./guacamoleclient</code></pre>
               </section>
 
               <section class="distro" aria-labelledby="linux-universal-title">
@@ -442,8 +468,12 @@ sudo apt install ./guacamoleclient-avalonia___AVALONIA_DEB_VERSION___amd64.deb</
         const windowsSummary = document.getElementById("windows-channel-summary");
         const linuxSummary = document.getElementById("linux-channel-summary");
         const linuxCommand = document.getElementById("linux-debian-command");
+        const linuxRpmCommand = document.getElementById("linux-rpm-command");
+        const linuxTarballCommand = document.getElementById("linux-tarball-command");
         const linuxReleaseLink = document.getElementById("linux-release-link");
         const copyLinuxCommandButton = document.getElementById("copy-linux-command");
+        const copyLinuxRpmCommandButton = document.getElementById("copy-linux-rpm-command");
+        const copyLinuxTarballCommandButton = document.getElementById("copy-linux-tarball-command");
         const requestedChannel = params.get("channel") === "dev" ? "dev" : "stable";
 
         let updateMetadata = null;
@@ -454,12 +484,16 @@ sudo apt install ./guacamoleclient-avalonia___AVALONIA_DEB_VERSION___amd64.deb</
             windowsSummary: "Stable channel for regular Windows installations.",
             linuxSummary: "Stable Debian/Ubuntu package for regular Linux installations.",
             linuxCommand: linuxCommand?.dataset.fallbackStableCommand || "",
+            linuxRpmCommand: linuxRpmCommand?.dataset.fallbackStableCommand || "",
+            linuxTarballCommand: linuxTarballCommand?.dataset.fallbackStableCommand || "",
           },
           dev: {
             clickOnceLabel: "Install WinForms Dev",
             windowsSummary: "Dev channel for preview builds and testing.",
             linuxSummary: "Dev builds are published as preview release assets for testing.",
             linuxCommand: linuxCommand?.dataset.fallbackDevCommand || "",
+            linuxRpmCommand: linuxRpmCommand?.dataset.fallbackDevCommand || "",
+            linuxTarballCommand: linuxTarballCommand?.dataset.fallbackDevCommand || "",
           },
         };
 
@@ -490,12 +524,41 @@ wget "${packageUrl}"
 sudo apt install ./${packageFileName}`;
         };
 
+        const buildLinuxRpmCommand = deployment => {
+          const packageUrl = deployment?.packageUrl;
+          const packageFileName = deployment?.packageFileName;
+          if (!packageUrl || !packageFileName) {
+            return null;
+          }
+
+          return `cd /tmp
+wget "${packageUrl}"
+sudo dnf install ./${packageFileName}`;
+        };
+
+        const buildLinuxTarballCommand = deployment => {
+          const packageUrl = deployment?.packageUrl;
+          const packageFileName = deployment?.packageFileName;
+          if (!packageUrl || !packageFileName) {
+            return null;
+          }
+
+          const directoryName = packageFileName.replace(/\.tar\.gz$/, "");
+          return `cd /tmp
+wget "${packageUrl}"
+tar -xzf ${packageFileName}
+cd ${directoryName}
+./guacamoleclient`;
+        };
+
         const selectChannel = channel => {
           const selectedChannel = channel === "dev" ? "dev" : "stable";
           const text = channelText[selectedChannel];
           const winformsChannel = updateMetadata?.apps?.winforms?.channels?.[selectedChannel];
           const avaloniaChannel = updateMetadata?.apps?.avalonia?.channels?.[selectedChannel];
           const linuxDebDeployment = avaloniaChannel?.deployments?.["linux-deb-direct"];
+          const linuxRpmDeployment = avaloniaChannel?.deployments?.["linux-rpm-direct"];
+          const linuxTarballDeployment = avaloniaChannel?.deployments?.["linux-tarball-direct"];
 
           channelTabs.forEach(tab => {
             tab.setAttribute("aria-selected", tab.dataset.selectChannel === selectedChannel ? "true" : "false");
@@ -530,6 +593,14 @@ sudo apt install ./${packageFileName}`;
 
           if (linuxCommand) {
             linuxCommand.textContent = buildLinuxDebCommand(linuxDebDeployment) || text.linuxCommand;
+          }
+
+          if (linuxRpmCommand) {
+            linuxRpmCommand.textContent = buildLinuxRpmCommand(linuxRpmDeployment) || text.linuxRpmCommand;
+          }
+
+          if (linuxTarballCommand) {
+            linuxTarballCommand.textContent = buildLinuxTarballCommand(linuxTarballDeployment) || text.linuxTarballCommand;
           }
 
           if (linuxReleaseLink) {
@@ -576,6 +647,40 @@ sudo apt install ./${packageFileName}`;
             }, 1800);
           } catch {
             copyLinuxCommandButton.textContent = "Copy failed";
+          }
+        });
+
+        copyLinuxRpmCommandButton?.addEventListener("click", async () => {
+          const command = linuxRpmCommand?.textContent || "";
+          if (!command.trim()) {
+            return;
+          }
+
+          try {
+            await copyText(command);
+            copyLinuxRpmCommandButton.textContent = copyLinuxRpmCommandButton.dataset.copiedLabel || "Copied";
+            window.setTimeout(() => {
+              copyLinuxRpmCommandButton.textContent = copyLinuxRpmCommandButton.dataset.defaultLabel || "Copy";
+            }, 1800);
+          } catch {
+            copyLinuxRpmCommandButton.textContent = "Copy failed";
+          }
+        });
+
+        copyLinuxTarballCommandButton?.addEventListener("click", async () => {
+          const command = linuxTarballCommand?.textContent || "";
+          if (!command.trim()) {
+            return;
+          }
+
+          try {
+            await copyText(command);
+            copyLinuxTarballCommandButton.textContent = copyLinuxTarballCommandButton.dataset.copiedLabel || "Copied";
+            window.setTimeout(() => {
+              copyLinuxTarballCommandButton.textContent = copyLinuxTarballCommandButton.dataset.defaultLabel || "Copy";
+            }, 1800);
+          } catch {
+            copyLinuxTarballCommandButton.textContent = "Copy failed";
           }
         });
 
