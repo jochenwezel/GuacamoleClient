@@ -213,6 +213,10 @@
         padding-top: 16px;
       }
 
+      .distro.wide {
+        grid-column: 1 / -1;
+      }
+
       .distro h3 {
         margin: 0 0 8px;
         font-size: 1rem;
@@ -449,7 +453,7 @@ sudo dnf install ./guacamoleclient-avalonia-*.x86_64.rpm'>RPM packages are avail
                 <p>The package already includes .NET and the embedded Chromium/CEF browser. Required Linux desktop libraries are installed automatically by dnf as package dependencies.</p>
               </section>
 
-              <section class="distro" aria-labelledby="linux-arch-title">
+              <section class="distro wide" aria-labelledby="linux-arch-title">
                 <h3 id="linux-arch-title">Other Linux distributions</h3>
                 <p>Use the portable Linux x64 tarball on glibc-based desktop distributions when no native package is available.</p>
                 <p class="command-title">Manual Linux x64 system-wide installation</p>
@@ -487,7 +491,7 @@ rm -f "$HOME/.local/bin/guacamoleclient"</code></pre>
                 <p>The tarball already includes .NET and the embedded Chromium/CEF browser. The target system still needs common Linux desktop libraries such as GTK 3, NSS, ALSA, CUPS, Mesa/GL/GBM, fontconfig, and X11/XCB libraries. Package names vary by distribution.</p>
               </section>
 
-              <section class="distro" aria-labelledby="linux-universal-title">
+              <section class="distro wide" aria-labelledby="linux-universal-title">
                 <h3 id="linux-universal-title">Snap / Flatpak / AppImage</h3>
                 <p>Universal package formats are being evaluated for a later release.</p>
               </section>
