@@ -794,7 +794,7 @@ namespace GuacamoleClient.WinForms
         }
 
         private static string CreateUpdateWebsiteUrl(AppInfo appInfo)
-            => $"{UpdateWebsiteBaseUrl}?app=winforms-clickonce&channel={Uri.EscapeDataString(appInfo.Channel)}&version={Uri.EscapeDataString(appInfo.CurrentVersion)}";
+            => $"{UpdateWebsiteBaseUrl}?app=winforms-clickonce&channel={Uri.EscapeDataString(appInfo.Channel)}&platform=windows&version={Uri.EscapeDataString(appInfo.CurrentVersion)}";
 
         private async void checkForUpdatesHelpToolStripMenuItem_Click(object sender, EventArgs e)
         {

@@ -1,4 +1,4 @@
-﻿name: PublishRelease - GitHub Pages
+name: PublishRelease - GitHub Pages
 
 on:
   release:
@@ -368,10 +368,10 @@ jobs:
             "bin-avalonia-windows-${VERSION}.zip"
             "bin-avalonia-linux-${VERSION}.zip"
             "guacamoleclient-avalonia-linux-x64-${VERSION}.tar.gz"
-            "guacamoleclient-avalonia-${VERSION}-1.x86_64.rpm"
+            "guacamoleclient-avalonia-linux-x64-${VERSION}-1.x86_64.rpm"
             "bin-avalonia-osx-arm64-${VERSION}.zip"
             "bin-avalonia-osx-x64-${VERSION}.zip"
-            "guacamoleclient-avalonia_${VERSION}_amd64.deb"
+            "guacamoleclient-avalonia-linux-x64_${VERSION}_amd64.deb"
           )
 
           deadline=$((SECONDS + 600))

@@ -10,7 +10,7 @@
     <title>GuacamoleClient</title>
     <style>
       :root {
-        color-scheme: light;
+        color-scheme: light dark;
         --ink: #172016;
         --muted: #5d6658;
         --line: #d9dfd5;
@@ -18,7 +18,30 @@
         --panel: #ffffff;
         --green: #337a36;
         --green-dark: #205928;
+        --code-bg: #f2f5ef;
+        --pre-bg: #f7f9f4;
+        --badge-bg: #eaf3e6;
+        --note-bg: #fff8e7;
+        --note-ink: #4e4227;
         --gold: #f2b84b;
+      }
+
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --ink: #edf4ea;
+          --muted: #b8c6b3;
+          --line: #344432;
+          --page: #10160f;
+          --panel: #172016;
+          --green: #5fbf63;
+          --green-dark: #8bd68e;
+          --code-bg: #10190f;
+          --pre-bg: #0d140c;
+          --badge-bg: #21341f;
+          --note-bg: #2d2512;
+          --note-ink: #f7e6bd;
+          --gold: #e8b54e;
+        }
       }
 
       * {
@@ -113,7 +136,7 @@
         margin-left: 6px;
         padding: 2px 7px;
         border-radius: 999px;
-        background: #eaf3e6;
+        background: var(--badge-bg);
         color: var(--green-dark);
         font-size: 0.78rem;
         font-weight: 700;
@@ -144,6 +167,17 @@
       .channel-tab[aria-selected="true"] {
         background: var(--green);
         color: #fff;
+      }
+
+      .tab-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        align-items: center;
+      }
+
+      [data-platform-panel][hidden] {
+        display: none;
       }
 
       .button {
@@ -259,7 +293,7 @@
         padding: 2px 5px;
         border: 1px solid var(--line);
         border-radius: 4px;
-        background: #f2f5ef;
+        background: var(--code-bg);
         overflow-wrap: anywhere;
         font-family: "Cascadia Mono", "Consolas", monospace;
         font-size: 0.92em;
@@ -271,7 +305,7 @@
         overflow-x: auto;
         border: 1px solid var(--line);
         border-radius: 6px;
-        background: #f7f9f4;
+        background: var(--pre-bg);
         padding: 10px 12px;
       }
 
@@ -322,8 +356,8 @@
         margin-top: 32px;
         border-left: 4px solid var(--gold);
         padding: 14px 18px;
-        background: #fff8e7;
-        color: #4e4227;
+        background: var(--note-bg);
+        color: var(--note-ink);
       }
 
       .note.inline-note {
@@ -361,15 +395,22 @@
             A lightweight desktop client for Apache Guacamole that runs remote sessions in their own app window and reduces keyboard shortcut conflicts between the remote session and your local computer.
           </p>
 
-          <div class="channel-tabs" role="tablist" aria-label="Installation channel">
-            <button id="channel-stable" class="channel-tab" type="button" role="tab" aria-selected="true" data-select-channel="stable">Stable</button>
-            <button id="channel-dev" class="channel-tab" type="button" role="tab" aria-selected="false" data-select-channel="dev">Dev</button>
+          <div class="tab-row">
+            <div class="channel-tabs" role="tablist" aria-label="Installation channel">
+              <button id="channel-stable" class="channel-tab" type="button" role="tab" aria-selected="true" data-select-channel="stable">Stable</button>
+              <button id="channel-dev" class="channel-tab" type="button" role="tab" aria-selected="false" data-select-channel="dev">Dev</button>
+            </div>
+            <div class="channel-tabs" role="tablist" aria-label="Installation platform">
+              <button id="platform-windows" class="channel-tab" type="button" role="tab" aria-selected="true" data-select-platform="windows">Windows</button>
+              <button id="platform-macos" class="channel-tab" type="button" role="tab" aria-selected="false" data-select-platform="macos">macOS</button>
+              <button id="platform-linux" class="channel-tab" type="button" role="tab" aria-selected="false" data-select-platform="linux">Linux</button>
+            </div>
           </div>
           <div class="actions">
             <a id="all-install-options-link" class="button secondary" href="https://github.com/jochenwezel/GuacamoleClient/releases">All install options</a>
           </div>
 
-          <section class="install" aria-labelledby="windows-install-title">
+          <section class="install" aria-labelledby="windows-install-title" data-platform-panel="windows">
             <p id="update-status" class="update-status" hidden></p>
             <h2 id="windows-install-title">Windows Installation</h2>
             <p id="windows-channel-summary" class="channel-summary">Stable channel for regular Windows installations.</p>
@@ -392,7 +433,7 @@
             <p class="note inline-note">Windows may show an unknown publisher warning for self-signed open-source builds.</p>
           </section>
 
-          <section class="linux-install" aria-labelledby="macos-install-title">
+          <section class="linux-install" aria-labelledby="macos-install-title" data-platform-panel="macos" hidden>
             <h2 id="macos-install-title">macOS Installation</h2>
             <p id="macos-channel-summary" class="channel-summary">macOS builds are experimental and intended for early testing.</p>
             <div class="distro-grid">
@@ -413,7 +454,7 @@
             <p class="note inline-note">macOS builds are not yet officially supported. Packaging, signing, notarization, and platform-specific validation are still in progress.</p>
           </section>
 
-          <section class="linux-install" aria-labelledby="linux-install-title">
+          <section class="linux-install" aria-labelledby="linux-install-title" data-platform-panel="linux" hidden>
             <h2 id="linux-install-title">Linux Installation</h2>
             <p id="linux-channel-summary" class="channel-summary">Stable Debian/Ubuntu package for regular Linux installations.</p>
             <div class="distro-grid">
@@ -427,12 +468,12 @@
                   <button id="copy-linux-command" class="copy-button" type="button" data-default-label="Copy" data-copied-label="Copied">Copy</button>
                 </div>
                 <pre><code id="linux-debian-command" data-fallback-stable-command='cd /tmp
-wget "https://github.com/jochenwezel/GuacamoleClient/releases/download/__AVALONIA_DEB_RELEASE_TAG__/guacamoleclient-avalonia___AVALONIA_DEB_VERSION___amd64.deb"
-sudo apt install ./guacamoleclient-avalonia___AVALONIA_DEB_VERSION___amd64.deb' data-fallback-dev-command='Open the latest preview release on GitHub and download the guacamoleclient-avalonia_*_amd64.deb asset.
+wget "https://github.com/jochenwezel/GuacamoleClient/releases/download/__AVALONIA_DEB_RELEASE_TAG__/guacamoleclient-avalonia-linux-x64___AVALONIA_DEB_VERSION___amd64.deb"
+sudo apt install ./guacamoleclient-avalonia-linux-x64___AVALONIA_DEB_VERSION___amd64.deb' data-fallback-dev-command='Open the latest preview release on GitHub and download the guacamoleclient-avalonia-linux-x64_*_amd64.deb asset.
 Then run:
-sudo apt install ./guacamoleclient-avalonia_*_amd64.deb'>cd /tmp
-wget "https://github.com/jochenwezel/GuacamoleClient/releases/download/__AVALONIA_DEB_RELEASE_TAG__/guacamoleclient-avalonia___AVALONIA_DEB_VERSION___amd64.deb"
-sudo apt install ./guacamoleclient-avalonia___AVALONIA_DEB_VERSION___amd64.deb</code></pre>
+sudo apt install ./guacamoleclient-avalonia-linux-x64_*_amd64.deb'>cd /tmp
+wget "https://github.com/jochenwezel/GuacamoleClient/releases/download/__AVALONIA_DEB_RELEASE_TAG__/guacamoleclient-avalonia-linux-x64___AVALONIA_DEB_VERSION___amd64.deb"
+sudo apt install ./guacamoleclient-avalonia-linux-x64___AVALONIA_DEB_VERSION___amd64.deb</code></pre>
                 <p>Start it from the application menu or run <code>guacamoleclient</code>.</p>
                 <p>The package already includes .NET and the embedded Chromium/CEF browser. Required Linux desktop libraries are installed automatically by apt as package dependencies.</p>
               </section>
@@ -446,9 +487,9 @@ sudo apt install ./guacamoleclient-avalonia___AVALONIA_DEB_VERSION___amd64.deb</
                 <div class="command-header">
                   <button id="copy-linux-rpm-command" class="copy-button" type="button" data-default-label="Copy" data-copied-label="Copied">Copy</button>
                 </div>
-                <pre><code id="linux-rpm-command" data-fallback-stable-command='RPM packages are available in the Dev channel for testing. Stable RPM packages will appear here after the next Stable release.' data-fallback-dev-command='Open the latest preview release on GitHub and download the guacamoleclient-avalonia-*.x86_64.rpm asset.
+                <pre><code id="linux-rpm-command" data-fallback-stable-command='RPM packages are available in the Dev channel for testing. Stable RPM packages will appear here after the next Stable release.' data-fallback-dev-command='Open the latest preview release on GitHub and download the guacamoleclient-avalonia-linux-x64-*.x86_64.rpm asset.
 Then run:
-sudo dnf install ./guacamoleclient-avalonia-*.x86_64.rpm'>RPM packages are available in the Dev channel for testing. Stable RPM packages will appear here after the next Stable release.</code></pre>
+sudo dnf install ./guacamoleclient-avalonia-linux-x64-*.x86_64.rpm'>RPM packages are available in the Dev channel for testing. Stable RPM packages will appear here after the next Stable release.</code></pre>
                 <p>Start it from the application menu or run <code>guacamoleclient</code>.</p>
                 <p>The package already includes .NET and the embedded Chromium/CEF browser. Required Linux desktop libraries are installed automatically by dnf as package dependencies.</p>
               </section>
@@ -528,6 +569,8 @@ rm -f "$HOME/.local/bin/guacamoleclient"</code></pre>
         const params = new URLSearchParams(window.location.search);
         const statusEl = document.getElementById("update-status");
         const channelTabs = Array.from(document.querySelectorAll("[data-select-channel]"));
+        const platformTabs = Array.from(document.querySelectorAll("[data-select-platform]"));
+        const platformPanels = Array.from(document.querySelectorAll("[data-platform-panel]"));
         const allInstallOptionsLink = document.getElementById("all-install-options-link");
         const clickOnceButton = document.getElementById("install-clickonce");
         const windowsAvaloniaLink = document.getElementById("windows-avalonia-link");
@@ -551,6 +594,9 @@ rm -f "$HOME/.local/bin/guacamoleclient"</code></pre>
         const copyLinuxTarballUninstallCommandButton = document.getElementById("copy-linux-tarball-uninstall-command");
         const copyLinuxTarballUserUninstallCommandButton = document.getElementById("copy-linux-tarball-user-uninstall-command");
         const requestedChannel = params.get("channel") === "dev" ? "dev" : "stable";
+        const requestedPlatform = ["windows", "macos", "linux"].includes(params.get("platform"))
+          ? params.get("platform")
+          : "windows";
 
         let updateMetadata = null;
 
@@ -666,6 +712,18 @@ mkdir -p "$HOME/.local/opt" "$HOME/.local/bin"
 tar -xzf ${packageFileName} -C "$HOME/.local/opt"
 ln -sfn "$HOME/.local/opt/${directoryName}/guacamoleclient" "$HOME/.local/bin/guacamoleclient"
 "$HOME/.local/bin/guacamoleclient"`;
+        };
+
+        const selectPlatform = platform => {
+          const selectedPlatform = ["windows", "macos", "linux"].includes(platform) ? platform : "windows";
+
+          platformTabs.forEach(tab => {
+            tab.setAttribute("aria-selected", tab.dataset.selectPlatform === selectedPlatform ? "true" : "false");
+          });
+
+          platformPanels.forEach(panel => {
+            panel.hidden = panel.dataset.platformPanel !== selectedPlatform;
+          });
         };
 
         const selectChannel = channel => {
@@ -788,6 +846,13 @@ ln -sfn "$HOME/.local/opt/${directoryName}/guacamoleclient" "$HOME/.local/bin/gu
           });
         });
 
+        platformTabs.forEach(tab => {
+          tab.addEventListener("click", () => {
+            const selectedPlatform = tab.dataset.selectPlatform || "windows";
+            selectPlatform(selectedPlatform);
+          });
+        });
+
         const copyText = async text => {
           if (navigator.clipboard?.writeText) {
             await navigator.clipboard.writeText(text);
@@ -863,6 +928,7 @@ ln -sfn "$HOME/.local/opt/${directoryName}/guacamoleclient" "$HOME/.local/bin/gu
         wireCopyButton(copyLinuxTarballUninstallCommandButton, linuxTarballUninstallCommand);
         wireCopyButton(copyLinuxTarballUserUninstallCommandButton, linuxTarballUserUninstallCommand);
 
+        selectPlatform(requestedPlatform);
         selectChannel(requestedChannel);
 
         fetch("./app-updates.json", { cache: "no-store" })
@@ -875,6 +941,7 @@ ln -sfn "$HOME/.local/opt/${directoryName}/guacamoleclient" "$HOME/.local/bin/gu
           .then(meta => {
             updateMetadata = meta;
             const channels = meta?.apps?.winforms?.channels;
+            selectPlatform(requestedPlatform);
             selectChannel(requestedChannel);
 
             if (params.get("app") !== "winforms-clickonce") {

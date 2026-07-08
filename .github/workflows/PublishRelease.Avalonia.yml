@@ -1,4 +1,4 @@
-﻿name: PublishRelease - Avalonia
+name: PublishRelease - Avalonia
 
 # PLEASE NOTE: PUBLISHING/DEPLOYMENT
 #   * Release is to be created manually at GitHub releases management page
@@ -342,7 +342,7 @@ jobs:
           EOF
 
           rpmbuild --define "_topdir $rpm_root" -bb "$spec_file"
-          cp "$rpm_root/RPMS/x86_64/${package_name}-${package_version}-${package_release}.x86_64.rpm" "$GITHUB_WORKSPACE/"
+          cp "$rpm_root/RPMS/x86_64/${package_name}-${package_version}-${package_release}.x86_64.rpm" "$GITHUB_WORKSPACE/${package_name}-linux-x64-${package_version}-${package_release}.x86_64.rpm"
 
       - name: Pack Debian package - Avalonia (Linux x64)
         if: runner.os == 'Linux'
@@ -410,7 +410,7 @@ jobs:
            GuacamoleClient runs Apache Guacamole sessions in a dedicated desktop application window.
           EOF
 
-          dpkg-deb --build "$package_root" "$GITHUB_WORKSPACE/${package_name}_${package_version}_amd64.deb"
+          dpkg-deb --build "$package_root" "$GITHUB_WORKSPACE/${package_name}-linux-x64_${package_version}_amd64.deb"
 
       - name: Pack binaries - Avalonia - macOS ARM64
         if: runner.os == 'macOS'
@@ -445,8 +445,8 @@ jobs:
           files: |
             bin-avalonia-${{ env.OS_NAME }}-${{ env.VERSION }}.zip
             guacamoleclient-avalonia-linux-x64-${{ env.VERSION }}.tar.gz
-            guacamoleclient-avalonia-${{ env.VERSION }}-1.x86_64.rpm
-            guacamoleclient-avalonia_${{ env.VERSION }}_amd64.deb
+            guacamoleclient-avalonia-linux-x64-${{ env.VERSION }}-1.x86_64.rpm
+            guacamoleclient-avalonia-linux-x64_${{ env.VERSION }}_amd64.deb
           tag_name: ${{ env.RELEASE_TAG }}
           prerelease: ${{ github.event_name != 'release' || github.event.release.prerelease }}
           make_latest: ${{ github.event_name == 'release' && !github.event.release.prerelease }}
