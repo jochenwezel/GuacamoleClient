@@ -30,6 +30,12 @@
 - Add durable unit tests for new behavior.
 - Test methods should preferably include short comments or XML summaries explaining why the test exists and what workbook behavior it verifies, but this is guidance and not a mandatory API documentation requirement.
 
+## Build Verification
+
+- Do not run separate `dotnet build` commands for projects that share project references in parallel. For example, build `GuacamoleClient-WinForms` and `GuacamoleClient-Avalonia` sequentially, or build the solution once, because both projects build `GuacamoleCommon` and parallel build processes can lock shared `obj` outputs.
+- Prefer one `dotnet build GuacamoleClient.sln` when the local SDK supports all projects. If the MSIX packaging project cannot build locally because DesktopBridge targets are missing, build the affected app projects sequentially instead.
+- When helping with an official/stable release, check for older Dev Preview releases that are no longer needed and ask for explicit confirmation before deleting them or their assets. Treat this as regular release cleanup follow-up work.
+
 ## File Encoding and Line Endings
 
 - Save text files as UTF-8 with BOM and CRLF line endings, matching `.editorconfig`.
