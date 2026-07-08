@@ -85,6 +85,7 @@
             },
             "linux-deb-direct": {
               "deploymentType": "linux-deb-direct",
+              "stableDisabled": __AVALONIA_STABLE_LINUX_DEB_DISABLED__,
               "releaseTag": "__AVALONIA_STABLE_DEB_RELEASE_TAG__",
               "packageFileName": "guacamoleclient-avalonia-linux-x64___AVALONIA_STABLE_VERSION___amd64.deb",
               "packageUrl": "https://github.com/jochenwezel/GuacamoleClient/releases/download/__AVALONIA_STABLE_DEB_RELEASE_TAG__/guacamoleclient-avalonia-linux-x64___AVALONIA_STABLE_VERSION___amd64.deb",
@@ -93,6 +94,7 @@
             },
             "linux-rpm-direct": {
               "deploymentType": "linux-rpm-direct",
+              "stableDisabled": __AVALONIA_STABLE_LINUX_RPM_DISABLED__,
               "releaseTag": "__AVALONIA_STABLE_DEB_RELEASE_TAG__",
               "packageFileName": "guacamoleclient-avalonia-linux-x64-__AVALONIA_STABLE_VERSION__-1.x86_64.rpm",
               "packageUrl": "https://github.com/jochenwezel/GuacamoleClient/releases/download/__AVALONIA_STABLE_DEB_RELEASE_TAG__/guacamoleclient-avalonia-linux-x64-__AVALONIA_STABLE_VERSION__-1.x86_64.rpm",
@@ -101,6 +103,7 @@
             },
             "linux-tarball-direct": {
               "deploymentType": "linux-tarball-direct",
+              "stableDisabled": __AVALONIA_STABLE_LINUX_TARBALL_DISABLED__,
               "releaseTag": "__AVALONIA_STABLE_DEB_RELEASE_TAG__",
               "packageFileName": "guacamoleclient-avalonia-linux-x64-__AVALONIA_STABLE_VERSION__.tar.gz",
               "packageUrl": "https://github.com/jochenwezel/GuacamoleClient/releases/download/__AVALONIA_STABLE_DEB_RELEASE_TAG__/guacamoleclient-avalonia-linux-x64-__AVALONIA_STABLE_VERSION__.tar.gz",
@@ -109,6 +112,7 @@
             },
             "macos-arm64-zip": {
               "deploymentType": "macos-arm64-zip",
+              "stableDisabled": __AVALONIA_STABLE_MACOS_ARM64_DISABLED__,
               "releaseTag": "__AVALONIA_STABLE_DEB_RELEASE_TAG__",
               "packageFileName": "bin-avalonia-osx-arm64-__AVALONIA_STABLE_VERSION__.zip",
               "packageUrl": "https://github.com/jochenwezel/GuacamoleClient/releases/download/__AVALONIA_STABLE_DEB_RELEASE_TAG__/bin-avalonia-osx-arm64-__AVALONIA_STABLE_VERSION__.zip",
@@ -117,6 +121,7 @@
             },
             "macos-x64-zip": {
               "deploymentType": "macos-x64-zip",
+              "stableDisabled": __AVALONIA_STABLE_MACOS_X64_DISABLED__,
               "releaseTag": "__AVALONIA_STABLE_DEB_RELEASE_TAG__",
               "packageFileName": "bin-avalonia-osx-x64-__AVALONIA_STABLE_VERSION__.zip",
               "packageUrl": "https://github.com/jochenwezel/GuacamoleClient/releases/download/__AVALONIA_STABLE_DEB_RELEASE_TAG__/bin-avalonia-osx-x64-__AVALONIA_STABLE_VERSION__.zip",
@@ -138,47 +143,47 @@
             "zip": {
               "deploymentType": "zip",
               "releaseTag": "__AVALONIA_DEV_DEB_RELEASE_TAG__",
-              "packageFileName": "bin-avalonia-windows-__AVALONIA_DEV_VERSION__.zip",
-              "packageUrl": "https://github.com/jochenwezel/GuacamoleClient/releases/download/__AVALONIA_DEV_DEB_RELEASE_TAG__/bin-avalonia-windows-__AVALONIA_DEV_VERSION__.zip",
+              "packageFileName": "bin-avalonia-windows-dev-__AVALONIA_DEV_VERSION__.zip",
+              "packageUrl": "https://github.com/jochenwezel/GuacamoleClient/releases/download/__AVALONIA_DEV_DEB_RELEASE_TAG__/bin-avalonia-windows-dev-__AVALONIA_DEV_VERSION__.zip",
               "releasesUrl": "https://github.com/jochenwezel/GuacamoleClient/releases"
             },
             "linux-deb-direct": {
               "deploymentType": "linux-deb-direct",
               "releaseTag": "__AVALONIA_DEV_DEB_RELEASE_TAG__",
-              "packageFileName": "guacamoleclient-avalonia-linux-x64___AVALONIA_DEV_VERSION___amd64.deb",
-              "packageUrl": "https://github.com/jochenwezel/GuacamoleClient/releases/download/__AVALONIA_DEV_DEB_RELEASE_TAG__/guacamoleclient-avalonia-linux-x64___AVALONIA_DEV_VERSION___amd64.deb",
+              "packageFileName": "guacamoleclient-avalonia-linux-x64-dev___AVALONIA_DEV_VERSION___amd64.deb",
+              "packageUrl": "https://github.com/jochenwezel/GuacamoleClient/releases/download/__AVALONIA_DEV_DEB_RELEASE_TAG__/guacamoleclient-avalonia-linux-x64-dev___AVALONIA_DEV_VERSION___amd64.deb",
               "updatePageUrl": "https://jochenwezel.github.io/GuacamoleClient/?channel=dev&platform=linux",
               "releasesUrl": "https://github.com/jochenwezel/GuacamoleClient/releases"
             },
             "linux-rpm-direct": {
               "deploymentType": "linux-rpm-direct",
               "releaseTag": "__AVALONIA_DEV_DEB_RELEASE_TAG__",
-              "packageFileName": "guacamoleclient-avalonia-linux-x64-__AVALONIA_DEV_VERSION__-1.x86_64.rpm",
-              "packageUrl": "https://github.com/jochenwezel/GuacamoleClient/releases/download/__AVALONIA_DEV_DEB_RELEASE_TAG__/guacamoleclient-avalonia-linux-x64-__AVALONIA_DEV_VERSION__-1.x86_64.rpm",
+              "packageFileName": "guacamoleclient-avalonia-linux-x64-dev-__AVALONIA_DEV_VERSION__-1.x86_64.rpm",
+              "packageUrl": "https://github.com/jochenwezel/GuacamoleClient/releases/download/__AVALONIA_DEV_DEB_RELEASE_TAG__/guacamoleclient-avalonia-linux-x64-dev-__AVALONIA_DEV_VERSION__-1.x86_64.rpm",
               "updatePageUrl": "https://jochenwezel.github.io/GuacamoleClient/?channel=dev&platform=linux",
               "releasesUrl": "https://github.com/jochenwezel/GuacamoleClient/releases"
             },
             "linux-tarball-direct": {
               "deploymentType": "linux-tarball-direct",
               "releaseTag": "__AVALONIA_DEV_DEB_RELEASE_TAG__",
-              "packageFileName": "guacamoleclient-avalonia-linux-x64-__AVALONIA_DEV_VERSION__.tar.gz",
-              "packageUrl": "https://github.com/jochenwezel/GuacamoleClient/releases/download/__AVALONIA_DEV_DEB_RELEASE_TAG__/guacamoleclient-avalonia-linux-x64-__AVALONIA_DEV_VERSION__.tar.gz",
+              "packageFileName": "guacamoleclient-avalonia-linux-x64-dev-__AVALONIA_DEV_VERSION__.tar.gz",
+              "packageUrl": "https://github.com/jochenwezel/GuacamoleClient/releases/download/__AVALONIA_DEV_DEB_RELEASE_TAG__/guacamoleclient-avalonia-linux-x64-dev-__AVALONIA_DEV_VERSION__.tar.gz",
               "updatePageUrl": "https://jochenwezel.github.io/GuacamoleClient/?channel=dev&platform=linux",
               "releasesUrl": "https://github.com/jochenwezel/GuacamoleClient/releases"
             },
             "macos-arm64-zip": {
               "deploymentType": "macos-arm64-zip",
               "releaseTag": "__AVALONIA_DEV_DEB_RELEASE_TAG__",
-              "packageFileName": "bin-avalonia-osx-arm64-__AVALONIA_DEV_VERSION__.zip",
-              "packageUrl": "https://github.com/jochenwezel/GuacamoleClient/releases/download/__AVALONIA_DEV_DEB_RELEASE_TAG__/bin-avalonia-osx-arm64-__AVALONIA_DEV_VERSION__.zip",
+              "packageFileName": "bin-avalonia-osx-arm64-dev-__AVALONIA_DEV_VERSION__.zip",
+              "packageUrl": "https://github.com/jochenwezel/GuacamoleClient/releases/download/__AVALONIA_DEV_DEB_RELEASE_TAG__/bin-avalonia-osx-arm64-dev-__AVALONIA_DEV_VERSION__.zip",
               "updatePageUrl": "https://jochenwezel.github.io/GuacamoleClient/?channel=dev&platform=macos",
               "releasesUrl": "https://github.com/jochenwezel/GuacamoleClient/releases"
             },
             "macos-x64-zip": {
               "deploymentType": "macos-x64-zip",
               "releaseTag": "__AVALONIA_DEV_DEB_RELEASE_TAG__",
-              "packageFileName": "bin-avalonia-osx-x64-__AVALONIA_DEV_VERSION__.zip",
-              "packageUrl": "https://github.com/jochenwezel/GuacamoleClient/releases/download/__AVALONIA_DEV_DEB_RELEASE_TAG__/bin-avalonia-osx-x64-__AVALONIA_DEV_VERSION__.zip",
+              "packageFileName": "bin-avalonia-osx-x64-dev-__AVALONIA_DEV_VERSION__.zip",
+              "packageUrl": "https://github.com/jochenwezel/GuacamoleClient/releases/download/__AVALONIA_DEV_DEB_RELEASE_TAG__/bin-avalonia-osx-x64-dev-__AVALONIA_DEV_VERSION__.zip",
               "updatePageUrl": "https://jochenwezel.github.io/GuacamoleClient/?channel=dev&platform=macos",
               "releasesUrl": "https://github.com/jochenwezel/GuacamoleClient/releases"
             }

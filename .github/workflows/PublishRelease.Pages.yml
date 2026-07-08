@@ -366,13 +366,48 @@ jobs:
 
           expected_assets=(
             "bin-avalonia-windows-${VERSION}.zip"
-            "bin-avalonia-linux-${VERSION}.zip"
-            "guacamoleclient-avalonia-linux-x64-${VERSION}.tar.gz"
-            "guacamoleclient-avalonia-linux-x64-${VERSION}-1.x86_64.rpm"
-            "bin-avalonia-osx-arm64-${VERSION}.zip"
-            "bin-avalonia-osx-x64-${VERSION}.zip"
-            "guacamoleclient-avalonia-linux-x64_${VERSION}_amd64.deb"
           )
+
+          is_stable_release=false
+          if [[ "${{ github.event.release.prerelease }}" != "true" ]]; then
+            is_stable_release=true
+          fi
+
+          stable_artifact_enabled() {
+            local gate_path="$1"
+            [[ "$is_stable_release" != "true" || ! -f "$gate_path" ]]
+          }
+
+          if stable_artifact_enabled "release-gates/not-yet-stable.linux-x64.zip.disabled"; then
+            expected_assets+=("bin-avalonia-linux-${VERSION}.zip")
+          fi
+          if stable_artifact_enabled "release-gates/not-yet-stable.linux-x64.tarball.disabled"; then
+            expected_assets+=("guacamoleclient-avalonia-linux-x64-${VERSION}.tar.gz")
+          fi
+          if stable_artifact_enabled "release-gates/not-yet-stable.linux-x64.rpm.disabled"; then
+            expected_assets+=("guacamoleclient-avalonia-linux-x64-${VERSION}-1.x86_64.rpm")
+          fi
+          if stable_artifact_enabled "release-gates/not-yet-stable.linux-x64.deb.disabled"; then
+            expected_assets+=("guacamoleclient-avalonia-linux-x64_${VERSION}_amd64.deb")
+          fi
+          if stable_artifact_enabled "release-gates/not-yet-stable.osx-arm64.zip.disabled"; then
+            expected_assets+=("bin-avalonia-osx-arm64-${VERSION}.zip")
+          fi
+          if stable_artifact_enabled "release-gates/not-yet-stable.osx-x64.zip.disabled"; then
+            expected_assets+=("bin-avalonia-osx-x64-${VERSION}.zip")
+          fi
+
+          if [[ "${{ github.event_name }}" == "release" ]]; then
+            expected_assets+=(
+              "bin-avalonia-windows-dev-${VERSION}.zip"
+              "bin-avalonia-linux-dev-${VERSION}.zip"
+              "guacamoleclient-avalonia-linux-x64-dev-${VERSION}.tar.gz"
+              "guacamoleclient-avalonia-linux-x64-dev-${VERSION}-1.x86_64.rpm"
+              "guacamoleclient-avalonia-linux-x64-dev_${VERSION}_amd64.deb"
+              "bin-avalonia-osx-arm64-dev-${VERSION}.zip"
+              "bin-avalonia-osx-x64-dev-${VERSION}.zip"
+            )
+          fi
 
           deadline=$((SECONDS + 600))
           while (( SECONDS < deadline )); do
@@ -422,6 +457,20 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          gate_disabled() {
+            if [[ -f "$1" ]]; then
+              echo "true"
+            else
+              echo "false"
+            fi
+          }
+
+          echo "AVALONIA_STABLE_LINUX_DEB_DISABLED=$(gate_disabled "release-gates/not-yet-stable.linux-x64.deb.disabled")" >> "$GITHUB_ENV"
+          echo "AVALONIA_STABLE_LINUX_RPM_DISABLED=$(gate_disabled "release-gates/not-yet-stable.linux-x64.rpm.disabled")" >> "$GITHUB_ENV"
+          echo "AVALONIA_STABLE_LINUX_TARBALL_DISABLED=$(gate_disabled "release-gates/not-yet-stable.linux-x64.tarball.disabled")" >> "$GITHUB_ENV"
+          echo "AVALONIA_STABLE_MACOS_ARM64_DISABLED=$(gate_disabled "release-gates/not-yet-stable.osx-arm64.zip.disabled")" >> "$GITHUB_ENV"
+          echo "AVALONIA_STABLE_MACOS_X64_DISABLED=$(gate_disabled "release-gates/not-yet-stable.osx-x64.zip.disabled")" >> "$GITHUB_ENV"
+
           if [[ "$PUBLISH_BOTH_CHANNELS" == "true" ]]; then
             echo "STABLE_VERSION=${VERSION}" >> "$GITHUB_ENV"
             echo "DEV_VERSION=${VERSION}" >> "$GITHUB_ENV"
@@ -477,6 +526,11 @@ jobs:
           sed -i "s/__AVALONIA_DEV_VERSION__/${AVALONIA_DEV_VERSION}/g" "public/app-updates.json"
           sed -i "s#__AVALONIA_STABLE_DEB_RELEASE_TAG__#${AVALONIA_STABLE_DEB_RELEASE_TAG}#g" "public/app-updates.json"
           sed -i "s#__AVALONIA_DEV_DEB_RELEASE_TAG__#${AVALONIA_DEV_DEB_RELEASE_TAG}#g" "public/app-updates.json"
+          sed -i "s/__AVALONIA_STABLE_LINUX_DEB_DISABLED__/${AVALONIA_STABLE_LINUX_DEB_DISABLED}/g" "public/app-updates.json"
+          sed -i "s/__AVALONIA_STABLE_LINUX_RPM_DISABLED__/${AVALONIA_STABLE_LINUX_RPM_DISABLED}/g" "public/app-updates.json"
+          sed -i "s/__AVALONIA_STABLE_LINUX_TARBALL_DISABLED__/${AVALONIA_STABLE_LINUX_TARBALL_DISABLED}/g" "public/app-updates.json"
+          sed -i "s/__AVALONIA_STABLE_MACOS_ARM64_DISABLED__/${AVALONIA_STABLE_MACOS_ARM64_DISABLED}/g" "public/app-updates.json"
+          sed -i "s/__AVALONIA_STABLE_MACOS_X64_DISABLED__/${AVALONIA_STABLE_MACOS_X64_DISABLED}/g" "public/app-updates.json"
           AVALONIA_DEB_VERSION="${AVALONIA_STABLE_VERSION}"
           AVALONIA_DEB_RELEASE_TAG="${AVALONIA_STABLE_DEB_RELEASE_TAG}"
           sed -i "s/__AVALONIA_DEB_VERSION__/${AVALONIA_DEB_VERSION}/g" "public/install-linux.md" "public/index.html"
