@@ -128,7 +128,7 @@ jobs:
 
           stable_artifact_enabled() {
             local gate_path="$1"
-            [[ "$is_stable_release" != "true" || ! -f "$gate_path" ]]
+            [[ "$is_stable_release" == "true" && ! -f "$gate_path" ]]
           }
 
           publish_linux_zip=false
@@ -253,7 +253,7 @@ jobs:
           }
 
       - name: Pack binaries - Avalonia (Windows)
-        if: runner.os == 'Windows'
+        if: runner.os == 'Windows' && env.IS_STABLE_RELEASE == 'true'
         shell: pwsh
         run: |
           $src = Join-Path $env:GITHUB_WORKSPACE "GuacamoleClient-Avalonia\bin\${{ env.BUILD_CONFIGURATION }}\net8.0\*"
