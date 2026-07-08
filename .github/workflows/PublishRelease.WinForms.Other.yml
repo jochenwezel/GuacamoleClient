@@ -150,22 +150,24 @@ jobs:
         shell: pwsh
         run: |
           $src = Join-Path $env:GITHUB_WORKSPACE "${{ env.OUT_FRAMEWORK }}\*"
-          $dst = Join-Path $env:GITHUB_WORKSPACE "bin-winforms-framework-${{ env.VERSION }}.zip"
+          $channelSuffix = if ($env:CHANNEL -eq "dev") { "-dev" } else { "" }
+          $dst = Join-Path $env:GITHUB_WORKSPACE "bin-winforms-framework$channelSuffix-${{ env.VERSION }}.zip"
           Compress-Archive -Path $src -DestinationPath $dst -Force
 
       - name: Pack portable single exe
         shell: pwsh
         run: |
           $src = Join-Path $env:GITHUB_WORKSPACE "${{ env.OUT_PORTABLE }}\*"
-          $dst = Join-Path $env:GITHUB_WORKSPACE "bin-winforms-portable-${{ env.VERSION }}.zip"
+          $channelSuffix = if ($env:CHANNEL -eq "dev") { "-dev" } else { "" }
+          $dst = Join-Path $env:GITHUB_WORKSPACE "bin-winforms-portable$channelSuffix-${{ env.VERSION }}.zip"
           Compress-Archive -Path $src -DestinationPath $dst -Force
 
       - name: Publish WinForms variants to the release
         uses: softprops/action-gh-release@v2
         with:
           files: |
-            bin-winforms-framework-${{ env.VERSION }}.zip
-            bin-winforms-portable-${{ env.VERSION }}.zip
+            bin-winforms-framework*.zip
+            bin-winforms-portable*.zip
           tag_name: ${{ env.RELEASE_TAG }}
           prerelease: ${{ github.event_name != 'release' || github.event.release.prerelease }}
           make_latest: ${{ github.event_name == 'release' && !github.event.release.prerelease }}
