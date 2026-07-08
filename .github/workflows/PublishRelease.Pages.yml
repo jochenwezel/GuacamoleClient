@@ -375,9 +375,7 @@ jobs:
         run: |
           set -euo pipefail
 
-          expected_assets=(
-            "bin-avalonia-windows-${VERSION}.zip"
-          )
+          expected_assets=()
 
           is_stable_release=false
           if [[ "${{ github.event.release.prerelease }}" != "true" ]]; then
@@ -386,8 +384,12 @@ jobs:
 
           stable_artifact_enabled() {
             local gate_path="$1"
-            [[ "$is_stable_release" != "true" || ! -f "$gate_path" ]]
+            [[ "$is_stable_release" == "true" && ! -f "$gate_path" ]]
           }
+
+          if [[ "$is_stable_release" == "true" ]]; then
+            expected_assets+=("bin-avalonia-windows-${VERSION}.zip")
+          fi
 
           if stable_artifact_enabled "release-gates/not-yet-stable.linux-x64.zip.disabled"; then
             expected_assets+=("bin-avalonia-linux-${VERSION}.zip")
