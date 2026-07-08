@@ -66,7 +66,11 @@ jobs:
         shell: pwsh
         run: |
           $channel = if ("${{ github.event_name }}" -ne "release") { "test" } elseif ("${{ github.event.release.prerelease }}" -eq "true") { "dev" } else { "stable" }
+          $isStableRelease = "${{ github.event_name }}" -eq "release" -and "${{ github.event.release.prerelease }}" -ne "true"
+          $publishDevAssets = "${{ github.event_name }}" -eq "release"
           "CHANNEL=$channel" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          "IS_STABLE_RELEASE=$($isStableRelease.ToString().ToLowerInvariant())" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          "PUBLISH_DEV_ASSETS=$($publishDevAssets.ToString().ToLowerInvariant())" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
 
       - name: Restore Tools
         run: dotnet tool restore
@@ -147,20 +151,60 @@ jobs:
           $appInfo | ConvertTo-Json -Depth 4 | Set-Content -LiteralPath (Join-Path $out "app-info.json") -Encoding utf8
 
       - name: Pack framework-dependent
+        if: env.IS_STABLE_RELEASE == 'true' || env.PUBLISH_DEV_ASSETS != 'true'
         shell: pwsh
         run: |
           $src = Join-Path $env:GITHUB_WORKSPACE "${{ env.OUT_FRAMEWORK }}\*"
-          $channelSuffix = if ($env:CHANNEL -eq "dev") { "-dev" } else { "" }
-          $dst = Join-Path $env:GITHUB_WORKSPACE "bin-winforms-framework$channelSuffix-${{ env.VERSION }}.zip"
+          $dst = Join-Path $env:GITHUB_WORKSPACE "bin-winforms-framework-${{ env.VERSION }}.zip"
           Compress-Archive -Path $src -DestinationPath $dst -Force
 
+      - name: Pack dev framework-dependent
+        if: env.PUBLISH_DEV_ASSETS == 'true'
+        shell: pwsh
+        run: |
+          $srcRoot = Join-Path $env:GITHUB_WORKSPACE "${{ env.OUT_FRAMEWORK }}"
+          $devRoot = Join-Path $env:GITHUB_WORKSPACE "dev-winforms-framework"
+          if (Test-Path $devRoot) { Remove-Item -Recurse -Force $devRoot }
+          New-Item -ItemType Directory -Force -Path $devRoot | Out-Null
+          Copy-Item -Path (Join-Path $srcRoot "*") -Destination $devRoot -Recurse -Force
+          $appInfo = [ordered]@{
+            schemaVersion = 1
+            appId = "winforms"
+            deploymentType = "framework-dependent"
+            channel = "dev"
+            version = $env:VERSION
+            updatesUrl = "https://jochenwezel.github.io/GuacamoleClient/app-updates.json"
+          }
+          $appInfo | ConvertTo-Json -Depth 4 | Set-Content -LiteralPath (Join-Path $devRoot "app-info.json") -Encoding utf8
+          Compress-Archive -Path (Join-Path $devRoot "*") -DestinationPath (Join-Path $env:GITHUB_WORKSPACE "bin-winforms-framework-dev-${{ env.VERSION }}.zip") -Force
+
       - name: Pack portable single exe
+        if: env.IS_STABLE_RELEASE == 'true' || env.PUBLISH_DEV_ASSETS != 'true'
         shell: pwsh
         run: |
           $src = Join-Path $env:GITHUB_WORKSPACE "${{ env.OUT_PORTABLE }}\*"
-          $channelSuffix = if ($env:CHANNEL -eq "dev") { "-dev" } else { "" }
-          $dst = Join-Path $env:GITHUB_WORKSPACE "bin-winforms-portable$channelSuffix-${{ env.VERSION }}.zip"
+          $dst = Join-Path $env:GITHUB_WORKSPACE "bin-winforms-portable-${{ env.VERSION }}.zip"
           Compress-Archive -Path $src -DestinationPath $dst -Force
+
+      - name: Pack dev portable single exe
+        if: env.PUBLISH_DEV_ASSETS == 'true'
+        shell: pwsh
+        run: |
+          $srcRoot = Join-Path $env:GITHUB_WORKSPACE "${{ env.OUT_PORTABLE }}"
+          $devRoot = Join-Path $env:GITHUB_WORKSPACE "dev-winforms-portable"
+          if (Test-Path $devRoot) { Remove-Item -Recurse -Force $devRoot }
+          New-Item -ItemType Directory -Force -Path $devRoot | Out-Null
+          Copy-Item -Path (Join-Path $srcRoot "*") -Destination $devRoot -Recurse -Force
+          $appInfo = [ordered]@{
+            schemaVersion = 1
+            appId = "winforms"
+            deploymentType = "portable"
+            channel = "dev"
+            version = $env:VERSION
+            updatesUrl = "https://jochenwezel.github.io/GuacamoleClient/app-updates.json"
+          }
+          $appInfo | ConvertTo-Json -Depth 4 | Set-Content -LiteralPath (Join-Path $devRoot "app-info.json") -Encoding utf8
+          Compress-Archive -Path (Join-Path $devRoot "*") -DestinationPath (Join-Path $env:GITHUB_WORKSPACE "bin-winforms-portable-dev-${{ env.VERSION }}.zip") -Force
 
       - name: Publish WinForms variants to the release
         uses: softprops/action-gh-release@v2
