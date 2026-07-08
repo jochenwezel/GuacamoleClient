@@ -187,21 +187,32 @@ jobs:
             $targetPath = Join-Path $publicRoot ($RelativePath -replace '/', [IO.Path]::DirectorySeparatorChar)
             $targetDirectory = Split-Path -Parent $targetPath
             New-Item -ItemType Directory -Force -Path $targetDirectory | Out-Null
-            try {
-              Invoke-WebRequest -Uri $sourceUrl -OutFile $targetPath -ErrorAction Stop
-            }
-            catch {
-              $statusCode = $null
-              if ($null -ne $_.Exception.Response -and $null -ne $_.Exception.Response.StatusCode) {
-                $statusCode = [int]$_.Exception.Response.StatusCode
-              }
-
-              if ($statusCode -eq 404) {
-                Write-Host "Skipping missing existing GitHub Pages file: $normalizedRelativePath"
+            $maxAttempts = 5
+            for ($attempt = 1; $attempt -le $maxAttempts; $attempt++) {
+              try {
+                Invoke-WebRequest -Uri $sourceUrl -OutFile $targetPath -ErrorAction Stop
                 return
               }
+              catch {
+                $statusCode = $null
+                if ($null -ne $_.Exception.Response -and $null -ne $_.Exception.Response.StatusCode) {
+                  $statusCode = [int]$_.Exception.Response.StatusCode
+                }
 
-              throw
+                if ($statusCode -eq 404) {
+                  Write-Host "Skipping missing existing GitHub Pages file: $normalizedRelativePath"
+                  return
+                }
+
+                if ($attempt -lt $maxAttempts) {
+                  Write-Host "Retrying existing GitHub Pages file after HTTP $statusCode`: $normalizedRelativePath"
+                  Start-Sleep -Seconds ([Math]::Min(20, 2 * $attempt))
+                  continue
+                }
+
+                Write-Warning "Skipping existing GitHub Pages file after $maxAttempts failed attempts: $normalizedRelativePath"
+                return
+              }
             }
           }
 
