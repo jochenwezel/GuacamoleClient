@@ -28,6 +28,14 @@
         Hint_RemoteAltF4_Sent,
         Hint_RemoteAltTab_Sent,
         Hint_GuacamoleMenu_Toggled,
+        /// <summary>
+        /// Gets the hint message indicating that clipboard text has been sent as keyboard input.
+        /// </summary>
+        Hint_RemoteClipboardText_Sent,
+        /// <summary>
+        /// Gets the hint message indicating that no clipboard text is available to send as keyboard input.
+        /// </summary>
+        Hint_RemoteClipboardText_Empty,
         Hint_ActiveModifiers,
         /// <summary>
         /// Gets the hint message indicating that pressing Ctrl+Alt+End has no effect in Remote Desktop sessions
@@ -72,6 +80,10 @@
         Menu_SendCtrlAltEnd,
         Menu_SendCtrlAltBackspace,
         Menu_OpenGuacamoleMenu,
+        /// <summary>
+        /// Gets the menu item text for sending clipboard text as keyboard input.
+        /// </summary>
+        Menu_SendClipboardTextAsKeystrokes,
         Menu_Settings,
         Menu_GpuHardwareAcceleration,
         Menu_GpuHardwareAccelerationEnabled,

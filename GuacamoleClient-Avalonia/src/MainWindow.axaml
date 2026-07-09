@@ -48,6 +48,8 @@
         <MenuItem x:Name="SendRemoteCtrlAltBackspaceMenuItem" />
         <Separator />
         <MenuItem x:Name="OpenGuacamoleMenuMenuItem" />
+        <Separator />
+        <MenuItem x:Name="SendClipboardTextAsKeystrokesMenuItem" />
       </MenuItem>
       <MenuItem x:Name="SettingsMenuItem">
         <MenuItem x:Name="GpuHardwareAccelerationMenuItem">

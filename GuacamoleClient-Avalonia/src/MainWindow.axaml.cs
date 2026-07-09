@@ -76,6 +76,7 @@ namespace GuacClient
         private MenuItem _sendRemoteCtrlAltEndMenuItem = default!;
         private MenuItem _sendRemoteCtrlAltBackspaceMenuItem = default!;
         private MenuItem _openGuacamoleMenuMenuItem = default!;
+        private MenuItem _sendClipboardTextAsKeystrokesMenuItem = default!;
         private MenuItem _settingsMenuItem = default!;
         private MenuItem _gpuHardwareAccelerationMenuItem = default!;
         private MenuItem _gpuHardwareAccelerationEnabledMenuItem = default!;
@@ -157,6 +158,7 @@ namespace GuacClient
             _sendRemoteCtrlAltEndMenuItem = this.FindControl<MenuItem>("SendRemoteCtrlAltEndMenuItem")!;
             _sendRemoteCtrlAltBackspaceMenuItem = this.FindControl<MenuItem>("SendRemoteCtrlAltBackspaceMenuItem")!;
             _openGuacamoleMenuMenuItem = this.FindControl<MenuItem>("OpenGuacamoleMenuMenuItem")!;
+            _sendClipboardTextAsKeystrokesMenuItem = this.FindControl<MenuItem>("SendClipboardTextAsKeystrokesMenuItem")!;
             _settingsMenuItem = this.FindControl<MenuItem>("SettingsMenuItem")!;
             _gpuHardwareAccelerationMenuItem = this.FindControl<MenuItem>("GpuHardwareAccelerationMenuItem")!;
             _gpuHardwareAccelerationEnabledMenuItem = this.FindControl<MenuItem>("GpuHardwareAccelerationEnabledMenuItem")!;
@@ -189,6 +191,7 @@ namespace GuacClient
             _sendRemoteCtrlAltEndMenuItem.Click += SendRemoteCtrlAltEndMenuItem_Click;
             _sendRemoteCtrlAltBackspaceMenuItem.Click += SendRemoteCtrlAltBackspaceMenuItem_Click;
             _openGuacamoleMenuMenuItem.Click += OpenGuacamoleMenuMenuItem_Click;
+            _sendClipboardTextAsKeystrokesMenuItem.Click += SendClipboardTextAsKeystrokesMenuItem_Click;
             _gpuHardwareAccelerationEnabledMenuItem.Click += GpuHardwareAccelerationEnabledMenuItem_Click;
             _gpuHardwareAccelerationDisabledMenuItem.Click += GpuHardwareAccelerationDisabledMenuItem_Click;
             _setupGuideHelpMenuItem.Click += SetupGuideHelpMenuItem_Click;
@@ -288,6 +291,7 @@ namespace GuacClient
                 LocalizationProvider.Get(LocalizationKeys.Menu_OpenGuacamoleMenu),
                 LocalizationProvider.Get(LocalizationKeys.ShortcutKeystroke_OpenGuacamoleMenuToolStripMenuItem));
             _openGuacamoleMenuMenuItem.InputGesture = null;
+            _sendClipboardTextAsKeystrokesMenuItem.Header = LocalizationProvider.Get(LocalizationKeys.Menu_SendClipboardTextAsKeystrokes);
             _settingsMenuItem.Header = LocalizationProvider.Get(LocalizationKeys.Menu_Settings);
             _gpuHardwareAccelerationMenuItem.Header = LocalizationProvider.Get(LocalizationKeys.Menu_GpuHardwareAcceleration);
             UpdateGpuHardwareAccelerationMenuState();
@@ -760,6 +764,9 @@ namespace GuacClient
                 await SendOpenGuacamoleMenuChordSafeAsync().ConfigureAwait(true);
             }, DispatcherPriority.Background);
         }
+
+        private async void SendClipboardTextAsKeystrokesMenuItem_Click(object? sender, RoutedEventArgs e)
+            => await SendClipboardTextAsKeystrokesSafeAsync().ConfigureAwait(true);
 
         private async void GpuHardwareAccelerationEnabledMenuItem_Click(object? sender, RoutedEventArgs e)
             => await ApplyGpuHardwareAccelerationPreferenceAsync(enabled: true).ConfigureAwait(true);
@@ -1627,6 +1634,82 @@ namespace GuacClient
             keyEvent.UnmodifiedCharacter = char.ToLowerInvariant(character.Value);
             SendNativeKeyEvent(keyEvent);
             return Task.CompletedTask;
+        }
+
+        private async Task SendClipboardTextAsKeystrokesSafeAsync()
+        {
+            try
+            {
+                var clipboard = TopLevel.GetTopLevel(this)?.Clipboard;
+                string? text = clipboard == null ? null : await clipboard.TryGetTextAsync().ConfigureAwait(true);
+                if (string.IsNullOrEmpty(text))
+                {
+                    ShowTransientHint(LocalizationProvider.Get(LocalizationKeys.Hint_RemoteClipboardText_Empty));
+                    return;
+                }
+
+                await SendTextAsKeystrokesAsync(text).ConfigureAwait(true);
+                ShowTransientHint(LocalizationProvider.Get(LocalizationKeys.Hint_RemoteClipboardText_Sent, text.Length));
+            }
+            catch (Exception ex)
+            {
+                await MessageBoxSimple.Show(this, LocalizationProvider.Get(LocalizationKeys.AppStart_BackgroundError_Title), ex.ToString());
+            }
+        }
+
+        private async Task SendTextAsKeystrokesAsync(string text)
+        {
+            Activate();
+            _web.Focus();
+            await Task.Yield();
+
+            for (int i = 0; i < text.Length; i++)
+            {
+                char character = text[i];
+
+                if (character == '\r')
+                {
+                    if (i + 1 < text.Length && text[i + 1] == '\n')
+                        i++;
+
+                    await SendNativeKeyTapAsync(Key.Enter, Array.Empty<Key>(), Array.Empty<Key>()).ConfigureAwait(false);
+                    continue;
+                }
+
+                if (character == '\n')
+                {
+                    await SendNativeKeyTapAsync(Key.Enter, Array.Empty<Key>(), Array.Empty<Key>()).ConfigureAwait(false);
+                    continue;
+                }
+
+                if (character == '\t')
+                {
+                    await SendNativeKeyTapAsync(Key.Tab, Array.Empty<Key>(), Array.Empty<Key>()).ConfigureAwait(false);
+                    continue;
+                }
+
+                SendNativeCharacter(character);
+
+                if (i % 64 == 0)
+                    await Task.Yield();
+            }
+        }
+
+        private void SendNativeCharacter(char character)
+        {
+            var keyEvent = new CefKeyEvent
+            {
+                EventType = CefKeyEventType.Char,
+                WindowsKeyCode = character,
+                NativeKeyCode = 0,
+                Character = character,
+                UnmodifiedCharacter = character,
+                Modifiers = CefEventFlags.None,
+                FocusOnEditableField = true,
+                IsSystemKey = false
+            };
+
+            SendNativeKeyEvent(keyEvent);
         }
 
         private void SendNativeKeyEvent(CefKeyEvent keyEvent)
