@@ -1,6 +1,7 @@
 ﻿using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Input;
+using Avalonia.Input.Platform;
 using Avalonia.Interactivity;
 using Avalonia.Markup.Xaml;
 using Avalonia.Media;
@@ -14,6 +15,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.InteropServices;
+using System.Text.Json;
 using System.Threading.Tasks;
 using WebViewControl;
 using Xilium.CefGlue;
@@ -211,6 +213,7 @@ namespace GuacClient
                 {
                     RefreshTrackedModifierStateFromPhysicalKeyboard();
                     UpdateKeyboardHookState();
+                    _ = SyncHostClipboardToWebViewSafeAsync();
                     if (_keyboardCaptureEnabled)
                         FocusKeyboardCaptureTarget();
                 }, DispatcherPriority.Input);
@@ -234,6 +237,7 @@ namespace GuacClient
             };
             this.AddHandler(KeyDownEvent, OnWindowKeyDown, RoutingStrategies.Tunnel, true);
             this.AddHandler(KeyUpEvent, OnWindowKeyUp, RoutingStrategies.Tunnel, true);
+            this.AddHandler(PointerPressedEvent, OnWindowPointerPressed, RoutingStrategies.Tunnel, true);
         }
 
         private void InitializeComponent()
@@ -1014,6 +1018,8 @@ namespace GuacClient
 
         private void OnWindowKeyDown(object? sender, KeyEventArgs e)
         {
+            _ = SyncHostClipboardToWebViewSafeAsync();
+
             if (_hookHandledKeyDowns.Remove(e.Key))
             {
                 e.Handled = true;
@@ -1034,6 +1040,70 @@ namespace GuacClient
                 e.Handled = true;
                 return;
             }
+        }
+
+        private void OnWindowPointerPressed(object? sender, PointerPressedEventArgs e)
+            => _ = SyncHostClipboardToWebViewSafeAsync();
+
+        private async Task SyncHostClipboardToWebViewSafeAsync()
+        {
+            try
+            {
+                await SyncHostClipboardToWebViewAsync().ConfigureAwait(true);
+            }
+            catch
+            {
+            }
+        }
+
+        private async Task SyncHostClipboardToWebViewAsync()
+        {
+            if (!_web.IsVisible || !_web.IsBrowserInitialized)
+                return;
+
+            var clipboard = TopLevel.GetTopLevel(this)?.Clipboard;
+            if (clipboard == null)
+                return;
+
+            string? text = await clipboard.TryGetTextAsync().ConfigureAwait(true);
+            if (text == null)
+                return;
+
+            string serializedText = JsonSerializer.Serialize(text);
+            string script = $$"""
+                (() => {
+                    const text = {{serializedText}};
+                    const copyWithSelection = () => {
+                        const active = document.activeElement;
+                        const textarea = document.createElement('textarea');
+                        textarea.value = text;
+                        textarea.setAttribute('readonly', '');
+                        textarea.style.position = 'fixed';
+                        textarea.style.left = '-10000px';
+                        textarea.style.top = '-10000px';
+                        document.documentElement.appendChild(textarea);
+                        textarea.focus();
+                        textarea.select();
+                        try {
+                            document.execCommand('copy');
+                        }
+                        finally {
+                            textarea.remove();
+                            if (active && typeof active.focus === 'function')
+                                active.focus();
+                        }
+                    };
+
+                    if (navigator.clipboard && typeof navigator.clipboard.writeText === 'function') {
+                        navigator.clipboard.writeText(text).catch(copyWithSelection);
+                    }
+                    else {
+                        copyWithSelection();
+                    }
+                })();
+                """;
+
+            _web.ExecuteScript(script, frameName: null!);
         }
 
         private void OnWindowKeyUp(object? sender, KeyEventArgs e)
