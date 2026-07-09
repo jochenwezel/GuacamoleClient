@@ -46,6 +46,7 @@ namespace GuacClient
         private readonly HashSet<Key> _hookHandledKeyDowns = new();
         private readonly HashSet<Key> _hookHandledKeyUps = new();
         private readonly List<Key> _modifierOnlyChordOrder = new();
+        private string? _lastHostClipboardTextSentToRemote;
         private readonly DispatcherTimer _hintTimer = new() { Interval = TimeSpan.FromMilliseconds(RemoteShortcutHintDurationMs) };
         private IntPtr _keyboardHookHandle = IntPtr.Zero;
         private NativeKeyboardMethods.LowLevelKeyboardProc? _keyboardHookProc;
@@ -76,7 +77,7 @@ namespace GuacClient
         private MenuItem _sendRemoteCtrlAltEndMenuItem = default!;
         private MenuItem _sendRemoteCtrlAltBackspaceMenuItem = default!;
         private MenuItem _openGuacamoleMenuMenuItem = default!;
-        private MenuItem _sendClipboardTextAsKeystrokesMenuItem = default!;
+        private MenuItem _sendClipboardTextToRemoteClipboardMenuItem = default!;
         private MenuItem _settingsMenuItem = default!;
         private MenuItem _gpuHardwareAccelerationMenuItem = default!;
         private MenuItem _gpuHardwareAccelerationEnabledMenuItem = default!;
@@ -158,7 +159,7 @@ namespace GuacClient
             _sendRemoteCtrlAltEndMenuItem = this.FindControl<MenuItem>("SendRemoteCtrlAltEndMenuItem")!;
             _sendRemoteCtrlAltBackspaceMenuItem = this.FindControl<MenuItem>("SendRemoteCtrlAltBackspaceMenuItem")!;
             _openGuacamoleMenuMenuItem = this.FindControl<MenuItem>("OpenGuacamoleMenuMenuItem")!;
-            _sendClipboardTextAsKeystrokesMenuItem = this.FindControl<MenuItem>("SendClipboardTextAsKeystrokesMenuItem")!;
+            _sendClipboardTextToRemoteClipboardMenuItem = this.FindControl<MenuItem>("SendClipboardTextToRemoteClipboardMenuItem")!;
             _settingsMenuItem = this.FindControl<MenuItem>("SettingsMenuItem")!;
             _gpuHardwareAccelerationMenuItem = this.FindControl<MenuItem>("GpuHardwareAccelerationMenuItem")!;
             _gpuHardwareAccelerationEnabledMenuItem = this.FindControl<MenuItem>("GpuHardwareAccelerationEnabledMenuItem")!;
@@ -191,7 +192,7 @@ namespace GuacClient
             _sendRemoteCtrlAltEndMenuItem.Click += SendRemoteCtrlAltEndMenuItem_Click;
             _sendRemoteCtrlAltBackspaceMenuItem.Click += SendRemoteCtrlAltBackspaceMenuItem_Click;
             _openGuacamoleMenuMenuItem.Click += OpenGuacamoleMenuMenuItem_Click;
-            _sendClipboardTextAsKeystrokesMenuItem.Click += SendClipboardTextAsKeystrokesMenuItem_Click;
+            _sendClipboardTextToRemoteClipboardMenuItem.Click += SendClipboardTextToRemoteClipboardMenuItem_Click;
             _gpuHardwareAccelerationEnabledMenuItem.Click += GpuHardwareAccelerationEnabledMenuItem_Click;
             _gpuHardwareAccelerationDisabledMenuItem.Click += GpuHardwareAccelerationDisabledMenuItem_Click;
             _setupGuideHelpMenuItem.Click += SetupGuideHelpMenuItem_Click;
@@ -291,7 +292,7 @@ namespace GuacClient
                 LocalizationProvider.Get(LocalizationKeys.Menu_OpenGuacamoleMenu),
                 LocalizationProvider.Get(LocalizationKeys.ShortcutKeystroke_OpenGuacamoleMenuToolStripMenuItem));
             _openGuacamoleMenuMenuItem.InputGesture = null;
-            _sendClipboardTextAsKeystrokesMenuItem.Header = LocalizationProvider.Get(LocalizationKeys.Menu_SendClipboardTextAsKeystrokes);
+            _sendClipboardTextToRemoteClipboardMenuItem.Header = LocalizationProvider.Get(LocalizationKeys.Menu_SendClipboardTextToRemoteClipboard);
             _settingsMenuItem.Header = LocalizationProvider.Get(LocalizationKeys.Menu_Settings);
             _gpuHardwareAccelerationMenuItem.Header = LocalizationProvider.Get(LocalizationKeys.Menu_GpuHardwareAcceleration);
             UpdateGpuHardwareAccelerationMenuState();
@@ -765,8 +766,8 @@ namespace GuacClient
             }, DispatcherPriority.Background);
         }
 
-        private async void SendClipboardTextAsKeystrokesMenuItem_Click(object? sender, RoutedEventArgs e)
-            => await SendClipboardTextAsKeystrokesSafeAsync().ConfigureAwait(true);
+        private async void SendClipboardTextToRemoteClipboardMenuItem_Click(object? sender, RoutedEventArgs e)
+            => await SendClipboardTextToRemoteClipboardSafeAsync().ConfigureAwait(true);
 
         private async void GpuHardwareAccelerationEnabledMenuItem_Click(object? sender, RoutedEventArgs e)
             => await ApplyGpuHardwareAccelerationPreferenceAsync(enabled: true).ConfigureAwait(true);
@@ -1076,41 +1077,11 @@ namespace GuacClient
             if (text == null)
                 return;
 
-            string serializedText = JsonSerializer.Serialize(text);
-            string script = $$"""
-                (() => {
-                    const text = {{serializedText}};
-                    const copyWithSelection = () => {
-                        const active = document.activeElement;
-                        const textarea = document.createElement('textarea');
-                        textarea.value = text;
-                        textarea.setAttribute('readonly', '');
-                        textarea.style.position = 'fixed';
-                        textarea.style.left = '-10000px';
-                        textarea.style.top = '-10000px';
-                        document.documentElement.appendChild(textarea);
-                        textarea.focus();
-                        textarea.select();
-                        try {
-                            document.execCommand('copy');
-                        }
-                        finally {
-                            textarea.remove();
-                            if (active && typeof active.focus === 'function')
-                                active.focus();
-                        }
-                    };
+            if (string.Equals(text, _lastHostClipboardTextSentToRemote, StringComparison.Ordinal))
+                return;
 
-                    if (navigator.clipboard && typeof navigator.clipboard.writeText === 'function') {
-                        navigator.clipboard.writeText(text).catch(copyWithSelection);
-                    }
-                    else {
-                        copyWithSelection();
-                    }
-                })();
-                """;
-
-            _web.ExecuteScript(script, frameName: null!);
+            SendTextToGuacamoleClipboard(text);
+            _lastHostClipboardTextSentToRemote = text;
         }
 
         private void OnWindowKeyUp(object? sender, KeyEventArgs e)
@@ -1636,7 +1607,7 @@ namespace GuacClient
             return Task.CompletedTask;
         }
 
-        private async Task SendClipboardTextAsKeystrokesSafeAsync()
+        private async Task SendClipboardTextToRemoteClipboardSafeAsync()
         {
             try
             {
@@ -1648,8 +1619,9 @@ namespace GuacClient
                     return;
                 }
 
-                await SendTextAsKeystrokesAsync(text).ConfigureAwait(true);
-                ShowTransientHint(LocalizationProvider.Get(LocalizationKeys.Hint_RemoteClipboardText_Sent, text.Length));
+                SendTextToGuacamoleClipboard(text);
+                _lastHostClipboardTextSentToRemote = text;
+                ShowTransientHint(LocalizationProvider.Get(LocalizationKeys.Hint_RemoteClipboardText_Synced, text.Length));
             }
             catch (Exception ex)
             {
@@ -1657,59 +1629,76 @@ namespace GuacClient
             }
         }
 
-        private async Task SendTextAsKeystrokesAsync(string text)
+        private void SendTextToGuacamoleClipboard(string text)
         {
-            Activate();
-            _web.Focus();
-            await Task.Yield();
+            string serializedText = JsonSerializer.Serialize(text);
+            string script = $$"""
+                (() => {
+                    const text = {{serializedText}};
+                    const angular = window.angular;
+                    if (!angular || typeof angular.element !== 'function')
+                        return;
 
-            for (int i = 0; i < text.Length; i++)
-            {
-                char character = text[i];
+                    const candidates = [
+                        document.querySelector('[ng-controller="clientController"]'),
+                        document.querySelector('.client'),
+                        document.querySelector('[ng-view]'),
+                        document.body,
+                        document.documentElement
+                    ].filter(Boolean);
 
-                if (character == '\r')
-                {
-                    if (i + 1 < text.Length && text[i + 1] == '\n')
-                        i++;
+                    let scope = null;
+                    let injector = null;
+                    const tryScope = (node) => {
+                        let current = node;
+                        while (current) {
+                            const wrapped = angular.element(current);
+                            const localScope =
+                                (typeof wrapped.scope === 'function' && wrapped.scope()) ||
+                                (typeof wrapped.isolateScope === 'function' && wrapped.isolateScope());
 
-                    await SendNativeKeyTapAsync(Key.Enter, Array.Empty<Key>(), Array.Empty<Key>()).ConfigureAwait(false);
-                    continue;
-                }
+                            if (localScope && (localScope.focusedClient || localScope.clientGroup)) {
+                                scope = localScope;
+                                injector = (typeof wrapped.injector === 'function' && wrapped.injector()) || injector;
+                                return true;
+                            }
 
-                if (character == '\n')
-                {
-                    await SendNativeKeyTapAsync(Key.Enter, Array.Empty<Key>(), Array.Empty<Key>()).ConfigureAwait(false);
-                    continue;
-                }
+                            current = current.parentElement || current.parentNode;
+                        }
 
-                if (character == '\t')
-                {
-                    await SendNativeKeyTapAsync(Key.Tab, Array.Empty<Key>(), Array.Empty<Key>()).ConfigureAwait(false);
-                    continue;
-                }
+                        return false;
+                    };
 
-                SendNativeCharacter(character);
+                    for (const candidate of candidates) {
+                        if (tryScope(candidate))
+                            break;
+                    }
 
-                if (i % 64 == 0)
-                    await Task.Yield();
-            }
-        }
+                    injector = injector || (angular.element(document.body).injector && angular.element(document.body).injector());
+                    if (!scope || !injector)
+                        return;
 
-        private void SendNativeCharacter(char character)
-        {
-            var keyEvent = new CefKeyEvent
-            {
-                EventType = CefKeyEventType.Char,
-                WindowsKeyCode = character,
-                NativeKeyCode = 0,
-                Character = character,
-                UnmodifiedCharacter = character,
-                Modifiers = CefEventFlags.None,
-                FocusOnEditableField = true,
-                IsSystemKey = false
-            };
+                    const ManagedClient = injector.get('ManagedClient');
+                    const ClipboardData = injector.get('ClipboardData');
+                    const clients = scope.clientGroup && Array.isArray(scope.clientGroup.clients)
+                        ? scope.clientGroup.clients
+                        : [];
+                    const focusedClient = scope.focusedClient ||
+                        clients.find((client) => client && client.clientProperties && client.clientProperties.focused) ||
+                        (clients.length === 1 ? clients[0] : null);
 
-            SendNativeKeyEvent(keyEvent);
+                    if (!focusedClient || !focusedClient.client)
+                        return;
+
+                    ManagedClient.setClipboard(focusedClient, new ClipboardData({
+                        source: 'GuacamoleClient-Avalonia',
+                        type: 'text/plain',
+                        data: text
+                    }));
+                })();
+                """;
+
+            _web.ExecuteScript(script, frameName: null!);
         }
 
         private void SendNativeKeyEvent(CefKeyEvent keyEvent)

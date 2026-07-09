@@ -80,8 +80,8 @@ namespace GuacamoleClient.Common.Localization
                         return "{0}+Tab wurde abgefangen und an die Remote-Sitzung gesendet.";
                     case LocalizationKeys.Hint_GuacamoleMenu_Toggled:
                         return "Guacamole-Menü wurde umgeschaltet.";
-                    case LocalizationKeys.Hint_RemoteClipboardText_Sent:
-                        return "Text-Zwischenablage wurde als Tastatureingabe gesendet ({0} Zeichen).";
+                    case LocalizationKeys.Hint_RemoteClipboardText_Synced:
+                        return "Text-Zwischenablage wurde an die Remote-Zwischenablage gesendet ({0} Zeichen).";
                     case LocalizationKeys.Hint_RemoteClipboardText_Empty:
                         return "Die Text-Zwischenablage ist leer.";
                     case LocalizationKeys.Hint_ActiveModifiers:
@@ -152,8 +152,8 @@ namespace GuacamoleClient.Common.Localization
                         return "Sende Strg+Alt+Rücktaste";
                     case LocalizationKeys.Menu_OpenGuacamoleMenu:
                         return "Guacamole-Menü öffnen";
-                    case LocalizationKeys.Menu_SendClipboardTextAsKeystrokes:
-                        return "Text-Zwischenablage als Tastatureingaben senden";
+                    case LocalizationKeys.Menu_SendClipboardTextToRemoteClipboard:
+                        return "Text-Zwischenablage an Remote-Zwischenablage senden";
                     case LocalizationKeys.Menu_Settings:
                         return "Einstellungen";
                     case LocalizationKeys.Menu_GpuHardwareAcceleration:
@@ -373,8 +373,8 @@ namespace GuacamoleClient.Common.Localization
                     return "{0}+Tab was caught and sent to the remote session.";
                 case LocalizationKeys.Hint_GuacamoleMenu_Toggled:
                     return "Guacamole menu was toggled.";
-                case LocalizationKeys.Hint_RemoteClipboardText_Sent:
-                    return "Clipboard text was sent as keyboard input ({0} characters).";
+                case LocalizationKeys.Hint_RemoteClipboardText_Synced:
+                    return "Clipboard text was sent to the remote clipboard ({0} characters).";
                 case LocalizationKeys.Hint_RemoteClipboardText_Empty:
                     return "The text clipboard is empty.";
                 case LocalizationKeys.Hint_ActiveModifiers:
@@ -445,8 +445,8 @@ namespace GuacamoleClient.Common.Localization
                     return "Send Ctrl+Alt+Backspace";
                 case LocalizationKeys.Menu_OpenGuacamoleMenu:
                     return "Open Guacamole menu";
-                case LocalizationKeys.Menu_SendClipboardTextAsKeystrokes:
-                    return "Send clipboard text as keystrokes";
+                case LocalizationKeys.Menu_SendClipboardTextToRemoteClipboard:
+                    return "Send clipboard text to remote clipboard";
                 case LocalizationKeys.Menu_Settings:
                     return "Settings";
                 case LocalizationKeys.Menu_GpuHardwareAcceleration:

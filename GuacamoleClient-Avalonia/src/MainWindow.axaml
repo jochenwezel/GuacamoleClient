@@ -49,7 +49,7 @@
         <Separator />
         <MenuItem x:Name="OpenGuacamoleMenuMenuItem" />
         <Separator />
-        <MenuItem x:Name="SendClipboardTextAsKeystrokesMenuItem" />
+        <MenuItem x:Name="SendClipboardTextToRemoteClipboardMenuItem" />
       </MenuItem>
       <MenuItem x:Name="SettingsMenuItem">
         <MenuItem x:Name="GpuHardwareAccelerationMenuItem">
