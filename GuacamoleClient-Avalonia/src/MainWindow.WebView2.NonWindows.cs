@@ -115,6 +115,15 @@ namespace GuacClient
 
         private void ConfigurePlatformWebViewAdapter(WebViewAdapterEventArgs e)
         {
+            if (!OperatingSystem.IsLinux())
+                return;
+
+            // The GTK/XWayland adapter can create its XEmbed surface before Avalonia has completed layout.
+            // Reattaching it on a later dispatcher pass gives WebKit the final native host dimensions.
+            _web.IsVisible = false;
+            Dispatcher.UIThread.Post(
+                () => _web.IsVisible = true,
+                DispatcherPriority.Background);
         }
     }
 }
