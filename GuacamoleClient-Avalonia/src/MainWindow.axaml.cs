@@ -1080,7 +1080,7 @@ namespace GuacClient
             if (string.Equals(text, _lastHostClipboardTextSentToRemote, StringComparison.Ordinal))
                 return;
 
-            SendTextToGuacamoleClipboard(text);
+            SendTextToGuacamoleClipboard(text, sendToAllClientsWhenNoFocusedClient: false);
             _lastHostClipboardTextSentToRemote = text;
         }
 
@@ -1619,7 +1619,11 @@ namespace GuacClient
                     return;
                 }
 
-                SendTextToGuacamoleClipboard(text);
+                Activate();
+                _web.Focus();
+                await Task.Yield();
+
+                SendTextToGuacamoleClipboard(text, sendToAllClientsWhenNoFocusedClient: true);
                 _lastHostClipboardTextSentToRemote = text;
                 ShowTransientHint(LocalizationProvider.Get(LocalizationKeys.Hint_RemoteClipboardText_Synced, text.Length));
             }
@@ -1629,12 +1633,14 @@ namespace GuacClient
             }
         }
 
-        private void SendTextToGuacamoleClipboard(string text)
+        private void SendTextToGuacamoleClipboard(string text, bool sendToAllClientsWhenNoFocusedClient)
         {
             string serializedText = JsonSerializer.Serialize(text);
+            string sendToAll = JsonSerializer.Serialize(sendToAllClientsWhenNoFocusedClient);
             string script = $$"""
                 (() => {
                     const text = {{serializedText}};
+                    const sendToAllClientsWhenNoFocusedClient = {{sendToAll}};
                     const angular = window.angular;
                     if (!angular || typeof angular.element !== 'function')
                         return;
@@ -1685,16 +1691,30 @@ namespace GuacClient
                         : [];
                     const focusedClient = scope.focusedClient ||
                         clients.find((client) => client && client.clientProperties && client.clientProperties.focused) ||
-                        (clients.length === 1 ? clients[0] : null);
+                        null;
+                    const rememberedClient = window.__guacamoleClientAvaloniaLastClipboardClient || null;
+                    const targets = focusedClient
+                        ? [focusedClient]
+                        : rememberedClient && rememberedClient.client
+                            ? [rememberedClient]
+                            : sendToAllClientsWhenNoFocusedClient
+                                ? clients.filter((client) => client && client.client)
+                                : clients.length === 1
+                                    ? [clients[0]]
+                                    : [];
 
-                    if (!focusedClient || !focusedClient.client)
+                    if (targets.length === 0)
                         return;
 
-                    ManagedClient.setClipboard(focusedClient, new ClipboardData({
-                        source: 'GuacamoleClient-Avalonia',
-                        type: 'text/plain',
-                        data: text
-                    }));
+                    for (const target of targets) {
+                        ManagedClient.setClipboard(target, new ClipboardData({
+                            source: 'GuacamoleClient-Avalonia',
+                            type: 'text/plain',
+                            data: text
+                        }));
+                    }
+
+                    window.__guacamoleClientAvaloniaLastClipboardClient = targets[0];
                 })();
                 """;
 
