@@ -64,6 +64,8 @@ internal static class Program
             if (TryShowCommandLineHelp(args))
                 return 0;
 
+            ConfigureLinuxGtkBackend();
+
             if (TryRunLinuxLauncher(args, out int launcherExitCode))
                 return launcherExitCode;
 
@@ -92,6 +94,15 @@ internal static class Program
         {
             DefaultFamilyName = "Liberation Sans"
         });
+    }
+
+    private static void ConfigureLinuxGtkBackend()
+    {
+        if (!OperatingSystem.IsLinux() || !string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable("GDK_BACKEND")))
+            return;
+
+        // Avalonia 12 currently runs through X11/XWayland, so its native GTK WebView must use the same backend.
+        Environment.SetEnvironmentVariable("GDK_BACKEND", "x11");
     }
 
     private static bool TryShowCommandLineHelp(string[] args)

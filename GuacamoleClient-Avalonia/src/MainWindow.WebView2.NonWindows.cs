@@ -68,25 +68,6 @@ namespace GuacClient
                 // A redirect can replace the document while the optional shortcut bridge is being installed.
             }
 
-            if (OperatingSystem.IsLinux())
-            {
-                await Dispatcher.UIThread.InvokeAsync(
-                    RefreshLinuxWebViewRendering,
-                    DispatcherPriority.Render);
-            }
-        }
-
-        private void RefreshLinuxWebViewRendering()
-        {
-            if (!_web.IsVisible)
-                return;
-
-            // The GTK offscreen adapter can be created after Avalonia's initial layout pass.
-            // Reapplying visibility forwards the current bounds and requests its first frame.
-            _web.IsVisible = false;
-            _web.IsVisible = true;
-            _web.InvalidateMeasure();
-            _web.InvalidateVisual();
         }
 
         private void Web_WebMessageReceived(object? sender, WebMessageReceivedEventArgs e)
