@@ -1,4 +1,5 @@
 ﻿using Avalonia.Controls;
+using Avalonia.Input;
 using Avalonia.Layout;
 using Avalonia.Threading;
 using System;
@@ -40,7 +41,11 @@ public static class MessageBoxSimple
 
             var topLevel = TopLevel.GetTopLevel(dialog);
             if (topLevel?.Clipboard != null)
-                await topLevel.Clipboard.SetTextAsync(message);
+            {
+                var data = new DataTransfer();
+                data.Add(DataTransferItem.CreateText(message));
+                await topLevel.Clipboard.SetDataAsync(data);
+            }
         };
 
         var buttonPanel = new StackPanel

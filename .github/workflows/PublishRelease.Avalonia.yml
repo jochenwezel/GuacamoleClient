@@ -1,4 +1,4 @@
-name: PublishRelease - Avalonia
+﻿name: PublishRelease - Avalonia
 
 # PLEASE NOTE: PUBLISHING/DEPLOYMENT
 #   * Release is to be created manually at GitHub releases management page
@@ -339,7 +339,6 @@ jobs:
           EOF
           chmod 0755 "$package_root/guacamoleclient"
           chmod 0755 "$package_root/GuacamoleClient-Avalonia"
-          chmod 0755 "$package_root/CefGlueBrowserProcess/Xilium.CefGlue.BrowserProcess"
 
           tar -C "$GITHUB_WORKSPACE" -czf "$GITHUB_WORKSPACE/guacamoleclient-avalonia-linux-x64-${VERSION}.tar.gz" "guacamoleclient-avalonia-linux-x64-${VERSION}"
 
@@ -373,7 +372,6 @@ jobs:
           EOF
           chmod 0755 "$package_root/guacamoleclient"
           chmod 0755 "$package_root/GuacamoleClient-Avalonia"
-          chmod 0755 "$package_root/CefGlueBrowserProcess/Xilium.CefGlue.BrowserProcess"
 
           tar -C "$GITHUB_WORKSPACE" -czf "$GITHUB_WORKSPACE/guacamoleclient-avalonia-linux-x64-dev-${VERSION}.tar.gz" "guacamoleclient-avalonia-linux-x64-dev-${VERSION}"
 
@@ -414,7 +412,6 @@ jobs:
           EOF
           chmod 0755 "$package_root/usr/bin/guacamoleclient"
           chmod 0755 "$install_dir/GuacamoleClient-Avalonia"
-          chmod 0755 "$install_dir/CefGlueBrowserProcess/Xilium.CefGlue.BrowserProcess"
 
           cp "$GITHUB_WORKSPACE/logos/favicon-guac-classic-logo/web-app-manifest-512x512.png" "$package_root/usr/share/icons/hicolor/256x256/apps/guacamoleclient.png"
 
@@ -498,7 +495,6 @@ jobs:
           EOF
           chmod 0755 "$package_root/usr/bin/guacamoleclient"
           chmod 0755 "$install_dir/GuacamoleClient-Avalonia"
-          chmod 0755 "$install_dir/CefGlueBrowserProcess/Xilium.CefGlue.BrowserProcess"
 
           cp "$GITHUB_WORKSPACE/logos/favicon-guac-classic-logo/web-app-manifest-512x512.png" "$package_root/usr/share/icons/hicolor/256x256/apps/guacamoleclient.png"
 
@@ -524,7 +520,7 @@ jobs:
           Architecture: amd64
           Maintainer: CompuMaster GmbH <info@compumaster.de>
           Installed-Size: $installed_size
-          Depends: libc6, libcups2, libasound2 | libasound2t64, libatk-bridge2.0-0, libatk1.0-0, libdrm2, libfontconfig1, libgbm1, libgcc-s1, libgl1, libgtk-3-0, libnss3, libstdc++6, libx11-xcb1, libxcb1, libxcomposite1, libxcursor1, libxdamage1, libxi6, libxkbcommon0, libxrandr2, libxrender1, libxss1, libxtst6, zlib1g
+          Depends: libc6, libcups2, libasound2 | libasound2t64, libatk-bridge2.0-0, libatk1.0-0, libdrm2, libfontconfig1, libgbm1, libgcc-s1, libgl1, libgtk-3-0, libnss3, libstdc++6, libwpewebkit-2.0-1, libx11-xcb1, libxcb1, libxcomposite1, libxcursor1, libxdamage1, libxi6, libxkbcommon0, libxrandr2, libxrender1, libxss1, libxtst6, zlib1g
           Homepage: https://github.com/jochenwezel/GuacamoleClient
           Description: Desktop client for Apache Guacamole
            GuacamoleClient runs Apache Guacamole sessions in a dedicated desktop application window.
@@ -566,7 +562,6 @@ jobs:
           EOF
           chmod 0755 "$package_root/usr/bin/guacamoleclient"
           chmod 0755 "$install_dir/GuacamoleClient-Avalonia"
-          chmod 0755 "$install_dir/CefGlueBrowserProcess/Xilium.CefGlue.BrowserProcess"
 
           cp "$GITHUB_WORKSPACE/logos/favicon-guac-classic-logo/web-app-manifest-512x512.png" "$package_root/usr/share/icons/hicolor/256x256/apps/guacamoleclient.png"
 
@@ -592,7 +587,7 @@ jobs:
           Architecture: amd64
           Maintainer: CompuMaster GmbH <info@compumaster.de>
           Installed-Size: $installed_size
-          Depends: libc6, libcups2, libasound2 | libasound2t64, libatk-bridge2.0-0, libatk1.0-0, libdrm2, libfontconfig1, libgbm1, libgcc-s1, libgl1, libgtk-3-0, libnss3, libstdc++6, libx11-xcb1, libxcb1, libxcomposite1, libxcursor1, libxdamage1, libxi6, libxkbcommon0, libxrandr2, libxrender1, libxss1, libxtst6, zlib1g
+          Depends: libc6, libcups2, libasound2 | libasound2t64, libatk-bridge2.0-0, libatk1.0-0, libdrm2, libfontconfig1, libgbm1, libgcc-s1, libgl1, libgtk-3-0, libnss3, libstdc++6, libwpewebkit-2.0-1, libx11-xcb1, libxcb1, libxcomposite1, libxcursor1, libxdamage1, libxi6, libxkbcommon0, libxrandr2, libxrender1, libxss1, libxtst6, zlib1g
           Homepage: https://github.com/jochenwezel/GuacamoleClient
           Description: Desktop client for Apache Guacamole
            GuacamoleClient runs Apache Guacamole sessions in a dedicated desktop application window.
@@ -637,7 +632,6 @@ jobs:
           EOF
           chmod 0755 "$package_root/usr/bin/guacamoleclient"
           chmod 0755 "$install_dir/GuacamoleClient-Avalonia"
-          chmod 0755 "$install_dir/CefGlueBrowserProcess/Xilium.CefGlue.BrowserProcess"
 
           cp "$GITHUB_WORKSPACE/logos/favicon-guac-classic-logo/web-app-manifest-512x512.png" "$package_root/usr/share/icons/hicolor/256x256/apps/guacamoleclient.png"
 

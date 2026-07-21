@@ -1,4 +1,4 @@
-using Avalonia;
+﻿using Avalonia;
 using Avalonia.Media;
 using GuacamoleClient.Common.Localization;
 using GuacamoleClient.Common.Settings;
@@ -11,7 +11,6 @@ using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text.Json;
 using System.Threading.Tasks;
-using WebViewControl;
 
 namespace GuacClient;
 internal static class Program
@@ -50,6 +49,7 @@ internal static class Program
         "use-gl",
         "v",
     };
+    private static readonly List<BrowserSwitch> s_configuredBrowserSwitches = new();
 
     [STAThread]
     public static int Main(string[] args)
@@ -110,17 +110,17 @@ internal static class Program
         Console.WriteLine("  --enable-gpu                       Start once with GPU hardware acceleration enabled.");
         Console.WriteLine("  --disable-gpu                      Start once with GPU hardware acceleration disabled.");
         Console.WriteLine();
-        Console.WriteLine("Linux CEF diagnostics:");
-        Console.WriteLine("  --no-sandbox                       Forward Chromium/CEF no-sandbox mode.");
+        Console.WriteLine("Linux browser diagnostics:");
+        Console.WriteLine("  --no-sandbox                       Forward browser no-sandbox mode when supported.");
         Console.WriteLine("  --disable-dev-shm-usage            Avoid Chromium shared memory usage under /dev/shm.");
-        Console.WriteLine("  --disable-features=<features>      Disable Chromium/CEF features, for example Vulkan or VA-API.");
-        Console.WriteLine("  --enable-features=<features>       Enable Chromium/CEF features.");
+        Console.WriteLine("  --disable-features=<features>      Disable browser features, for example Vulkan or VA-API.");
+        Console.WriteLine("  --enable-features=<features>       Enable browser features.");
         Console.WriteLine("  --disable-software-rasterizer      Disable Chromium software rasterizer.");
         Console.WriteLine("  --use-angle=<backend>              Select ANGLE backend, for example swiftshader.");
         Console.WriteLine("  --use-gl=<backend>                 Select GL backend, for example swiftshader or desktop.");
-        Console.WriteLine("  --enable-logging[=stderr]          Enable Chromium/CEF logging.");
-        Console.WriteLine("  --log-file=<path>                  Write Chromium/CEF log output to a file.");
-        Console.WriteLine("  --v=<level>                        Set Chromium/CEF verbose logging level.");
+        Console.WriteLine("  --enable-logging[=stderr]          Enable browser logging when supported.");
+        Console.WriteLine("  --log-file=<path>                  Write browser log output to a file when supported.");
+        Console.WriteLine("  --v=<level>                        Set browser verbose logging level when supported.");
         Console.WriteLine();
         Console.WriteLine("Environment:");
         Console.WriteLine("  GUACAMOLECLIENT_DISABLE_GPU=1      Prefer disabled GPU hardware acceleration.");
@@ -279,6 +279,11 @@ internal static class Program
         return new BrowserStartupDiagnostics(startupMode, startupArguments, cefSwitches);
     }
 
+    internal static string GetAdditionalBrowserArguments()
+        => string.Join(" ", s_configuredBrowserSwitches
+            .Select(browserSwitch => FormatBrowserSwitch(browserSwitch.Name, browserSwitch.Value))
+            .Distinct(StringComparer.OrdinalIgnoreCase));
+
     private static void ConfigureBrowserCompatibilitySwitches(string[] args)
     {
         if (!RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
@@ -346,7 +351,7 @@ internal static class Program
         if (FindBrowserCommandLineSwitch(args, switchName) != null)
             return;
 
-        WebView.Settings.AddCommandLineSwitch(switchName, value);
+        AddBrowserCommandLineSwitch(switchName, value);
     }
 
     private static void AddOptionalBrowserCommandLineSwitches(string[] args, params string[] switchNames)
@@ -366,7 +371,15 @@ internal static class Program
         if (equalsIndex >= 0)
             value = argument[(equalsIndex + 1)..];
 
-        WebView.Settings.AddCommandLineSwitch(switchName, value);
+        AddBrowserCommandLineSwitch(switchName, value);
+    }
+
+    private static void AddBrowserCommandLineSwitch(string switchName, string value)
+    {
+        if (s_configuredBrowserSwitches.Any(browserSwitch => string.Equals(browserSwitch.Name, switchName, StringComparison.OrdinalIgnoreCase)))
+            return;
+
+        s_configuredBrowserSwitches.Add(new BrowserSwitch(switchName, value));
     }
 
     private static string? FindBrowserCommandLineSwitch(string[] args, string switchName)
@@ -408,7 +421,7 @@ internal static class Program
             + Environment.NewLine
             + $"Exit code: {result.ExitCode}"
             + Environment.NewLine + Environment.NewLine
-            + "The embedded Chromium/CEF browser process could not be started. "
+            + "The native browser control could not be started. "
             + "This often happens in virtual machines or remote desktop sessions when GPU/OpenGL support is not usable.";
 
         StartupErrorDialog.Show("GuacamoleClient startup failed", message);
@@ -502,7 +515,7 @@ internal static class Program
             + ex;
     }
 
-    internal sealed record BrowserStartupDiagnostics(string StartupMode, string StartupArguments, string CefSwitches);
+    internal sealed record BrowserStartupDiagnostics(string StartupMode, string StartupArguments, string BrowserSwitches);
 
     private sealed record BrowserSwitch(string Name, string Value);
 

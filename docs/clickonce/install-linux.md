@@ -1,4 +1,4 @@
-# GuacamoleClient - Linux Installation
+﻿# GuacamoleClient - Linux Installation
 
 ## Debian / Ubuntu
 
@@ -29,7 +29,7 @@ Install the downloaded package with `apt`:
 sudo apt install ./guacamoleclient-avalonia-linux-x64___AVALONIA_DEB_VERSION___amd64.deb
 ```
 
-The package already includes .NET and the embedded Chromium/CEF browser. Required Linux desktop libraries are installed automatically by apt as package dependencies.
+The package already includes .NET. The native WebView engine and required Linux desktop libraries are installed automatically by apt as package dependencies.
 
 Directly downloaded `.deb` packages are not tied to an APT repository yet. The client can therefore use its in-app update check to guide users back to the installation page when a newer direct-download package is available.
 
@@ -39,7 +39,7 @@ Start the application from the desktop application menu or from a terminal:
 guacamoleclient
 ```
 
-On Linux, GuacamoleClient automatically retries early Chromium/CEF GPU startup crashes with GPU acceleration disabled. If the fallback succeeds, this preference is stored for future starts.
+On Linux, GuacamoleClient automatically retries early native WebView GPU startup crashes with GPU acceleration disabled. If the fallback succeeds, this preference is stored for future starts.
 
 To force GPU acceleration off manually, start with:
 
@@ -111,7 +111,7 @@ Use the Linux x64 RPM package on Fedora/RHEL-compatible distributions:
 Open the Dev channel on https://jochenwezel.github.io/GuacamoleClient/
 Copy the Fedora / Red Hat command block from there.
 
-The package already includes .NET and the embedded Chromium/CEF browser. Required Linux desktop libraries are installed automatically by `dnf` as package dependencies.
+The package already includes .NET. The native WebView engine and required Linux desktop libraries are installed automatically by `dnf` as package dependencies.
 
 ## Other Linux distributions
 
@@ -152,7 +152,7 @@ rm -rf "$HOME/.local/opt"/guacamoleclient-avalonia-linux-x64-*
 rm -f "$HOME/.local/bin/guacamoleclient"
 ```
 
-The tarball already includes .NET and the embedded Chromium/CEF browser. The target system still needs common Linux desktop libraries such as GTK 3, NSS, ALSA, CUPS, Mesa/GL/GBM, fontconfig, and X11/XCB libraries. Package names vary by distribution.
+The tarball already includes .NET. The target system still needs the native WebView engine and common Linux desktop libraries such as GTK 3, WebKitGTK/WPE, NSS, ALSA, CUPS, Mesa/GL/GBM, fontconfig, and X11/XCB libraries. Package names vary by distribution.
 
 The system-wide tarball installation uses `/opt/guacamoleclient` for the extracted application files and `/usr/local/bin` for the launcher symlink. The per-user tarball installation uses `~/.local/opt` and `~/.local/bin`. Many desktop Linux distributions already include `~/.local/bin` in `PATH`; if not, start the client with the full path or add that directory to your shell profile.
 

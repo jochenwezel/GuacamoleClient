@@ -25,7 +25,7 @@ There are two variants of GuacamoleClient:
 ### GuacamoleClient-Avalonia
 
 The Avalonia version is a cross-platform application that can run on Windows, Linux, and macOS. 
-It is based on Avalonia UI framework and uses the WebViewControl-Avalonia control and the embedded CefGlue browser to embed the Guacamole web interface. 
+It is based on Avalonia UI framework and uses Avalonia.Controls.WebView with the operating system native web engine to embed the Guacamole web interface.
 
 Please note: platforms Mac and Linux still needs more testing. If you can help, please let us know any issues.
 

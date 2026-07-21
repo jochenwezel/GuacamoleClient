@@ -4,6 +4,7 @@ using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Markup.Xaml;
 using Avalonia.Media;
+using Avalonia.Platform;
 using Avalonia;
 using Avalonia.Threading;
 using GuacamoleClient.Common.Localization;
@@ -12,11 +13,9 @@ using GuacamoleClient.Common.Updates;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Reflection;
 using System.Runtime.InteropServices;
+using System.Text.Json;
 using System.Threading.Tasks;
-using WebViewControl;
-using Xilium.CefGlue;
 
 namespace GuacClient
 {
@@ -48,7 +47,7 @@ namespace GuacClient
         private IntPtr _keyboardHookHandle = IntPtr.Zero;
         private NativeKeyboardMethods.LowLevelKeyboardProc? _keyboardHookProc;
 
-        private WebView _web = default!;
+        private NativeWebView _web = default!;
         private Menu _mainMenu = default!;
         private Border _emptyStateOverlay = default!;
         private TextBlock _emptyStateTitleTextBlock = default!;
@@ -129,7 +128,7 @@ namespace GuacClient
             ConfigureBrowserCacheBeforeWebViewCreation();
             InitializeComponent();
 
-            _web = this.FindControl<WebView>("Web")!;
+            _web = this.FindControl<NativeWebView>("Web")!;
             _mainMenu = this.FindControl<Menu>("MainMenu")!;
             _emptyStateOverlay = this.FindControl<Border>("EmptyStateOverlay")!;
             _emptyStateTitleTextBlock = this.FindControl<TextBlock>("EmptyStateTitleTextBlock")!;
@@ -168,8 +167,9 @@ namespace GuacClient
             _keyboardCaptureStatusMenuItem = this.FindControl<MenuItem>("KeyboardCaptureStatusMenuItem")!;
             _keyboardHintMenuItem = this.FindControl<MenuItem>("KeyboardHintMenuItem")!;
 
-            _web.TitleChanged += UpdateWindowTitleFromWebView;
-            _web.Navigated += Web_Navigated;
+            _web.EnvironmentRequested += Web_EnvironmentRequested;
+            _web.AdapterCreated += (_, e) => ConfigurePlatformWebViewAdapter(e);
+            _web.NavigationCompleted += Web_NavigationCompleted;
 
             InitializeLocalization();
 
@@ -454,9 +454,6 @@ namespace GuacClient
                 return true;
             }
 
-            if (!_keyboardCaptureEnabled)
-                return false;
-
             if (hostCtrlAlt && key == Key.Home)
             {
                 Dispatcher.UIThread.Post(GoToConnectionHome);
@@ -475,6 +472,9 @@ namespace GuacClient
                     SetFullScreenMode(false, LocalizationProvider.Get(LocalizationKeys.Hint_CtrlAltBreak_FullscreenModeOff)));
                 return true;
             }
+
+            if (!_keyboardCaptureEnabled)
+                return false;
 
             if (ctrl && alt && shift && !_guacamoleMenuShortcutActive)
             {
@@ -624,8 +624,8 @@ namespace GuacClient
 
             try
             {
-                _web.Address = url!;
-                UpdateWindowTitle(url!, _web.Title);
+                NavigateWebView(url!);
+                UpdateWindowTitle(url!, null);
             }
             catch (Exception ex)
             {
@@ -669,15 +669,53 @@ namespace GuacClient
                 GuacamoleBrowserCache.DeleteDirectoryIfExists(_temporaryCacheDirectory);
                 _temporaryCacheDirectory = null;
                 GuacamoleBrowserCache.EnsureProfileCacheDirectory("GuacamoleClient-Avalonia", profile.Id);
-                WebView.Settings.CachePath = GuacamoleBrowserCache.GetProfileCacheDirectory("GuacamoleClient-Avalonia", profile.Id);
-                WebView.Settings.PersistCache = true;
             }
             else
             {
                 _temporaryCacheDirectory ??= GuacamoleBrowserCache.CreateTemporaryCacheDirectory("GuacamoleClient-Avalonia", profile?.Id);
-                WebView.Settings.CachePath = _temporaryCacheDirectory;
-                WebView.Settings.PersistCache = false;
             }
+        }
+
+        private void Web_EnvironmentRequested(object? sender, WebViewEnvironmentRequestedEventArgs e)
+        {
+            string? cacheDirectory = GetActiveBrowserCacheDirectory();
+            bool persistCache = _activeProfile?.LocalCacheEnabled == true;
+            string additionalBrowserArguments = Program.GetAdditionalBrowserArguments();
+
+            switch (e)
+            {
+                case WindowsWebView2EnvironmentRequestedEventArgs windows:
+                    windows.UserDataFolder = cacheDirectory;
+                    windows.IsInPrivateModeEnabled = !persistCache;
+                    if (!string.IsNullOrWhiteSpace(additionalBrowserArguments))
+                        windows.AdditionalBrowserArguments = additionalBrowserArguments;
+                    break;
+
+                case GtkWebViewEnvironmentRequestedEventArgs gtk:
+                    gtk.BaseDataDirectory = cacheDirectory;
+                    gtk.BaseCacheDirectory = cacheDirectory;
+                    gtk.DisableCache = !persistCache;
+                    break;
+
+                case LinuxWpeWebViewEnvironmentRequestedEventArgs wpe:
+                    wpe.DataDirectory = cacheDirectory;
+                    wpe.CacheDirectory = cacheDirectory;
+                    break;
+
+                case AppleWKWebViewEnvironmentRequestedEventArgs apple:
+                    apple.NonPersistentDataStore = !persistCache;
+                    if (persistCache && _activeProfile != null)
+                        apple.DataStoreIdentifier = _activeProfile.Id;
+                    break;
+            }
+        }
+
+        private string? GetActiveBrowserCacheDirectory()
+        {
+            if (_activeProfile?.LocalCacheEnabled == true)
+                return GuacamoleBrowserCache.GetProfileCacheDirectory("GuacamoleClient-Avalonia", _activeProfile.Id);
+
+            return _temporaryCacheDirectory;
         }
 
         private async void ManageServersMenuItem_Click(object? sender, RoutedEventArgs e)
@@ -980,7 +1018,7 @@ namespace GuacClient
                 LocalizationKeys.Help_About_RuntimeDiagnostics_Text,
                 diagnostics.StartupMode,
                 diagnostics.StartupArguments,
-                diagnostics.CefSwitches);
+                diagnostics.BrowserSwitches);
             var licenseText = LocalizationProvider.Get(LocalizationKeys.Help_About_License_Text);
             var thirdPartyText = LocalizationProvider.Get(LocalizationKeys.Help_About_Avalonia_ThirdParty_Text);
             var text = string.Join("\n\n", detailsText, runtimeDiagnosticsText, licenseText, thirdPartyText);
@@ -1142,8 +1180,8 @@ namespace GuacClient
                 return;
 
             HideEmptyState();
-            _web.Address = url;
-            UpdateWindowTitle(url!, _web.Title);
+            NavigateWebView(url!);
+            UpdateWindowTitle(url!, null);
             _web.Focus();
         }
 
@@ -1179,8 +1217,9 @@ namespace GuacClient
                 return;
 
             HideEmptyState();
-            _web.Address = new Uri(new Uri(url!), "#/settings/preferences").ToString();
-            UpdateWindowTitle(_web.Address, _web.Title);
+            string targetUrl = new Uri(new Uri(url!), "#/settings/preferences").ToString();
+            NavigateWebView(targetUrl);
+            UpdateWindowTitle(targetUrl, null);
             _web.Focus();
         }
 
@@ -1191,8 +1230,9 @@ namespace GuacClient
                 return;
 
             HideEmptyState();
-            _web.Address = new Uri(new Uri(url!), "#/settings/connections").ToString();
-            UpdateWindowTitle(_web.Address, _web.Title);
+            string targetUrl = new Uri(new Uri(url!), "#/settings/connections").ToString();
+            NavigateWebView(targetUrl);
+            UpdateWindowTitle(targetUrl, null);
             _web.Focus();
         }
 
@@ -1224,21 +1264,37 @@ namespace GuacClient
                 Title = $"{documentTitle} - {currentUrl} - GuacamoleClient v{VersionUtil.InformationalVersion()}";
         }
 
-        private void UpdateWindowTitleFromWebView()
+        private async Task UpdateWindowTitleFromWebViewAsync(Uri? currentUri)
         {
-            Dispatcher.UIThread.Post(() =>
+            string currentUrl = currentUri?.ToString() ?? _web.Source?.ToString() ?? GetConfiguredHomeUrl() ?? string.Empty;
+            if (string.IsNullOrWhiteSpace(currentUrl))
+                return;
+
+            string? documentTitle = null;
+            try
             {
-                string currentUrl = string.IsNullOrWhiteSpace(_web.Address)
-                    ? GetConfiguredHomeUrl() ?? string.Empty
-                    : _web.Address;
-                if (!string.IsNullOrWhiteSpace(currentUrl))
-                    UpdateWindowTitle(currentUrl, _web.Title);
-            });
+                documentTitle = await _web.InvokeScript("document.title").ConfigureAwait(true);
+            }
+            catch
+            {
+                documentTitle = null;
+            }
+
+            UpdateWindowTitle(currentUrl, NormalizeScriptString(documentTitle));
         }
 
-        private void Web_Navigated(string url, string frameName)
+        private async void Web_NavigationCompleted(object? sender, WebViewNavigationCompletedEventArgs e)
+            => await UpdateWindowTitleFromWebViewAsync(e.Request).ConfigureAwait(true);
+
+        private void NavigateWebView(string url)
+            => _web.Navigate(new Uri(url));
+
+        private static string? NormalizeScriptString(string? value)
         {
-            Dispatcher.UIThread.Post(() => UpdateWindowTitle(url, _web.Title));
+            if (string.IsNullOrWhiteSpace(value))
+                return null;
+
+            return value.Trim('"');
         }
 
         private async Task CloseApplicationWithHintAsync()
@@ -1536,14 +1592,12 @@ namespace GuacClient
 
         private Task SendNativeKeyDownAsync(Key key, IReadOnlyCollection<Key> activeModifiers)
         {
-            SendNativeKeyEvent(CreateCefKeyEvent(CefKeyEventType.RawKeyDown, key, activeModifiers));
-            return Task.CompletedTask;
+            return DispatchDomKeyboardEventAsync("keydown", key, activeModifiers);
         }
 
         private Task SendNativeKeyUpAsync(Key key, IReadOnlyCollection<Key> activeModifiersAfterRelease)
         {
-            SendNativeKeyEvent(CreateCefKeyEvent(CefKeyEventType.KeyUp, key, activeModifiersAfterRelease));
-            return Task.CompletedTask;
+            return DispatchDomKeyboardEventAsync("keyup", key, activeModifiersAfterRelease);
         }
 
         private Task SendNativeKeyCharAsync(Key key, IReadOnlyCollection<Key> activeModifiers)
@@ -1552,78 +1606,90 @@ namespace GuacClient
             if (!character.HasValue)
                 return Task.CompletedTask;
 
-            var keyEvent = CreateCefKeyEvent(CefKeyEventType.Char, key, activeModifiers);
-            keyEvent.Character = character.Value;
-            keyEvent.UnmodifiedCharacter = char.ToLowerInvariant(character.Value);
-            SendNativeKeyEvent(keyEvent);
-            return Task.CompletedTask;
+            return DispatchDomKeyboardEventAsync("keypress", key, activeModifiers, character.Value.ToString());
         }
 
-        private void SendNativeKeyEvent(CefKeyEvent keyEvent)
+        private async Task DispatchDomKeyboardEventAsync(string eventType, Key key, IReadOnlyCollection<Key> activeModifiers, string? text = null)
         {
-            _web.Focus();
-            object browser = GetUnderlyingBrowser()
-                ?? throw new InvalidOperationException("Underlying browser is not available.");
+            int keyCode = MapAvaloniaKeyToVirtualKey(key);
+            if (keyCode == 0)
+                throw new NotSupportedException($"No DOM key mapping implemented for {key}.");
 
-            MethodInfo sendKeyEventMethod = browser.GetType().GetMethod(
-                "SendKeyEvent",
-                BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic,
-                binder: null,
-                types: new[] { typeof(CefKeyEvent) },
-                modifiers: null)
-                ?? throw new InvalidOperationException("Native SendKeyEvent(CefKeyEvent) is not available.");
+            string keyValue = text ?? MapAvaloniaKeyToDomKey(key);
+            string codeValue = MapAvaloniaKeyToDomCode(key);
+            string script =
+                "(() => {" +
+                "const target = document.activeElement || document.body;" +
+                "const event = new KeyboardEvent(" + JsonSerializer.Serialize(eventType) + ", {" +
+                "key: " + JsonSerializer.Serialize(keyValue) + "," +
+                "code: " + JsonSerializer.Serialize(codeValue) + "," +
+                "keyCode: " + keyCode + "," +
+                "which: " + keyCode + "," +
+                "ctrlKey: " + ToJavaScriptBoolean(activeModifiers.Contains(Key.LeftCtrl) || activeModifiers.Contains(Key.RightCtrl)) + "," +
+                "altKey: " + ToJavaScriptBoolean(activeModifiers.Contains(Key.LeftAlt) || activeModifiers.Contains(Key.RightAlt)) + "," +
+                "shiftKey: " + ToJavaScriptBoolean(activeModifiers.Contains(Key.LeftShift) || activeModifiers.Contains(Key.RightShift)) + "," +
+                "metaKey: " + ToJavaScriptBoolean(activeModifiers.Contains(Key.LWin) || activeModifiers.Contains(Key.RWin)) + "," +
+                "bubbles: true, cancelable: true" +
+                "});" +
+                "target.dispatchEvent(event);" +
+                "})();";
 
-            sendKeyEventMethod.Invoke(browser, new object[] { keyEvent });
-        }
-
-        private object? GetUnderlyingBrowser()
-        {
-            PropertyInfo? property = _web.GetType().GetProperty("UnderlyingBrowser", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
-            return property?.GetValue(_web);
-        }
-
-        private CefKeyEvent CreateCefKeyEvent(CefKeyEventType eventType, Key key, IReadOnlyCollection<Key> activeModifiers)
-        {
-            int virtualKey = MapAvaloniaKeyToVirtualKey(key);
-            if (virtualKey == 0)
-                throw new NotSupportedException($"No native key mapping implemented for {key}.");
-
-            int nativeKeyCode = BuildNativeKeyCode(virtualKey, key, eventType);
-
-            var keyEvent = new CefKeyEvent
+            await Dispatcher.UIThread.InvokeAsync(async () =>
             {
-                EventType = eventType,
-                WindowsKeyCode = virtualKey,
-                NativeKeyCode = nativeKeyCode,
-                Modifiers = BuildCefEventFlags(key, activeModifiers),
-                FocusOnEditableField = true,
-                IsSystemKey = key is Key.LeftAlt or Key.RightAlt or Key.F10 || activeModifiers.Contains(Key.LeftAlt) || activeModifiers.Contains(Key.RightAlt)
+                _web.Focus();
+                await _web.InvokeScript(script).ConfigureAwait(true);
+            });
+        }
+
+        private static string ToJavaScriptBoolean(bool value)
+            => value ? "true" : "false";
+
+        private static string MapAvaloniaKeyToDomKey(Key key)
+            => key switch
+            {
+                >= Key.A and <= Key.Z => ((char)('a' + (key - Key.A))).ToString(),
+                >= Key.D0 and <= Key.D9 => ((char)('0' + (key - Key.D0))).ToString(),
+                >= Key.F1 and <= Key.F12 => "F" + (1 + key - Key.F1).ToString(),
+                Key.Back => "Backspace",
+                Key.Tab => "Tab",
+                Key.Pause => "Pause",
+                Key.Space => " ",
+                Key.Enter => "Enter",
+                Key.Escape => "Escape",
+                Key.PageUp => "PageUp",
+                Key.PageDown => "PageDown",
+                Key.End => "End",
+                Key.Home => "Home",
+                Key.Left => "ArrowLeft",
+                Key.Up => "ArrowUp",
+                Key.Right => "ArrowRight",
+                Key.Down => "ArrowDown",
+                Key.Insert => "Insert",
+                Key.Delete => "Delete",
+                Key.Apps => "ContextMenu",
+                Key.LWin or Key.RWin => "Meta",
+                Key.LeftCtrl or Key.RightCtrl => "Control",
+                Key.LeftAlt or Key.RightAlt => "Alt",
+                Key.LeftShift or Key.RightShift => "Shift",
+                _ => key.ToString(),
             };
 
-            return keyEvent;
-        }
-
-        private static int BuildNativeKeyCode(int virtualKey, Key key, CefKeyEventType eventType)
-        {
-            if (!OperatingSystem.IsWindows())
-                return 0;
-
-            uint scanCode = NativeKeyboardMethods.MapVirtualKey((uint)virtualKey, NativeKeyboardMethods.MAPVK_VK_TO_VSC);
-            bool isExtended = key is Key.RightAlt or Key.RightCtrl or Key.Insert or Key.Delete or
-                              Key.Home or Key.End or Key.PageUp or Key.PageDown or
-                              Key.Left or Key.Right or Key.Up or Key.Down or
-                              Key.LWin or Key.RWin or Key.Apps;
-
-            int nativeKeyCode = (int)(scanCode << 16);
-
-            if (isExtended)
-                nativeKeyCode |= 1 << 24;
-
-            if (eventType == CefKeyEventType.KeyUp)
-                nativeKeyCode |= unchecked((int)0xC0000000);
-
-            return nativeKeyCode;
-        }
+        private static string MapAvaloniaKeyToDomCode(Key key)
+            => key switch
+            {
+                >= Key.A and <= Key.Z => "Key" + (char)('A' + (key - Key.A)),
+                >= Key.D0 and <= Key.D9 => "Digit" + (char)('0' + (key - Key.D0)),
+                >= Key.F1 and <= Key.F12 => "F" + (1 + key - Key.F1).ToString(),
+                Key.LeftCtrl => "ControlLeft",
+                Key.RightCtrl => "ControlRight",
+                Key.LeftAlt => "AltLeft",
+                Key.RightAlt => "AltRight",
+                Key.LeftShift => "ShiftLeft",
+                Key.RightShift => "ShiftRight",
+                Key.LWin => "MetaLeft",
+                Key.RWin => "MetaRight",
+                _ => MapAvaloniaKeyToDomKey(key),
+            };
 
         private static char? TryGetCharacterForKey(Key key, IReadOnlyCollection<Key> activeModifiers)
         {
@@ -1924,32 +1990,6 @@ namespace GuacClient
         private static string FormatShiftKeyName(Key? key)
             => key == Key.RightShift ? "RShift" : "LShift";
 
-        private static CefEventFlags BuildCefEventFlags(Key key, IReadOnlyCollection<Key> activeModifiers)
-        {
-            CefEventFlags flags = CefEventFlags.None;
-
-            if (activeModifiers.Contains(Key.LeftCtrl) || activeModifiers.Contains(Key.RightCtrl))
-                flags |= CefEventFlags.ControlDown;
-            if (activeModifiers.Contains(Key.LeftAlt) || activeModifiers.Contains(Key.RightAlt))
-                flags |= CefEventFlags.AltDown;
-            if (activeModifiers.Contains(Key.LeftShift) || activeModifiers.Contains(Key.RightShift))
-                flags |= CefEventFlags.ShiftDown;
-            if (activeModifiers.Contains(Key.LWin) || activeModifiers.Contains(Key.RWin))
-                flags |= CefEventFlags.CommandDown;
-
-            if (activeModifiers.Contains(Key.LeftCtrl) && activeModifiers.Contains(Key.RightAlt) &&
-                !activeModifiers.Contains(Key.RightCtrl) && !activeModifiers.Contains(Key.LeftAlt))
-            {
-                flags |= CefEventFlags.AltGrDown;
-            }
-
-            if (key is Key.LeftCtrl or Key.LeftAlt or Key.LeftShift or Key.LWin)
-                flags |= CefEventFlags.IsLeft;
-            else if (key is Key.RightCtrl or Key.RightAlt or Key.RightShift or Key.RWin)
-                flags |= CefEventFlags.IsRight;
-
-            return flags;
-        }
         private static bool IsKeyCurrentlyDown(Key key)
         {
             if (!OperatingSystem.IsWindows())

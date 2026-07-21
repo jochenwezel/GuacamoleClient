@@ -183,11 +183,11 @@ namespace GuacamoleClient.Common.Localization
                     case LocalizationKeys.Help_About_Text:
                         return "GuacamoleClient\n\nVariante: {0}\nVersion: {1}\nFramework: {2}\nBetriebssystem: {3}\nArchitektur: {4}";
                     case LocalizationKeys.Help_About_RuntimeDiagnostics_Text:
-                        return "Start-/Browser-Diagnose\n- Startmodus: {0}\n- Startargumente: {1}\n- CEF/GPU-Switches: {2}";
+                        return "Start-/Browser-Diagnose\n- Startmodus: {0}\n- Startargumente: {1}\n- Browser/GPU-Switches: {2}";
                     case LocalizationKeys.Help_About_License_Text:
                         return "Dieses Projekt ist unter der Apache License 2.0 lizenziert.\nSiehe LICENSE im Installationsverzeichnis.";
                     case LocalizationKeys.Help_About_Avalonia_ThirdParty_Text:
-                        return "Enthält Chromium Embedded Framework (CEF).\nLizenzhinweise siehe NOTICE und LICENSE.chromium im Installationsverzeichnis.";
+                        return "Verwendet das native WebView des Betriebssystems (WebView2, WebKit oder WebKitGTK/WPE).";
                     case LocalizationKeys.Help_ProjectWebsite_Link:
                         return "Projekt-Website";
                     case LocalizationKeys.Help_ReportBug_Link:
@@ -470,11 +470,11 @@ namespace GuacamoleClient.Common.Localization
                 case LocalizationKeys.Help_About_Text:
                     return "GuacamoleClient\n\nVariant: {0}\nVersion: {1}\nFramework: {2}\nOperating system: {3}\nArchitecture: {4}";
                 case LocalizationKeys.Help_About_RuntimeDiagnostics_Text:
-                    return "Startup/browser diagnostics\n- Startup mode: {0}\n- Startup arguments: {1}\n- CEF/GPU switches: {2}";
+                    return "Startup/browser diagnostics\n- Startup mode: {0}\n- Startup arguments: {1}\n- Browser/GPU switches: {2}";
                 case LocalizationKeys.Help_About_License_Text:
                     return "This project is licensed under the Apache License 2.0.\nSee LICENSE in the installation directory.";
                 case LocalizationKeys.Help_About_Avalonia_ThirdParty_Text:
-                    return "Includes Chromium Embedded Framework (CEF).\nFor license notices, see NOTICE and LICENSE.chromium in the installation directory.";
+                    return "Uses the operating system native WebView engine (WebView2, WebKit, or WebKitGTK/WPE).";
                 case LocalizationKeys.Help_ProjectWebsite_Link:
                     return "Project website";
                 case LocalizationKeys.Help_ReportBug_Link:

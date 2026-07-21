@@ -428,7 +428,7 @@
               </section>
               <section class="client-option" aria-labelledby="windows-avalonia-title">
                 <h3 id="windows-avalonia-title">Avalonia</h3>
-                <p>Same app family as Linux and macOS. Uses bundled Chromium/CEF, so browser updates arrive with GuacamoleClient releases.</p>
+                <p>Same app family as Linux and macOS. Uses the operating system native WebView engine, so browser runtime updates follow the platform engine.</p>
                 <div class="actions">
                   <a id="windows-avalonia-link" class="button secondary" href="./clickonce/avalonia/stable/GuacamoleClient-Avalonia.application">Install Avalonia Stable</a>
                 </div>
@@ -481,7 +481,7 @@ sudo apt install ./guacamoleclient-avalonia-linux-x64_*_amd64.deb'>cd /tmp
 wget "https://github.com/jochenwezel/GuacamoleClient/releases/download/__AVALONIA_DEB_RELEASE_TAG__/guacamoleclient-avalonia-linux-x64___AVALONIA_DEB_VERSION___amd64.deb"
 sudo apt install ./guacamoleclient-avalonia-linux-x64___AVALONIA_DEB_VERSION___amd64.deb</code></pre>
                 <p>Start it from the application menu or run <code>guacamoleclient</code>.</p>
-                <p>The package already includes .NET and the embedded Chromium/CEF browser. Required Linux desktop libraries are installed automatically by apt as package dependencies.</p>
+                <p>The package already includes .NET. The native WebView engine and required Linux desktop libraries are installed automatically by apt as package dependencies.</p>
               </section>
 
               <section class="distro" aria-labelledby="linux-rpm-title" data-deployment-section="linux-rpm-direct">
@@ -497,7 +497,7 @@ sudo apt install ./guacamoleclient-avalonia-linux-x64___AVALONIA_DEB_VERSION___a
 Then run:
 sudo dnf install ./guacamoleclient-avalonia-linux-x64-*.x86_64.rpm'>RPM packages are available in the Dev channel for testing. Stable RPM packages will appear here after the next Stable release.</code></pre>
                 <p>Start it from the application menu or run <code>guacamoleclient</code>.</p>
-                <p>The package already includes .NET and the embedded Chromium/CEF browser. Required Linux desktop libraries are installed automatically by dnf as package dependencies.</p>
+                <p>The package already includes .NET. The native WebView engine and required Linux desktop libraries are installed automatically by dnf as package dependencies.</p>
               </section>
 
               <section class="distro wide" aria-labelledby="linux-arch-title" data-deployment-section="linux-tarball-direct">
@@ -535,7 +535,7 @@ ln -sfn "$HOME/.local/opt"/guacamoleclient-avalonia-linux-x64-*/guacamoleclient 
                 </div>
                 <pre><code id="linux-tarball-user-uninstall-command">rm -rf "$HOME/.local/opt"/guacamoleclient-avalonia-linux-x64-*
 rm -f "$HOME/.local/bin/guacamoleclient"</code></pre>
-                <p>The tarball already includes .NET and the embedded Chromium/CEF browser. The target system still needs common Linux desktop libraries such as GTK 3, NSS, ALSA, CUPS, Mesa/GL/GBM, fontconfig, and X11/XCB libraries. Package names vary by distribution.</p>
+                <p>The tarball already includes .NET. The target system still needs the native WebView engine and common Linux desktop libraries such as GTK 3, WebKitGTK/WPE, NSS, ALSA, CUPS, Mesa/GL/GBM, fontconfig, and X11/XCB libraries. Package names vary by distribution.</p>
               </section>
 
               <section class="distro wide" aria-labelledby="linux-universal-title">

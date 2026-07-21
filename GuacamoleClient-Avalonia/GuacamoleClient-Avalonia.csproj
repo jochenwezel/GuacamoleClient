@@ -37,11 +37,6 @@
     <!-- Wir bauen plattformübergreifend, aber deklarieren RIDs -->
     <RuntimeIdentifiers>win-x64;linux-x64;osx-arm64;osx-x64</RuntimeIdentifiers>
 
-    <!-- CEF ist auf Windows x64, deshalb auf Windows x64 zwingen -->
-    <!-- a) Wenn lokal (ohne RID) unter Windows gebaut wird -->
-    <PlatformTarget Condition="'$(RuntimeIdentifier)'=='' and '$(OS)'=='Windows_NT'">x64</PlatformTarget>
-    <!-- b) Wenn explizit mit RID gebaut wird -->
-    <PlatformTarget Condition="'$(RuntimeIdentifier)'=='win-x64'">x64</PlatformTarget>
   </PropertyGroup>
 
   <ItemGroup>
@@ -55,14 +50,6 @@
     </Content>
     <Content Include="..\LICENSE">
       <Link>LICENSE</Link>
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
-    </Content>
-    <Content Include="NOTICE">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
-    </Content>
-    <Content Include="LICENSE.chromium">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
     </Content>
@@ -80,79 +67,32 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Avalonia" Version="11.3.18" />
-    <PackageReference Include="Avalonia.Desktop" Version="11.3.18" />
-    <PackageReference Include="Avalonia.Themes.Fluent" Version="11.3.18" />
+    <PackageReference Include="Avalonia" Version="12.0.5" />
+    <PackageReference Include="Avalonia.Controls.WebView" Version="12.0.1" />
+    <PackageReference Include="Avalonia.Desktop" Version="12.0.5" />
+    <PackageReference Include="Avalonia.Themes.Fluent" Version="12.0.5" />
     <PackageReference Include="HarfBuzzSharp" Version="8.3.1.5" />
     <PackageReference Include="HarfBuzzSharp.NativeAssets.Linux" Version="8.3.1.5" />
     <PackageReference Include="System.Text.Json" Version="10.0.7" />
 
-    <!-- Optional: Tools für XAML Previewer -->
-    <PackageReference Include="Avalonia.Diagnostics" Version="11.3.18" Condition="'$(Configuration)' == 'Debug'" />
   </ItemGroup>
 
-  <ItemGroup>
-    <!-- Wrapper -->
-    <PackageReference Include="WebViewControl-Avalonia" Version="3.120.11" />
-
-    <!-- Redists (pro RID) -->
-    <!--
-    <PackageReference Include="cef.redist.linux64" />
-    <PackageReference Include="cef.redist.linuxarm64" />
-    <PackageReference Include="cef.redist.osx.arm64" />
-    <PackageReference Include="cef.redist.osx64" />
-    -->
+  <ItemGroup Condition="'$(RuntimeIdentifier)'=='win-x64' or ('$(RuntimeIdentifier)'=='' and '$(OS)'=='Windows_NT')">
+    <!-- WebView2 ships a WPF helper assembly that creates a benign WindowsBase 4.0/5.0 conflict in this Avalonia app. -->
+    <PackageReference Include="Microsoft.Web.WebView2" Version="1.0.3912.50" />
   </ItemGroup>
 
-  <ItemGroup Condition="'$(RuntimeIdentifier)'=='osx-arm64'">
-    <PackageReference Include="CefGlue.Avalonia.ARM64" Version="120.6099.211" />
-    <PackageReference Include="CefGlue.Common.ARM64" Version="120.6099.211" />
-    <PackageReference Include="cef.redist.osx.arm64" Version="120.1.8" />
-  </ItemGroup>
-  <ItemGroup Condition="'$(RuntimeIdentifier)'!='osx-arm64'">
-    <PackageReference Include="CefGlue.Avalonia" Version="120.6099.211" />
-    <PackageReference Include="CefGlue.Common" Version="120.6099.211" />
-  </ItemGroup>
-  <ItemGroup Condition="'$(RuntimeIdentifier)'=='osx-x64'">
-    <PackageReference Include="cef.redist.osx64" Version="120.1.8" />
+  <ItemGroup Condition="'$(RuntimeIdentifier)'!='win-x64' and ('$(RuntimeIdentifier)'!='' or '$(OS)'!='Windows_NT')">
+    <Compile Remove="src\MainWindow.WebView2.Windows.cs" />
   </ItemGroup>
 
-  <ItemGroup Condition="'$(RuntimeIdentifier)'=='osx-arm64'">
-    <Arm64CefGlueRootAssemblies Include="$(NuGetPackageRoot)cefglue.avalonia.arm64\120.6099.211\lib\net8.0\Xilium.CefGlue.Avalonia.dll" />
-    <Arm64CefGlueRootAssemblies Include="$(NuGetPackageRoot)cefglue.common.arm64\120.6099.211\lib\net8.0\Xilium.CefGlue.Common.dll" />
-    <Arm64CefGlueRootAssemblies Include="$(NuGetPackageRoot)cefglue.common.arm64\120.6099.211\lib\net8.0\Xilium.CefGlue.Common.Shared.dll" />
-    <Arm64CefGlueRootAssemblies Include="$(NuGetPackageRoot)cefglue.common.arm64\120.6099.211\lib\net8.0\Xilium.CefGlue.dll" />
+  <ItemGroup Condition="'$(RuntimeIdentifier)'=='win-x64' or ('$(RuntimeIdentifier)'=='' and '$(OS)'=='Windows_NT')">
+    <Compile Remove="src\MainWindow.WebView2.NonWindows.cs" />
   </ItemGroup>
 
-  <Target Name="CopyArm64CefGlueRootAssembliesToOutput"
-          Condition="'$(RuntimeIdentifier)'=='osx-arm64'"
-          AfterTargets="CopyFilesToOutputDirectory">
-    <Copy SourceFiles="@(Arm64CefGlueRootAssemblies)"
-          DestinationFolder="$(OutDir)"
-          SkipUnchangedFiles="true" />
-  </Target>
-
-  <Target Name="CopyArm64CefGlueRootAssembliesToPublish"
-          Condition="'$(RuntimeIdentifier)'=='osx-arm64' and '$(PublishDir)'!=''"
-          AfterTargets="Publish">
-    <Copy SourceFiles="@(Arm64CefGlueRootAssemblies)"
-          DestinationFolder="$(PublishDir)"
-          SkipUnchangedFiles="true" />
-  </Target>
-
-  <Target Name="SeedMacCefGlueBrowserProcessDylibs"
-          Condition="'$(CefGlueTargetPlatform)'=='osx-arm64' or '$(CefGlueTargetPlatform)'=='osx-x64'"
-          BeforeTargets="GetCopyToOutputDirectoryItems;_CopyOutOfDateSourceItemsToOutputDirectory;ComputeFilesToPublish">
-    <ItemGroup>
-      <MacCefGlueBrowserProcessDylibs Include="@(CefRedistOSXARM64)"
-                                      Condition="'$(CefGlueTargetPlatform)'=='osx-arm64' and ('%(FileName)%(Extension)'=='libEGL.dylib' or '%(FileName)%(Extension)'=='libGLESv2.dylib' or '%(FileName)%(Extension)'=='libvk_swiftshader.dylib')" />
-      <MacCefGlueBrowserProcessDylibs Include="@(CefRedistOSX64)"
-                                      Condition="'$(CefGlueTargetPlatform)'=='osx-x64' and ('%(FileName)%(Extension)'=='libEGL.dylib' or '%(FileName)%(Extension)'=='libGLESv2.dylib' or '%(FileName)%(Extension)'=='libvk_swiftshader.dylib')" />
-    </ItemGroup>
-    <Copy SourceFiles="@(MacCefGlueBrowserProcessDylibs)"
-          DestinationFolder="$(OutDir)"
-          SkipUnchangedFiles="true" />
-  </Target>
+  <PropertyGroup Condition="'$(RuntimeIdentifier)'=='win-x64' or ('$(RuntimeIdentifier)'=='' and '$(OS)'=='Windows_NT')">
+    <MSBuildWarningsAsMessages>$(MSBuildWarningsAsMessages);MSB3277</MSBuildWarningsAsMessages>
+  </PropertyGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\GuacamoleCommon\GuacamoleCommon.csproj" />

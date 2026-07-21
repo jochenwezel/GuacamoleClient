@@ -1,4 +1,4 @@
-using Avalonia;
+﻿using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
@@ -15,7 +15,7 @@ public partial class App : Application
 
     public override void OnFrameworkInitializationCompleted()
     {
-        WorkAroundLinuxCefGlueTextShapingCrash();
+        WarmUpLinuxTextShaping();
 
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
@@ -33,7 +33,7 @@ public partial class App : Application
         return File.Exists(iconPath) ? new WindowIcon(iconPath) : null;
     }
 
-    private static void WorkAroundLinuxCefGlueTextShapingCrash()
+    private static void WarmUpLinuxTextShaping()
     {
         if (!OperatingSystem.IsLinux())
             return;

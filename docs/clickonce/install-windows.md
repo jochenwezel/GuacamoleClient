@@ -5,7 +5,7 @@
 Both Windows clients are supported long-term.
 
 - WinForms is recommended for most Windows users. It uses Microsoft WebView2, so browser security updates come through Windows/Edge.
-- Avalonia is the same app family as Linux and macOS. It uses bundled Chromium/CEF, so browser updates arrive with GuacamoleClient releases.
+- Avalonia is the same app family as Linux and macOS. It uses the operating system native WebView engine, so browser runtime updates follow the platform engine.
 
 ## Windows delivery options
 

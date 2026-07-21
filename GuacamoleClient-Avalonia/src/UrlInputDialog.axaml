@@ -5,7 +5,7 @@
         Title="Start-URL festlegen">
   <StackPanel Margin="16" Spacing="8">
     <TextBlock Text="Bitte geben Sie die Start-URL für Apache Guacamole ein:"/>
-    <TextBox x:Name="Input" Watermark="https://remote.example.com/guacamole/" />
+    <TextBox x:Name="Input" PlaceholderText="https://remote.example.com/guacamole/" />
     <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="8">
       <Button Content="Abbrechen" IsCancel="True"/>
       <Button Content="OK" IsDefault="True" Click="Ok_Click"/>
