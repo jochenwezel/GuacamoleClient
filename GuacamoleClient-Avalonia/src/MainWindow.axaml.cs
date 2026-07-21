@@ -77,7 +77,6 @@ namespace GuacClient
         private MenuItem _sendRemoteCtrlAltEndMenuItem = default!;
         private MenuItem _sendRemoteCtrlAltBackspaceMenuItem = default!;
         private MenuItem _openGuacamoleMenuMenuItem = default!;
-        private MenuItem _sendClipboardTextToRemoteClipboardMenuItem = default!;
         private MenuItem _settingsMenuItem = default!;
         private MenuItem _gpuHardwareAccelerationMenuItem = default!;
         private MenuItem _gpuHardwareAccelerationEnabledMenuItem = default!;
@@ -159,7 +158,6 @@ namespace GuacClient
             _sendRemoteCtrlAltEndMenuItem = this.FindControl<MenuItem>("SendRemoteCtrlAltEndMenuItem")!;
             _sendRemoteCtrlAltBackspaceMenuItem = this.FindControl<MenuItem>("SendRemoteCtrlAltBackspaceMenuItem")!;
             _openGuacamoleMenuMenuItem = this.FindControl<MenuItem>("OpenGuacamoleMenuMenuItem")!;
-            _sendClipboardTextToRemoteClipboardMenuItem = this.FindControl<MenuItem>("SendClipboardTextToRemoteClipboardMenuItem")!;
             _settingsMenuItem = this.FindControl<MenuItem>("SettingsMenuItem")!;
             _gpuHardwareAccelerationMenuItem = this.FindControl<MenuItem>("GpuHardwareAccelerationMenuItem")!;
             _gpuHardwareAccelerationEnabledMenuItem = this.FindControl<MenuItem>("GpuHardwareAccelerationEnabledMenuItem")!;
@@ -192,7 +190,6 @@ namespace GuacClient
             _sendRemoteCtrlAltEndMenuItem.Click += SendRemoteCtrlAltEndMenuItem_Click;
             _sendRemoteCtrlAltBackspaceMenuItem.Click += SendRemoteCtrlAltBackspaceMenuItem_Click;
             _openGuacamoleMenuMenuItem.Click += OpenGuacamoleMenuMenuItem_Click;
-            _sendClipboardTextToRemoteClipboardMenuItem.Click += SendClipboardTextToRemoteClipboardMenuItem_Click;
             _gpuHardwareAccelerationEnabledMenuItem.Click += GpuHardwareAccelerationEnabledMenuItem_Click;
             _gpuHardwareAccelerationDisabledMenuItem.Click += GpuHardwareAccelerationDisabledMenuItem_Click;
             _setupGuideHelpMenuItem.Click += SetupGuideHelpMenuItem_Click;
@@ -292,7 +289,6 @@ namespace GuacClient
                 LocalizationProvider.Get(LocalizationKeys.Menu_OpenGuacamoleMenu),
                 LocalizationProvider.Get(LocalizationKeys.ShortcutKeystroke_OpenGuacamoleMenuToolStripMenuItem));
             _openGuacamoleMenuMenuItem.InputGesture = null;
-            _sendClipboardTextToRemoteClipboardMenuItem.Header = LocalizationProvider.Get(LocalizationKeys.Menu_SendClipboardTextToRemoteClipboard);
             _settingsMenuItem.Header = LocalizationProvider.Get(LocalizationKeys.Menu_Settings);
             _gpuHardwareAccelerationMenuItem.Header = LocalizationProvider.Get(LocalizationKeys.Menu_GpuHardwareAcceleration);
             UpdateGpuHardwareAccelerationMenuState();
@@ -766,9 +762,6 @@ namespace GuacClient
             }, DispatcherPriority.Background);
         }
 
-        private async void SendClipboardTextToRemoteClipboardMenuItem_Click(object? sender, RoutedEventArgs e)
-            => await SendClipboardTextToRemoteClipboardSafeAsync().ConfigureAwait(true);
-
         private async void GpuHardwareAccelerationEnabledMenuItem_Click(object? sender, RoutedEventArgs e)
             => await ApplyGpuHardwareAccelerationPreferenceAsync(enabled: true).ConfigureAwait(true);
 
@@ -1080,7 +1073,7 @@ namespace GuacClient
             if (string.Equals(text, _lastHostClipboardTextSentToRemote, StringComparison.Ordinal))
                 return;
 
-            SendTextToGuacamoleClipboard(text, sendToAllClientsWhenNoFocusedClient: false);
+            SendTextToGuacamoleClipboard(text);
             _lastHostClipboardTextSentToRemote = text;
         }
 
@@ -1607,40 +1600,12 @@ namespace GuacClient
             return Task.CompletedTask;
         }
 
-        private async Task SendClipboardTextToRemoteClipboardSafeAsync()
-        {
-            try
-            {
-                var clipboard = TopLevel.GetTopLevel(this)?.Clipboard;
-                string? text = clipboard == null ? null : await clipboard.TryGetTextAsync().ConfigureAwait(true);
-                if (string.IsNullOrEmpty(text))
-                {
-                    ShowTransientHint(LocalizationProvider.Get(LocalizationKeys.Hint_RemoteClipboardText_Empty));
-                    return;
-                }
-
-                Activate();
-                _web.Focus();
-                await Task.Yield();
-
-                SendTextToGuacamoleClipboard(text, sendToAllClientsWhenNoFocusedClient: true);
-                _lastHostClipboardTextSentToRemote = text;
-                ShowTransientHint(LocalizationProvider.Get(LocalizationKeys.Hint_RemoteClipboardText_Synced, text.Length));
-            }
-            catch (Exception ex)
-            {
-                await MessageBoxSimple.Show(this, LocalizationProvider.Get(LocalizationKeys.AppStart_BackgroundError_Title), ex.ToString());
-            }
-        }
-
-        private void SendTextToGuacamoleClipboard(string text, bool sendToAllClientsWhenNoFocusedClient)
+        private void SendTextToGuacamoleClipboard(string text)
         {
             string serializedText = JsonSerializer.Serialize(text);
-            string sendToAll = JsonSerializer.Serialize(sendToAllClientsWhenNoFocusedClient);
             string script = $$"""
                 (() => {
                     const text = {{serializedText}};
-                    const sendToAllClientsWhenNoFocusedClient = {{sendToAll}};
                     const angular = window.angular;
                     if (!angular || typeof angular.element !== 'function')
                         return;
@@ -1697,11 +1662,9 @@ namespace GuacClient
                         ? [focusedClient]
                         : rememberedClient && rememberedClient.client
                             ? [rememberedClient]
-                            : sendToAllClientsWhenNoFocusedClient
-                                ? clients.filter((client) => client && client.client)
-                                : clients.length === 1
-                                    ? [clients[0]]
-                                    : [];
+                            : clients.length === 1
+                                ? [clients[0]]
+                                : [];
 
                     if (targets.length === 0)
                         return;
