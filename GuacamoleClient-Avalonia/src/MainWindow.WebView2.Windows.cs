@@ -2,11 +2,19 @@
 using Avalonia.Platform;
 using Microsoft.Web.WebView2.Core;
 using System;
+using System.Threading.Tasks;
 
 namespace GuacClient
 {
     public partial class MainWindow
     {
+        private void ConfigurePlatformWebViewEvents()
+        {
+        }
+
+        private static Task ConfigurePlatformWebViewPageAsync(Uri? request)
+            => Task.CompletedTask;
+
         private void ConfigurePlatformWebViewAdapter(WebViewAdapterEventArgs e)
         {
             if (e.TryGetPlatformHandle() is not IWindowsWebView2PlatformHandle windowsHandle ||

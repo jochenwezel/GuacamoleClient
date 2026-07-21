@@ -168,6 +168,7 @@ namespace GuacClient
             _keyboardHintMenuItem = this.FindControl<MenuItem>("KeyboardHintMenuItem")!;
 
             _web.EnvironmentRequested += Web_EnvironmentRequested;
+            ConfigurePlatformWebViewEvents();
             _web.AdapterCreated += (_, e) => ConfigurePlatformWebViewAdapter(e);
             _web.NavigationCompleted += Web_NavigationCompleted;
 
@@ -1284,7 +1285,10 @@ namespace GuacClient
         }
 
         private async void Web_NavigationCompleted(object? sender, WebViewNavigationCompletedEventArgs e)
-            => await UpdateWindowTitleFromWebViewAsync(e.Request).ConfigureAwait(true);
+        {
+            await UpdateWindowTitleFromWebViewAsync(e.Request).ConfigureAwait(true);
+            await ConfigurePlatformWebViewPageAsync(e.Request).ConfigureAwait(true);
+        }
 
         private void NavigateWebView(string url)
             => _web.Navigate(new Uri(url));
