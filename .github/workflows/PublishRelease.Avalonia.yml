@@ -520,7 +520,7 @@ jobs:
           Architecture: amd64
           Maintainer: CompuMaster GmbH <info@compumaster.de>
           Installed-Size: $installed_size
-          Depends: libc6, libcups2, libasound2 | libasound2t64, libatk-bridge2.0-0, libatk1.0-0, libdrm2, libfontconfig1, libgbm1, libgcc-s1, libgl1, libgtk-3-0, libnss3, libstdc++6, libwpewebkit-2.0-1, libx11-xcb1, libxcb1, libxcomposite1, libxcursor1, libxdamage1, libxi6, libxkbcommon0, libxrandr2, libxrender1, libxss1, libxtst6, zlib1g
+          Depends: libc6, libcups2, libasound2 | libasound2t64, libatk-bridge2.0-0, libatk1.0-0, libdrm2, libfontconfig1, libgbm1, libgcc-s1, libgl1, libgtk-3-0, libnss3, libstdc++6, libwpewebkit-2.0-1 | libwebkit2gtk-4.1-0, libx11-xcb1, libxcb1, libxcomposite1, libxcursor1, libxdamage1, libxi6, libxkbcommon0, libxrandr2, libxrender1, libxss1, libxtst6, zlib1g
           Homepage: https://github.com/jochenwezel/GuacamoleClient
           Description: Desktop client for Apache Guacamole
            GuacamoleClient runs Apache Guacamole sessions in a dedicated desktop application window.
@@ -587,13 +587,22 @@ jobs:
           Architecture: amd64
           Maintainer: CompuMaster GmbH <info@compumaster.de>
           Installed-Size: $installed_size
-          Depends: libc6, libcups2, libasound2 | libasound2t64, libatk-bridge2.0-0, libatk1.0-0, libdrm2, libfontconfig1, libgbm1, libgcc-s1, libgl1, libgtk-3-0, libnss3, libstdc++6, libwpewebkit-2.0-1, libx11-xcb1, libxcb1, libxcomposite1, libxcursor1, libxdamage1, libxi6, libxkbcommon0, libxrandr2, libxrender1, libxss1, libxtst6, zlib1g
+          Depends: libc6, libcups2, libasound2 | libasound2t64, libatk-bridge2.0-0, libatk1.0-0, libdrm2, libfontconfig1, libgbm1, libgcc-s1, libgl1, libgtk-3-0, libnss3, libstdc++6, libwpewebkit-2.0-1 | libwebkit2gtk-4.1-0, libx11-xcb1, libxcb1, libxcomposite1, libxcursor1, libxdamage1, libxi6, libxkbcommon0, libxrandr2, libxrender1, libxss1, libxtst6, zlib1g
           Homepage: https://github.com/jochenwezel/GuacamoleClient
           Description: Desktop client for Apache Guacamole
            GuacamoleClient runs Apache Guacamole sessions in a dedicated desktop application window.
           EOF
 
           dpkg-deb --build "$package_root" "$GITHUB_WORKSPACE/${package_name}-linux-x64-dev_${package_version}_amd64.deb"
+
+      - name: Verify Debian package dependencies - Avalonia (Linux x64)
+        if: runner.os == 'Linux' && (env.PUBLISH_LINUX_DEB == 'true' || env.PUBLISH_DEV_ASSETS == 'true')
+        shell: bash
+        run: |
+          set -euo pipefail
+          for package in "$GITHUB_WORKSPACE"/guacamoleclient-avalonia-linux-x64*_amd64.deb; do
+            sudo apt-get install --dry-run "$package"
+          done
 
       - name: Pack dev RPM package - Avalonia (Linux x64)
         if: runner.os == 'Linux' && env.PUBLISH_DEV_ASSETS == 'true'
