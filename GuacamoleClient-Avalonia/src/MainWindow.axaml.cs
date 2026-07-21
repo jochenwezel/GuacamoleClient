@@ -693,6 +693,7 @@ namespace GuacClient
                     break;
 
                 case GtkWebViewEnvironmentRequestedEventArgs gtk:
+                    gtk.ExperimentalOffscreen = true;
                     gtk.BaseDataDirectory = cacheDirectory;
                     gtk.BaseCacheDirectory = cacheDirectory;
                     gtk.DisableCache = !persistCache;
