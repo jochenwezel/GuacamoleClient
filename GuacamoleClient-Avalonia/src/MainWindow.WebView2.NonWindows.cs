@@ -9,7 +9,7 @@ namespace GuacClient
     public partial class MainWindow
     {
         private const string HostShortcutMessagePrefix = "guacamoleclient:host-shortcut:";
-        private bool _linuxWebViewSurfaceRefreshPending;
+        private readonly TaskCompletionSource<bool> _linuxWebViewAdapterCreated = new(TaskCreationOptions.RunContinuationsAsynchronously);
         private bool _linuxWebViewSurfaceRefreshApplied;
 
         private void ConfigurePlatformWebViewEvents()
@@ -17,8 +17,6 @@ namespace GuacClient
 
         private async Task ConfigurePlatformWebViewPageAsync(Uri? request)
         {
-            await RefreshLinuxWebViewSurfaceOnceAsync().ConfigureAwait(true);
-
             if (request == null || !_trustedHosts.Contains(request.Host))
                 return;
 
@@ -74,17 +72,27 @@ namespace GuacClient
 
         }
 
-        private async Task RefreshLinuxWebViewSurfaceOnceAsync()
+        private async Task RefreshPlatformWebViewAfterNavigationStartedAsync(string url)
         {
-            if (!_linuxWebViewSurfaceRefreshPending || _linuxWebViewSurfaceRefreshApplied)
+            if (!OperatingSystem.IsLinux() || _linuxWebViewSurfaceRefreshApplied)
                 return;
 
-            _linuxWebViewSurfaceRefreshPending = false;
+            await Task.WhenAny(
+                _linuxWebViewAdapterCreated.Task,
+                Task.Delay(TimeSpan.FromSeconds(2))).ConfigureAwait(true);
+            await Task.Delay(250).ConfigureAwait(true);
+
+            if (_closeRequested)
+                return;
+
             _linuxWebViewSurfaceRefreshApplied = true;
             _web.IsVisible = false;
             await Dispatcher.UIThread.InvokeAsync(
                 () => _web.IsVisible = true,
                 DispatcherPriority.Background);
+
+            // Reattachment can discard a navigation that started against the original XEmbed surface.
+            NavigateWebView(url);
         }
 
         private void Web_WebMessageReceived(object? sender, WebMessageReceivedEventArgs e)
@@ -132,11 +140,8 @@ namespace GuacClient
 
         private void ConfigurePlatformWebViewAdapter(WebViewAdapterEventArgs e)
         {
-            if (!OperatingSystem.IsLinux() || _linuxWebViewSurfaceRefreshApplied)
-                return;
-
-            // Refresh only after the first navigation so reattaching the XEmbed surface cannot race loading.
-            _linuxWebViewSurfaceRefreshPending = true;
+            if (OperatingSystem.IsLinux())
+                _linuxWebViewAdapterCreated.TrySetResult(true);
         }
     }
 }

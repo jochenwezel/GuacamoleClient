@@ -626,6 +626,7 @@ namespace GuacClient
             try
             {
                 NavigateWebView(url!);
+                await RefreshPlatformWebViewAfterNavigationStartedAsync(url!).ConfigureAwait(true);
                 UpdateWindowTitle(url!, null);
             }
             catch (Exception ex)

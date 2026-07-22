@@ -15,6 +15,9 @@ namespace GuacClient
         private static Task ConfigurePlatformWebViewPageAsync(Uri? request)
             => Task.CompletedTask;
 
+        private static Task RefreshPlatformWebViewAfterNavigationStartedAsync(string url)
+            => Task.CompletedTask;
+
         private void ConfigurePlatformWebViewAdapter(WebViewAdapterEventArgs e)
         {
             if (e.TryGetPlatformHandle() is not IWindowsWebView2PlatformHandle windowsHandle ||
