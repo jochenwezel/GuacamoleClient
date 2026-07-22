@@ -9,12 +9,16 @@ namespace GuacClient
     public partial class MainWindow
     {
         private const string HostShortcutMessagePrefix = "guacamoleclient:host-shortcut:";
+        private bool _linuxWebViewSurfaceRefreshPending;
+        private bool _linuxWebViewSurfaceRefreshApplied;
 
         private void ConfigurePlatformWebViewEvents()
             => _web.WebMessageReceived += Web_WebMessageReceived;
 
         private async Task ConfigurePlatformWebViewPageAsync(Uri? request)
         {
+            await RefreshLinuxWebViewSurfaceOnceAsync().ConfigureAwait(true);
+
             if (request == null || !_trustedHosts.Contains(request.Host))
                 return;
 
@@ -70,6 +74,19 @@ namespace GuacClient
 
         }
 
+        private async Task RefreshLinuxWebViewSurfaceOnceAsync()
+        {
+            if (!_linuxWebViewSurfaceRefreshPending || _linuxWebViewSurfaceRefreshApplied)
+                return;
+
+            _linuxWebViewSurfaceRefreshPending = false;
+            _linuxWebViewSurfaceRefreshApplied = true;
+            _web.IsVisible = false;
+            await Dispatcher.UIThread.InvokeAsync(
+                () => _web.IsVisible = true,
+                DispatcherPriority.Background);
+        }
+
         private void Web_WebMessageReceived(object? sender, WebMessageReceivedEventArgs e)
         {
             string? message = e.Body?.Trim().Trim('"');
@@ -115,15 +132,11 @@ namespace GuacClient
 
         private void ConfigurePlatformWebViewAdapter(WebViewAdapterEventArgs e)
         {
-            if (!OperatingSystem.IsLinux())
+            if (!OperatingSystem.IsLinux() || _linuxWebViewSurfaceRefreshApplied)
                 return;
 
-            // The GTK/XWayland adapter can create its XEmbed surface before Avalonia has completed layout.
-            // Reattaching it on a later dispatcher pass gives WebKit the final native host dimensions.
-            _web.IsVisible = false;
-            Dispatcher.UIThread.Post(
-                () => _web.IsVisible = true,
-                DispatcherPriority.Background);
+            // Refresh only after the first navigation so reattaching the XEmbed surface cannot race loading.
+            _linuxWebViewSurfaceRefreshPending = true;
         }
     }
 }
