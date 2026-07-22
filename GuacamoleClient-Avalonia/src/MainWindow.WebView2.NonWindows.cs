@@ -1,4 +1,5 @@
 ﻿using Avalonia.Controls;
+using Avalonia.Platform;
 using Avalonia.Threading;
 using GuacamoleClient.Common.Localization;
 using System;
@@ -11,9 +12,14 @@ namespace GuacClient
         private const string HostShortcutMessagePrefix = "guacamoleclient:host-shortcut:";
         private readonly TaskCompletionSource<bool> _linuxWebViewAdapterCreated = new(TaskCreationOptions.RunContinuationsAsynchronously);
         private bool _linuxWebViewSurfaceRefreshApplied;
+        private IntPtr _linuxGtkWebViewHandle;
 
         private void ConfigurePlatformWebViewEvents()
-            => _web.WebMessageReceived += Web_WebMessageReceived;
+        {
+            _web.WebMessageReceived += Web_WebMessageReceived;
+            if (OperatingSystem.IsLinux())
+                _web.SizeChanged += async (_, _) => await ApplyLinuxWebViewSizeSafeAsync().ConfigureAwait(true);
+        }
 
         private async Task ConfigurePlatformWebViewPageAsync(Uri? request)
         {
@@ -86,13 +92,33 @@ namespace GuacClient
                 return;
 
             _linuxWebViewSurfaceRefreshApplied = true;
+            await ApplyLinuxWebViewSizeSafeAsync().ConfigureAwait(true);
             _web.IsVisible = false;
-            await Dispatcher.UIThread.InvokeAsync(
-                () => _web.IsVisible = true,
-                DispatcherPriority.Background);
+            await Task.Delay(50).ConfigureAwait(true);
+            _web.IsVisible = true;
+            await Dispatcher.UIThread.InvokeAsync(() => { }, DispatcherPriority.Render);
+            await ApplyLinuxWebViewSizeSafeAsync().ConfigureAwait(true);
 
             // Reattachment can discard a navigation that started against the original XEmbed surface.
             NavigateWebView(url);
+        }
+
+        private async Task ApplyLinuxWebViewSizeSafeAsync()
+        {
+            if (_linuxGtkWebViewHandle == IntPtr.Zero || !_web.IsVisible)
+                return;
+
+            try
+            {
+                double scaling = TopLevel.GetTopLevel(_web)?.RenderScaling ?? 1.0;
+                int width = Math.Max(1, (int)Math.Ceiling(_web.Bounds.Width * scaling));
+                int height = Math.Max(1, (int)Math.Ceiling(_web.Bounds.Height * scaling));
+                await GtkWebViewSizeWorkaround.ApplyAsync(_linuxGtkWebViewHandle, width, height).ConfigureAwait(true);
+            }
+            catch (Exception)
+            {
+                // The native WebView can disappear while a queued GTK resize is pending during shutdown.
+            }
         }
 
         private void Web_WebMessageReceived(object? sender, WebMessageReceivedEventArgs e)
@@ -140,8 +166,13 @@ namespace GuacClient
 
         private void ConfigurePlatformWebViewAdapter(WebViewAdapterEventArgs e)
         {
-            if (OperatingSystem.IsLinux())
-                _linuxWebViewAdapterCreated.TrySetResult(true);
+            if (!OperatingSystem.IsLinux() || e.TryGetPlatformHandle() is not IGtkWebViewPlatformHandle gtkHandle)
+                return;
+
+            _linuxGtkWebViewHandle = gtkHandle.WebKitWebView;
+            _linuxWebViewAdapterCreated.TrySetResult(true);
+            _ = ApplyLinuxWebViewSizeSafeAsync();
         }
     }
+
 }
