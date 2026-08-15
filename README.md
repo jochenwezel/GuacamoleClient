@@ -7,14 +7,20 @@
 
 ➡️ **Install and download page:** https://jochenwezel.github.io/GuacamoleClient/
 
-## What is GuacamoleClient? Why we need it?
+## What is GuacamoleClient?
 
-Apache Guacamole is a free, clientless remote desktop gateway. It supports standard protocols like VNC, RDP, and SSH. see https://guacamole.apache.org/
-Usually, you access Guacamole via a web browser. However, sometimes using a web browser can lead to conflicts with keyboard shortcuts and other browser-specific behaviors.
+**GuacamoleClient is a dedicated desktop client for users of existing Apache Guacamole servers.** It provides a native application experience on Windows, Linux, and macOS, with improved handling of keyboard shortcuts, full-screen sessions, and multiple Guacamole server profiles.
 
-* This GuacamoleClient app is more or less a browser control but catching as keyboard shortcuts as much as possible. 
-* This allows using of modifier keys and shortcuts like Win+R, Ctrl+Alt+End,
-* This also prevents e.g. accidential closing of browser tab (Ctrl+F4) with your guacamole session or the whole browser app (Alt+F4).
+This project is not a fork, replacement, or distribution of the Apache Guacamole server. A running Guacamole server is required.
+
+Apache Guacamole is a free, clientless remote desktop gateway that supports standard protocols such as VNC, RDP, and SSH. For more information, visit https://guacamole.apache.org/.
+
+Guacamole is usually accessed through a web browser. However, browser and operating-system shortcuts can interfere with remote sessions. GuacamoleClient embeds the Guacamole web interface in a dedicated desktop application to:
+
+* Prevent local browser and window shortcuts such as Ctrl+F4 and Alt+F4 from accidentally closing the Guacamole session or the entire browser application.
+* Capture operating-system shortcuts such as Alt+Tab, Win+R, and many others and send them to the remote session instead of handling them locally.
+* Use Ctrl+Alt+End as a safe replacement for Ctrl+Alt+Delete and send Ctrl+Alt+Delete to the remote session.
+* Provide full-screen sessions, multiple remote sessions, and profiles for multiple Guacamole servers.
 
 ## Variants of GuacamoleClient
 
