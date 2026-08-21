@@ -392,8 +392,8 @@ namespace GuacamoleClient.WinForms
             if (mapped == null)
                 return false;
 
-            await EnsureRemoteModifierHeldAsync(windowsKey).ConfigureAwait(false);
-            await SendRemoteKeyPulseAsync(key).ConfigureAwait(false);
+            await EnsureRemoteModifierHeldAsync(windowsKey).ConfigureAwait(true);
+            await SendRemoteKeyPulseAsync(key).ConfigureAwait(true);
             return true;
         }
 
@@ -403,7 +403,7 @@ namespace GuacamoleClient.WinForms
                 return;
 
             _heldRemoteModifiers.Add(key);
-            await DispatchSyntheticKeyboardSequenceAsync(BuildModifierKeyboardEventJson("keydown", key, _heldRemoteModifiers)).ConfigureAwait(false);
+            await DispatchSyntheticKeyboardSequenceAsync(BuildModifierKeyboardEventJson("keydown", key, _heldRemoteModifiers)).ConfigureAwait(true);
         }
 
         private async Task ReleaseRemoteModifierAsync(Keys key)
@@ -412,7 +412,7 @@ namespace GuacamoleClient.WinForms
                 return;
 
             _heldRemoteModifiers.Remove(key);
-            await DispatchSyntheticKeyboardSequenceAsync(BuildModifierKeyboardEventJson("keyup", key, _heldRemoteModifiers)).ConfigureAwait(false);
+            await DispatchSyntheticKeyboardSequenceAsync(BuildModifierKeyboardEventJson("keyup", key, _heldRemoteModifiers)).ConfigureAwait(true);
         }
 
         private async Task SendRemoteKeyPulseAsync(Keys key)

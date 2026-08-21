@@ -287,7 +287,7 @@ namespace GuacamoleClient.WinForms
         /// <remarks>This URL might be available for guacamole admin users only.</remarks>
         public async Task<Uri?> GetGuacamoleConnectionsConfigurationUrlAsync()
         {
-            var ctx = await this.GetLoginContextAsync().ConfigureAwait(false);
+            var ctx = await this.GetLoginContextAsync().ConfigureAwait(true);
             var result = ctx?.ConnectionsConfigUri;
             if (string.IsNullOrEmpty(result))
                 return null;
@@ -390,7 +390,7 @@ namespace GuacamoleClient.WinForms
             }
 
             //Check for login form and show menu items accordingly
-            if (GuacamoleUrlAndContentChecks.ContentIsGuacamoleLoginForm(currentHtml)) // could also be solved by checking var ctx = await this.GetLoginContextAsync().ConfigureAwait(false);
+            if (GuacamoleUrlAndContentChecks.ContentIsGuacamoleLoginForm(currentHtml)) // could also be solved by checking var ctx = await this.GetLoginContextAsync().ConfigureAwait(true);
 
             {
                 UITools.SwitchToolStripVisibility(guacamoleUserSettingsToolStripMenuItem, false, false);
@@ -1140,7 +1140,7 @@ namespace GuacamoleClient.WinForms
                 })();
                 """;
 
-            return await _webview2_core.ExecuteScriptAsync(script).ConfigureAwait(false);
+            return await _webview2_core.ExecuteScriptAsync(script).ConfigureAwait(true);
         }
 
         private async Task<(bool toggled, string? reason)> TryToggleGuacamoleMenuAsync()
@@ -1215,7 +1215,7 @@ namespace GuacamoleClient.WinForms
                 })();
                 """;
 
-            string resultJson = await _webview2_core.ExecuteScriptAsync(script).ConfigureAwait(false);
+            string resultJson = await _webview2_core.ExecuteScriptAsync(script).ConfigureAwait(true);
             string? unescapedJson = JsonSerializer.Deserialize<string>(resultJson);
             if (string.IsNullOrWhiteSpace(unescapedJson))
                 return (false, "empty-webview-response");
@@ -1295,7 +1295,7 @@ namespace GuacamoleClient.WinForms
 
         public async Task<GuacamoleClient.RestClient.UserLoginContextWithPrimaryConnectionDataSource?> GetLoginContextAsync()
         {
-            string? token = await GetGuacamoleAuthTokenAsync().ConfigureAwait(false);
+            string? token = await GetGuacamoleAuthTokenAsync().ConfigureAwait(true);
             if (token == null)
                 return null;
             var lastLoginContext = _lastUserLoginContext;
@@ -1364,7 +1364,7 @@ namespace GuacamoleClient.WinForms
                     }
                     return JSON.stringify(result);
                 })()
-            ").ConfigureAwait(false);
+            ").ConfigureAwait(true);
 
             // WebView2 liefert immer einen JSON-string-escaped string zurück
             var unescapedJson = System.Text.Json.JsonSerializer.Deserialize<string>(jsResult)
