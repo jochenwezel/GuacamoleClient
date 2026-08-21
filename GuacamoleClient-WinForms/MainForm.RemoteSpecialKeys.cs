@@ -392,8 +392,8 @@ namespace GuacamoleClient.WinForms
             if (mapped == null)
                 return false;
 
-            await EnsureRemoteModifierHeldAsync(windowsKey).ConfigureAwait(false);
-            await SendRemoteKeyPulseAsync(key).ConfigureAwait(false);
+            await EnsureRemoteModifierHeldAsync(windowsKey).ConfigureAwait(true);
+            await SendRemoteKeyPulseAsync(key).ConfigureAwait(true);
             return true;
         }
 
