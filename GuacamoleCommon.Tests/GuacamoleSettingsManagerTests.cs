@@ -39,4 +39,17 @@ public class GuacamoleSettingsManagerTests
         Assert.That(mgr.UrlExists("https://x", exceptId: p1.Id), Is.False);
         Assert.That(mgr.UrlExists("https://y"), Is.False);
     }
+
+    [Test]
+    public void CloneAndUpdate_PreservesProfileKind()
+    {
+        var profile = new GuacamoleServerProfile("https://example.invalid/prototype/", "Prototype", "Green", false, false)
+        {
+            ProfileKind = GuacamoleServerProfileKind.MonitorLayoutPrototype
+        };
+
+        var clone = profile.CloneAndUpdate(profile.Url, profile.DisplayName!, profile.PrimaryColorValue, false);
+
+        Assert.That(clone.ProfileKind, Is.EqualTo(GuacamoleServerProfileKind.MonitorLayoutPrototype));
+    }
 }

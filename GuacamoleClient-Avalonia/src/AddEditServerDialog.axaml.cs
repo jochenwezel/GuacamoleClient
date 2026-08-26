@@ -18,6 +18,8 @@ public partial class AddEditServerDialog : Window
     private readonly GuacamoleServerProfile? _editing;
     private readonly bool _isFirstProfile;
 
+    private TextBlock _profileKindLabel = default!;
+    private ComboBox _profileKindComboBox = default!;
     private TextBox _urlTextBox = default!;
     private TextBox _displayNameTextBox = default!;
     private ComboBox _colorComboBox = default!;
@@ -56,6 +58,8 @@ public partial class AddEditServerDialog : Window
     {
         InitializeComponent();
 
+        _profileKindLabel = this.FindControl<TextBlock>("ProfileKindLabel")!;
+        _profileKindComboBox = this.FindControl<ComboBox>("ProfileKindComboBox")!;
         _urlTextBox = this.FindControl<TextBox>("UrlTextBox")!;
         _displayNameTextBox = this.FindControl<TextBox>("DisplayNameTextBox")!;
         _colorComboBox = this.FindControl<ComboBox>("ColorComboBox")!;
@@ -88,6 +92,14 @@ public partial class AddEditServerDialog : Window
         Title = _editing == null
             ? LocalizationProvider.Get(LocalizationKeys.AddEdit_ModeAddServer_Title)
             : LocalizationProvider.Get(LocalizationKeys.AddEdit_ModeEditServer_Title);
+        _profileKindLabel.Text = LocalizationProvider.Get(LocalizationKeys.AddEdit_Label_ProfileKind);
+        _profileKindComboBox.ItemsSource = new[]
+        {
+            new ProfileKindSelection(GuacamoleServerProfileKind.GuacamoleServer,
+                LocalizationProvider.Get(LocalizationKeys.AddEdit_ProfileKind_GuacamoleServer)),
+            new ProfileKindSelection(GuacamoleServerProfileKind.MonitorLayoutPrototype,
+                LocalizationProvider.Get(LocalizationKeys.AddEdit_ProfileKind_MonitorLayoutPrototype))
+        };
         _ignoreCertificateErrorsCheckBox.Content = LocalizationProvider.Get(LocalizationKeys.AddEdit_Check_IgnoreCertificateErrorsUnsafe);
         _localCacheLabel.Text = LocalizationProvider.Get(LocalizationKeys.AddEdit_Label_LocalWebViewCache);
         _disableLocalCacheRadioButton.Content = LocalizationProvider.Get(LocalizationKeys.AddEdit_Radio_DisableLocalCacheRecommended);
@@ -99,6 +111,8 @@ public partial class AddEditServerDialog : Window
 
     private void Populate()
     {
+        _profileKindComboBox.SelectedItem = ((ProfileKindSelection[])_profileKindComboBox.ItemsSource!)
+            .First(item => item.Kind == (_editing?.ProfileKind ?? GuacamoleServerProfileKind.GuacamoleServer));
         if (_editing != null)
         {
             _urlTextBox.Text = _editing.Url;
@@ -198,6 +212,8 @@ public partial class AddEditServerDialog : Window
             string? displayName = string.IsNullOrWhiteSpace(_displayNameTextBox.Text) ? null : _displayNameTextBox.Text!.Trim();
             bool ignoreCert = _ignoreCertificateErrorsCheckBox.IsChecked == true;
             bool localCacheEnabled = _enableLocalCacheRadioButton.IsChecked == true;
+            var profileKind = (_profileKindComboBox.SelectedItem as ProfileKindSelection)?.Kind
+                ?? GuacamoleServerProfileKind.GuacamoleServer;
             string colorValue = GetSelectedColorValue();
 
             if (string.IsNullOrWhiteSpace(url))
@@ -232,12 +248,14 @@ public partial class AddEditServerDialog : Window
                 return;
             }
 
-            bool ok = await Task.Run(() => GuacamoleUrlAndContentChecks.IsGuacamoleResponseWithStartPage(url, ignoreCert)).ConfigureAwait(true);
+            bool ok = await Task.Run(() => GuacamoleUrlAndContentChecks.IsResponseForProfileKind(url, ignoreCert, profileKind)).ConfigureAwait(true);
             if (!ok)
             {
                 await MessageBoxSimple.Show(this,
                     LocalizationProvider.Get(LocalizationKeys.AddEdit_TestFailed_Title),
-                    LocalizationProvider.Get(LocalizationKeys.AddEdit_TestFailed_Text, "https://remote.example.com/guacamole/"));
+                    profileKind == GuacamoleServerProfileKind.GuacamoleServer
+                        ? LocalizationProvider.Get(LocalizationKeys.AddEdit_TestFailed_Text, "https://remote.example.com/guacamole/")
+                        : LocalizationProvider.Get(LocalizationKeys.AddEdit_TestFailed_ProfileTypeText));
                 return;
             }
 
@@ -248,6 +266,7 @@ public partial class AddEditServerDialog : Window
             var profile = _editing != null
                 ? _editing.CloneAndUpdate(url, displayName!, primaryColorValue, ignoreCert, localCacheEnabled)
                 : new GuacamoleServerProfile(url, displayName!, primaryColorValue, ignoreCert, localCacheEnabled, false);
+            profile.ProfileKind = profileKind;
 
             bool creating = _editing == null;
             bool shouldDeleteCache = _editing?.LocalCacheEnabled == true && !localCacheEnabled;
@@ -266,5 +285,18 @@ public partial class AddEditServerDialog : Window
         {
             _saveButton.IsEnabled = true;
         }
+    }
+
+    private sealed class ProfileKindSelection
+    {
+        public ProfileKindSelection(GuacamoleServerProfileKind kind, string text)
+        {
+            Kind = kind;
+            Text = text;
+        }
+
+        public GuacamoleServerProfileKind Kind { get; }
+        private string Text { get; }
+        public override string ToString() => Text;
     }
 }

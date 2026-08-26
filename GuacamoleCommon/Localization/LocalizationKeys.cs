@@ -140,6 +140,9 @@
         // Add/Edit dialog
         AddEdit_ModeAddServer_Title,
         AddEdit_ModeEditServer_Title,
+        AddEdit_Label_ProfileKind,
+        AddEdit_ProfileKind_GuacamoleServer,
+        AddEdit_ProfileKind_MonitorLayoutPrototype,
         AddEdit_Label_ServerUrl,
         AddEdit_Label_DisplayNameOptional,
         AddEdit_Label_ColorScheme,
@@ -160,6 +163,7 @@
         AddEdit_Warn_ColorAlreadyInUse_Text,
         AddEdit_TestFailed_Title,
         AddEdit_TestFailed_Text,
+        AddEdit_TestFailed_ProfileTypeText,
         AddEdit_Link_SetupGuideGuacamoleTestServer,
 
         // App start / startup error handling

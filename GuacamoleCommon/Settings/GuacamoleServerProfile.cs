@@ -90,6 +90,12 @@ namespace GuacamoleClient.Common.Settings
         public Guid Id { get; set; } = Guid.NewGuid();
 
         /// <summary>
+        /// Gets or sets the type of page represented by this profile.
+        /// </summary>
+        /// <remarks>Profiles saved before this property was introduced are treated as Apache Guacamole server profiles.</remarks>
+        public GuacamoleServerProfileKind ProfileKind { get; set; } = GuacamoleServerProfileKind.GuacamoleServer;
+
+        /// <summary>
         /// The base URL of the Guacamole server (e.g. https://remote.example.com/guacamole/)
         /// </summary>
         public string Url { get; set; } = string.Empty;
@@ -158,6 +164,7 @@ namespace GuacamoleClient.Common.Settings
         {
             return new GuacamoleServerProfile(this.Id)
             {
+                ProfileKind = this.ProfileKind,
                 Url = this.Url,
                 DisplayName = this.DisplayName,
                 PrimaryColorValue = this.PrimaryColorValue,

@@ -9,6 +9,11 @@ namespace GuacamoleClient.Common
     public sealed class GuacamoleUrlAndContentChecks
     {
         /// <summary>
+        /// Defines the versioned marker required on the monitor-layout prototype page.
+        /// </summary>
+        public const string MonitorLayoutPrototypeMarker = "<meta name=\"guacamole-client-profile-kind\" content=\"monitor-layout-prototype-v1\">";
+
+        /// <summary>
         /// Is the value a valid URL with accepted scheme (http or https)?
         /// </summary>
         /// <param name="value"></param>
@@ -113,6 +118,51 @@ namespace GuacamoleClient.Common
         {
             if (string.IsNullOrWhiteSpace(content)) return false;
             return content.Contains("<guac-modal>");
+        }
+
+        /// <summary>
+        /// Determines whether the specified raw HTML represents the supported monitor-layout prototype page.
+        /// </summary>
+        /// <param name="content">The raw HTML content to inspect.</param>
+        /// <returns><see langword="true"/> if the versioned prototype marker is present; otherwise, <see langword="false"/>.</returns>
+        public static bool ContentIsMonitorLayoutPrototypeStartPage(string content)
+        {
+            if (string.IsNullOrWhiteSpace(content)) return false;
+            return content.Contains(MonitorLayoutPrototypeMarker, StringComparison.Ordinal);
+        }
+
+        /// <summary>
+        /// Determines whether the specified HTTP response represents the selected profile type.
+        /// </summary>
+        /// <param name="url">The URL of the page to validate.</param>
+        /// <param name="ignoreCertificateErrors">Whether certificate validation errors are ignored.</param>
+        /// <param name="profileKind">The expected page type.</param>
+        /// <returns><see langword="true"/> if the response contains the marker required by the selected profile type; otherwise, <see langword="false"/>.</returns>
+        public static bool IsResponseForProfileKind(string? url, bool ignoreCertificateErrors, Settings.GuacamoleServerProfileKind profileKind)
+        {
+            if (url == null || !Uri.TryCreate(url.Trim(), UriKind.Absolute, out var uri)) return false;
+
+            var handler = new System.Net.Http.HttpClientHandler();
+            if (ignoreCertificateErrors)
+                handler.ServerCertificateCustomValidationCallback = (_, __, ___, ____) => true;
+
+            using var request = new System.Net.Http.HttpClient(handler);
+            try
+            {
+                var response = request.GetAsync(uri).Result;
+                if (!response.IsSuccessStatusCode) return false;
+                var content = response.Content.ReadAsStringAsync().Result;
+                return profileKind switch
+                {
+                    Settings.GuacamoleServerProfileKind.GuacamoleServer => ContentIsGuacamoleStartPage(content),
+                    Settings.GuacamoleServerProfileKind.MonitorLayoutPrototype => ContentIsMonitorLayoutPrototypeStartPage(content),
+                    _ => false
+                };
+            }
+            catch
+            {
+                return false;
+            }
         }
     }
 }

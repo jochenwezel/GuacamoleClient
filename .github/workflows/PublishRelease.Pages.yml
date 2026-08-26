@@ -11,7 +11,7 @@ permissions:
   id-token: write
 
 concurrency:
-  group: pages-${{ github.ref }}
+  group: github-pages
   cancel-in-progress: true
 
 env:
@@ -533,6 +533,8 @@ jobs:
           cp -f "logos/favicon-guac-tricolor-logo/web-app-manifest-512x512.png" "public/web-app-manifest-512x512.png"
           mkdir -p "public/assets"
           cp -f "logos/guac-client-app_banner_1280x640.png" "public/assets/guac-client-app_banner_1280x640.png"
+          mkdir -p "public/monitor-layout-prototype"
+          cp -R "docs/monitor-layout-prototype/." "public/monitor-layout-prototype/"
           sed -i "s/__WINFORMS_STABLE_VERSION__/${STABLE_VERSION}/g" "public/app-updates.json"
           sed -i "s/__WINFORMS_DEV_VERSION__/${DEV_VERSION}/g" "public/app-updates.json"
           sed -i "s/__AVALONIA_STABLE_VERSION__/${AVALONIA_STABLE_VERSION}/g" "public/app-updates.json"

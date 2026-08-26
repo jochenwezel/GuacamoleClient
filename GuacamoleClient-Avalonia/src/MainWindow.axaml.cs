@@ -173,6 +173,7 @@ namespace GuacClient
 
             _web.TitleChanged += UpdateWindowTitleFromWebView;
             _web.Navigated += Web_Navigated;
+            InitializeMonitorLayoutPrototypeBridge();
 
             InitializeLocalization();
 
@@ -1279,6 +1280,7 @@ namespace GuacClient
 
         private void Web_Navigated(string url, string frameName)
         {
+            MonitorLayoutPrototypeNavigationChanged(url);
             Dispatcher.UIThread.Post(() => UpdateWindowTitle(url, _web.Title));
         }
 

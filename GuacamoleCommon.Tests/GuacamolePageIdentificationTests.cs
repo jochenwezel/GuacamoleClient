@@ -9,8 +9,17 @@ using System.Threading.Tasks;
 
 namespace GuacamoleCommon.Tests
 {
-    public class GuacamolePageIdentificationTests
+public class GuacamolePageIdentificationTests
+{
+    [Test]
+    public void ContentIsMonitorLayoutPrototypeStartPage_AcceptsOnlyVersionedPrototypeMarker()
     {
+        const string prototypeHtml = "<html><head><meta name=\"guacamole-client-profile-kind\" content=\"monitor-layout-prototype-v1\"></head></html>";
+
+        Assert.That(GuacamoleUrlAndContentChecks.ContentIsMonitorLayoutPrototypeStartPage(prototypeHtml), Is.True);
+        Assert.That(GuacamoleUrlAndContentChecks.ContentIsMonitorLayoutPrototypeStartPage("<guac-modal></guac-modal>"), Is.False);
+        Assert.That(GuacamoleUrlAndContentChecks.ContentIsGuacamoleStartPage(prototypeHtml), Is.False);
+    }
         [Test]
         public void ContentIsGuacamoleLoginForm()
         {

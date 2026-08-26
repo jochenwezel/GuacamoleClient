@@ -492,6 +492,7 @@ namespace GuacamoleClient.WinForms
             _webview2_core.Settings.AreDefaultContextMenusEnabled = true;
             _webview2_core.Settings.AreDevToolsEnabled = false;
 
+            InitializeMonitorLayoutPrototypeBridge();
             InitializeLoginRequestCapture();
 
             _webview2_core.Navigate(StartUrl.ToString());

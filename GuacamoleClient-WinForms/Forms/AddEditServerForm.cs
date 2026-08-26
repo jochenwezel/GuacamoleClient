@@ -15,6 +15,8 @@ namespace GuacamoleClient.WinForms
         private readonly GuacamoleSettingsManager _manager;
         private readonly GuacamoleServerProfile? _editing;
         private readonly bool _isFirstProfile;
+        private Label _lblProfileKind = default!;
+        private ComboBox _cmbProfileKind = default!;
 
         // Controls are defined in AddEditServerForm.Designer.cs
 
@@ -27,6 +29,7 @@ namespace GuacamoleClient.WinForms
             _isFirstProfile = isFirstProfile;
 
             InitializeComponent();
+            AddProfileKindControls();
 
             _cmbColor.Items.AddRange(GuacamoleColorPalette.Keys.OrderBy(k => k).Cast<object>().ToArray());
             _cmbColor.Items.Add("Custom");
@@ -51,6 +54,12 @@ namespace GuacamoleClient.WinForms
                 : LocalizationProvider.Get(LocalizationKeys.AddEdit_ModeEditServer_Title);
 
             _lblUrl.Text = LocalizationProvider.Get(LocalizationKeys.AddEdit_Label_ServerUrl);
+            _lblProfileKind.Text = LocalizationProvider.Get(LocalizationKeys.AddEdit_Label_ProfileKind);
+            _cmbProfileKind.Items.Clear();
+            _cmbProfileKind.Items.Add(new ProfileKindSelection(GuacamoleServerProfileKind.GuacamoleServer,
+                LocalizationProvider.Get(LocalizationKeys.AddEdit_ProfileKind_GuacamoleServer)));
+            _cmbProfileKind.Items.Add(new ProfileKindSelection(GuacamoleServerProfileKind.MonitorLayoutPrototype,
+                LocalizationProvider.Get(LocalizationKeys.AddEdit_ProfileKind_MonitorLayoutPrototype)));
             _lblName.Text = LocalizationProvider.Get(LocalizationKeys.AddEdit_Label_DisplayNameOptional);
             _lblColor.Text = LocalizationProvider.Get(LocalizationKeys.AddEdit_Label_ColorScheme);
             _lblCustomHex.Text = LocalizationProvider.Get(LocalizationKeys.AddEdit_Label_CustomColorHex);
@@ -66,6 +75,7 @@ namespace GuacamoleClient.WinForms
 
         private void Populate()
         {
+            SelectProfileKind(_editing?.ProfileKind ?? GuacamoleServerProfileKind.GuacamoleServer);
             if (_editing != null)
             {
                 _txtUrl.Text = _editing.Url;
@@ -139,6 +149,8 @@ namespace GuacamoleClient.WinForms
                 var displayName = string.IsNullOrWhiteSpace(_txtName.Text) ? null : _txtName.Text.Trim();
                 var ignoreCert = _chkIgnoreCert.Checked;
                 var localCacheEnabled = _rbEnableLocalCache.Checked;
+                var profileKind = (_cmbProfileKind.SelectedItem as ProfileKindSelection)?.Kind
+                    ?? GuacamoleServerProfileKind.GuacamoleServer;
 
                 var sel = _cmbColor.SelectedItem?.ToString() ?? "Red";
                 var colorValue = string.Equals(sel, "Custom", StringComparison.OrdinalIgnoreCase)
@@ -207,11 +219,13 @@ namespace GuacamoleClient.WinForms
                 }
 
                 // Mandatory server test on save (reuse existing logic)
-                bool ok = GuacamoleUrlAndContentChecks.IsGuacamoleResponseWithStartPage(url, ignoreCert);
+                bool ok = GuacamoleUrlAndContentChecks.IsResponseForProfileKind(url, ignoreCert, profileKind);
                 if (!ok)
                 {
                     MessageBox.Show(this,
-                        LocalizationProvider.Get(LocalizationKeys.AddEdit_TestFailed_Text, "https://remote.example.com/guacamole/"),
+                        profileKind == GuacamoleServerProfileKind.GuacamoleServer
+                            ? LocalizationProvider.Get(LocalizationKeys.AddEdit_TestFailed_Text, "https://remote.example.com/guacamole/")
+                            : LocalizationProvider.Get(LocalizationKeys.AddEdit_TestFailed_ProfileTypeText),
                         LocalizationProvider.Get(LocalizationKeys.AddEdit_TestFailed_Title),
                         MessageBoxButtons.OK,
                         MessageBoxIcon.Error);
@@ -222,6 +236,7 @@ namespace GuacamoleClient.WinForms
                 var profile = _editing != null
                     ? _editing.CloneAndUpdate(url, displayName!, primaryColorValue, ignoreCert, localCacheEnabled)
                     : new GuacamoleServerProfile(url, displayName!, primaryColorValue, ignoreCert, localCacheEnabled, false);
+                profile.ProfileKind = profileKind;
 
                 bool creating = _editing == null;
                 bool shouldDeleteCache = _editing?.LocalCacheEnabled == true && !localCacheEnabled;
@@ -241,6 +256,45 @@ namespace GuacamoleClient.WinForms
             {
                 _btnSave.Enabled = true;
             }
+        }
+
+        private void AddProfileKindControls()
+        {
+            _lblProfileKind = new Label { AutoSize = true };
+            _cmbProfileKind = new ComboBox
+            {
+                Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right,
+                DropDownStyle = ComboBoxStyle.DropDownList
+            };
+            _layout.SuspendLayout();
+            foreach (Control control in _layout.Controls.Cast<Control>().ToArray())
+                _layout.SetRow(control, _layout.GetRow(control) + 1);
+            _layout.RowCount += 1;
+            _layout.RowStyles.Insert(0, new RowStyle(SizeType.Absolute, 28F));
+            _layout.Controls.Add(_lblProfileKind, 0, 0);
+            _layout.Controls.Add(_cmbProfileKind, 1, 0);
+            _layout.SetColumnSpan(_cmbProfileKind, 2);
+            ClientSize = new Size(ClientSize.Width, ClientSize.Height + 28);
+            _layout.ResumeLayout(true);
+        }
+
+        private void SelectProfileKind(GuacamoleServerProfileKind kind)
+        {
+            _cmbProfileKind.SelectedItem = _cmbProfileKind.Items.Cast<ProfileKindSelection>()
+                .First(item => item.Kind == kind);
+        }
+
+        private sealed class ProfileKindSelection
+        {
+            public ProfileKindSelection(GuacamoleServerProfileKind kind, string text)
+            {
+                Kind = kind;
+                Text = text;
+            }
+
+            public GuacamoleServerProfileKind Kind { get; }
+            private string Text { get; }
+            public override string ToString() => Text;
         }
 
         private void linkLabelHelpGuacamoleTestServer_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)

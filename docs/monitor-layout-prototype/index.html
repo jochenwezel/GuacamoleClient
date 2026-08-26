@@ -1,0 +1,95 @@
+﻿<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Visualize monitor geometry reported by the native GuacamoleClient host.">
+  <meta name="guacamole-client-profile-kind" content="monitor-layout-prototype-v1">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; object-src 'none'; base-uri 'none'; form-action 'none'">
+  <title>Monitor Layout Lab · GuacamoleClient</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <span class="brand-mark" aria-hidden="true"><i></i><i></i><i></i></span>
+      <div>
+        <p class="eyebrow">GuacamoleClient prototype</p>
+        <h1>Monitor Layout Lab</h1>
+      </div>
+    </div>
+    <div class="connection-state" id="connectionState" data-state="demo">
+      <span class="state-dot" aria-hidden="true"></span>
+      <span id="connectionStateText">Demo data</span>
+    </div>
+  </header>
+
+  <main>
+    <section class="hero" aria-labelledby="workspaceHeading">
+      <div>
+        <p class="eyebrow">Virtual desktop preview</p>
+        <h2 id="workspaceHeading">One layout. Every screen.</h2>
+        <p class="hero-copy">This standalone page verifies monitor geometry before it is connected to the Guacamole protocol. Move the sample windows or maximize one to inspect individual monitor boundaries.</p>
+      </div>
+      <div class="hero-actions">
+        <button class="button" id="loadClassicButton" type="button">Load classic display</button>
+        <button class="button button-primary" id="loadDemoButton" type="button">Load demo layout</button>
+        <button class="button" id="copyReportButton" type="button">Copy diagnostic report</button>
+      </div>
+    </section>
+
+    <section class="workspace-card" aria-label="Monitor layout visualization">
+      <div class="workspace-toolbar">
+        <div class="metric"><span>Monitors</span><strong id="monitorCount">0</strong></div>
+        <div class="metric"><span>Desktop bounds</span><strong id="desktopBounds">—</strong></div>
+        <div class="metric"><span>Input mode</span><strong id="inputMode">—</strong></div>
+        <div class="metric"><span>Layout revision</span><strong id="layoutRevision">—</strong></div>
+        <label class="toggle"><input id="showBoundingBox" type="checkbox" checked><span>Show bounding box</span></label>
+      </div>
+      <div class="stage" id="stage">
+        <div class="desktop-canvas" id="desktopCanvas" aria-live="polite"></div>
+      </div>
+      <p class="stage-hint" id="stageHint">Waiting for the native host. Demonstration data is shown so the prototype remains useful in a normal browser.</p>
+    </section>
+
+    <section class="details-grid">
+      <article class="panel monitor-panel">
+        <div class="panel-heading">
+          <div><p class="eyebrow">Detected topology</p><h2>Monitor details</h2></div>
+        </div>
+        <div class="monitor-list" id="monitorList"></div>
+      </article>
+
+      <article class="panel diagnostics-panel">
+        <div class="panel-heading">
+          <div><p class="eyebrow">Bridge diagnostics</p><h2>Received payload</h2></div>
+          <span class="schema-badge" id="schemaBadge">Schema v1</span>
+        </div>
+        <div class="warning-list" id="warningList" aria-live="polite"></div>
+        <dl class="diagnostic-summary">
+          <div><dt>Coordinate space</dt><dd id="coordinateSpace">—</dd></div>
+          <div><dt>Browser viewport</dt><dd id="viewportSize">—</dd></div>
+          <div><dt>Device pixel ratio</dt><dd id="devicePixelRatio">—</dd></div>
+          <div><dt>Last update</dt><dd id="lastUpdate">—</dd></div>
+        </dl>
+        <details>
+          <summary>Raw JSON</summary>
+          <pre id="rawJson"></pre>
+        </details>
+        <details>
+          <summary>Normalized JSON</summary>
+          <pre id="normalizedJson"></pre>
+        </details>
+      </article>
+    </section>
+  </main>
+
+  <footer>
+    <span>Standalone visualization prototype for issues #59, #60, and #61.</span>
+    <a href="https://github.com/jochenwezel/GuacamoleClient" rel="noreferrer">Project repository</a>
+  </footer>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  <script type="module" src="app.mjs"></script>
+</body>
+</html>

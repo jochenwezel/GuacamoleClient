@@ -254,6 +254,12 @@ namespace GuacamoleClient.Common.Localization
                         return "Guacamole-Server hinzufügen";
                     case LocalizationKeys.AddEdit_ModeEditServer_Title:
                         return "Guacamole-Server bearbeiten";
+                    case LocalizationKeys.AddEdit_Label_ProfileKind:
+                        return "Profiltyp";
+                    case LocalizationKeys.AddEdit_ProfileKind_GuacamoleServer:
+                        return "Apache-Guacamole-Server";
+                    case LocalizationKeys.AddEdit_ProfileKind_MonitorLayoutPrototype:
+                        return "Monitor-Layout-Prototyp";
                     case LocalizationKeys.AddEdit_Label_ServerUrl:
                         return "Server-URL";
                     case LocalizationKeys.AddEdit_Label_DisplayNameOptional:
@@ -294,6 +300,8 @@ namespace GuacamoleClient.Common.Localization
                         return "Server-Test fehlgeschlagen";
                     case LocalizationKeys.AddEdit_TestFailed_Text:
                         return "Die URL antwortet nicht mit einer Apache-Guacamole-Startseite (oder ist nicht erreichbar).\n\nBeispiel: {0}";
+                    case LocalizationKeys.AddEdit_TestFailed_ProfileTypeText:
+                        return "Die URL antwortet nicht mit einer zum ausgewählten Profiltyp passenden Seite (oder ist nicht erreichbar).";
                     case LocalizationKeys.AddEdit_Link_SetupGuideGuacamoleTestServer:
                         return "Setup Leitfaden für Guacamole Test Server mit Docker";
 
@@ -547,6 +555,12 @@ namespace GuacamoleClient.Common.Localization
                     return "Add Guacamole server";
                 case LocalizationKeys.AddEdit_ModeEditServer_Title:
                     return "Edit Guacamole server";
+                case LocalizationKeys.AddEdit_Label_ProfileKind:
+                    return "Profile type";
+                case LocalizationKeys.AddEdit_ProfileKind_GuacamoleServer:
+                    return "Apache Guacamole server";
+                case LocalizationKeys.AddEdit_ProfileKind_MonitorLayoutPrototype:
+                    return "Monitor layout prototype";
                 case LocalizationKeys.AddEdit_Label_ServerUrl:
                     return "Server URL";
                 case LocalizationKeys.AddEdit_Label_DisplayNameOptional:
@@ -587,6 +601,8 @@ namespace GuacamoleClient.Common.Localization
                     return "Server test failed";
                 case LocalizationKeys.AddEdit_TestFailed_Text:
                     return "The URL does not respond with an Apache Guacamole start page (or is not reachable).\n\nExample: {0}";
+                case LocalizationKeys.AddEdit_TestFailed_ProfileTypeText:
+                    return "The URL does not respond with a page matching the selected profile type (or is not reachable).";
                 case LocalizationKeys.AddEdit_Link_SetupGuideGuacamoleTestServer:
                     return "Setup guide for Guacamole Test Server with Docker";
 

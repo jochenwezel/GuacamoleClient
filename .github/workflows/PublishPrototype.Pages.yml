@@ -1,0 +1,97 @@
+﻿name: Publish monitor layout prototype - GitHub Pages
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - "docs/monitor-layout-prototype/**"
+      - ".github/workflows/PublishPrototype.Pages.yml"
+
+permissions:
+  contents: read
+  actions: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: github-pages
+  cancel-in-progress: true
+
+jobs:
+  publish-prototype:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}monitor-layout-prototype/
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Configure GitHub Pages
+        uses: actions/configure-pages@v6
+
+      - name: Download latest complete Pages preview
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+
+          run_id="$(gh run list \
+            --workflow "PublishRelease - GitHub Pages" \
+            --status success \
+            --limit 1 \
+            --json databaseId \
+            --jq '.[0].databaseId // ""')"
+
+          if [[ -z "$run_id" ]]; then
+            echo "No successful complete Pages deployment was found." >&2
+            exit 1
+          fi
+
+          artifact_name="$(gh api "repos/${GITHUB_REPOSITORY}/actions/runs/${run_id}/artifacts" \
+            --jq '[.artifacts[] | select(.expired == false and (.name | startswith("github-pages-preview-")))] | sort_by(.created_at) | last | .name // ""')"
+
+          if [[ -z "$artifact_name" ]]; then
+            echo "The latest complete Pages preview artifact is unavailable or expired." >&2
+            exit 1
+          fi
+
+          gh run download "$run_id" --name "$artifact_name" --dir existing-site
+
+      - name: Overlay monitor layout prototype
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          if [[ -f "existing-site/app-updates.json" ]]; then
+            existing_root="existing-site"
+          elif [[ -f "existing-site/public/app-updates.json" ]]; then
+            existing_root="existing-site/public"
+          else
+            echo "Downloaded Pages preview does not contain the expected site root." >&2
+            exit 1
+          fi
+
+          mkdir -p public
+          cp -a "${existing_root}/." public/
+          mkdir -p public/monitor-layout-prototype
+          find public/monitor-layout-prototype -mindepth 1 -delete
+          cp -a docs/monitor-layout-prototype/. public/monitor-layout-prototype/
+          touch public/.nojekyll
+
+          test -f public/index.html
+          test -f public/app-updates.json
+          test -d public/clickonce
+          test -f public/monitor-layout-prototype/index.html
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v5
+        with:
+          path: public
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v5
