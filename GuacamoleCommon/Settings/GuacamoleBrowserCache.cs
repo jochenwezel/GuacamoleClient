@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -21,6 +21,15 @@ namespace GuacamoleClient.Common.Settings
             CreatePrivateDirectory(appName, path);
             return path;
         }
+
+        /// <summary>
+        /// Creates a temporary browser profile that is deleted after its last lease is released.
+        /// </summary>
+        /// <param name="appName">The application name used to locate the temporary profile root.</param>
+        /// <param name="profileId">The optional server profile identifier used to group the directory.</param>
+        /// <returns>A lease for the newly created temporary browser profile.</returns>
+        public static TemporaryBrowserProfileLease CreateTemporaryBrowserProfile(string appName, Guid? profileId = null)
+            => TemporaryBrowserProfileLease.CreateForDirectory(CreateTemporaryCacheDirectory(appName, profileId));
 
         public static void EnsureProfileCacheDirectory(string appName, Guid profileId)
             => CreatePrivateDirectory(appName, GetProfileCacheDirectory(appName, profileId));

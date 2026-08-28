@@ -44,7 +44,8 @@ namespace GuacamoleClient.WinForms
 
         private readonly GuacamoleClient.Common.Settings.GuacamoleSettingsManager _settings;
         public GuacamoleClient.Common.Settings.GuacamoleServerProfile ServerProfile { get; }
-        private string? _temporaryCacheDirectory;
+        private readonly TemporaryBrowserProfileLease? _temporaryBrowserProfile;
+        private readonly Lazy<Task<CoreWebView2Environment>>? _secureWebViewEnvironment;
         private readonly ClickOnceDeploymentInfo? _clickOnceDeploymentInfo = ClickOnceDeploymentInfo.TryCreate();
         private readonly AppInfo _appInfo = AppInfo.Load(CreateFallbackAppInfo());
         private readonly AppUpdateChecker _appUpdateChecker;
@@ -54,9 +55,26 @@ namespace GuacamoleClient.WinForms
         { }
 
         public MainForm(GuacamoleClient.Common.Settings.GuacamoleSettingsManager settings, GuacamoleClient.Common.Settings.GuacamoleServerProfile serverProfile, Uri startUrl)
+            : this(settings, serverProfile, startUrl, null, null)
+        { }
+
+        private MainForm(
+            GuacamoleClient.Common.Settings.GuacamoleSettingsManager settings,
+            GuacamoleClient.Common.Settings.GuacamoleServerProfile serverProfile,
+            Uri startUrl,
+            TemporaryBrowserProfileLease? temporaryBrowserProfile,
+            Lazy<Task<CoreWebView2Environment>>? secureWebViewEnvironment)
         {
             _settings = settings ?? throw new ArgumentNullException(nameof(settings));
             ServerProfile = serverProfile ?? throw new ArgumentNullException(nameof(serverProfile));
+            if (!ServerProfile.LocalCacheEnabled)
+            {
+                _temporaryBrowserProfile = temporaryBrowserProfile
+                    ?? GuacamoleBrowserCache.CreateTemporaryBrowserProfile("GuacamoleClient", ServerProfile.Id);
+                _secureWebViewEnvironment = secureWebViewEnvironment
+                    ?? new Lazy<Task<CoreWebView2Environment>>(() =>
+                        CoreWebView2Environment.CreateAsync(null, _temporaryBrowserProfile.DirectoryPath));
+            }
             _appUpdateChecker = new AppUpdateChecker(_appInfo, "GuacamoleClient");
             _clickOnceCleanupManager = new ClickOnceCleanupManager(
                 ClickOnceCleanupStateStore.CreateForSettingsAppName("GuacamoleClient"),
@@ -85,7 +103,9 @@ namespace GuacamoleClient.WinForms
             this.FormClosed += (_, __) =>
             {
                 RemoveKeyboardHook();
-                GuacamoleBrowserCache.DeleteDirectoryIfExists(_temporaryCacheDirectory);
+                _webview2_controller?.Close();
+                _webview2_controller = null;
+                _temporaryBrowserProfile?.Dispose();
                 if (!ServerProfile.LocalCacheEnabled)
                     GuacamoleBrowserCache.DeleteProfileCacheDirectory("GuacamoleClient", ServerProfile.Id);
             };
@@ -231,7 +251,7 @@ namespace GuacamoleClient.WinForms
         private void NewWindowRequested(object? sender, CoreWebView2NewWindowRequestedEventArgs e)
         {
             // Öffne neuen MainForm mit der Ziel-URL
-            var form = new MainForm(_settings, this.ServerProfile, new Uri(e.Uri));
+            var form = CreateWindowForCurrentProfile(new Uri(e.Uri));
             form.Show();
             // Verhindere das Öffnen im aktuellen WebView
             e.Handled = true;
@@ -457,9 +477,22 @@ namespace GuacamoleClient.WinForms
         /// <returns></returns>
         private async Task InitWebView2Async()
         {
-            string userDataFolder = GetWebView2UserDataFolder();
-            _webview2_env = await CoreWebView2Environment.CreateAsync(null, userDataFolder);
-            _webview2_controller = await _webview2_env.CreateCoreWebView2ControllerAsync(this.WebBrowserHostPanel!.Handle);
+            if (_secureWebViewEnvironment != null)
+            {
+                _webview2_env = await _secureWebViewEnvironment.Value;
+                var controllerOptions = _webview2_env.CreateCoreWebView2ControllerOptions();
+                controllerOptions.ProfileName = $"Secure-{ServerProfile.Id:N}";
+                controllerOptions.IsInPrivateModeEnabled = true;
+                _webview2_controller = await _webview2_env.CreateCoreWebView2ControllerAsync(
+                    this.WebBrowserHostPanel!.Handle,
+                    controllerOptions);
+            }
+            else
+            {
+                string userDataFolder = GetWebView2UserDataFolder();
+                _webview2_env = await CoreWebView2Environment.CreateAsync(null, userDataFolder);
+                _webview2_controller = await _webview2_env.CreateCoreWebView2ControllerAsync(this.WebBrowserHostPanel!.Handle);
+            }
             _webview2_controller.IsVisible = true;
             UpdateControllerBounds();
 
@@ -507,8 +540,21 @@ namespace GuacamoleClient.WinForms
                 return GuacamoleBrowserCache.GetProfileCacheDirectory("GuacamoleClient", ServerProfile.Id);
             }
 
-            _temporaryCacheDirectory = GuacamoleBrowserCache.CreateTemporaryCacheDirectory("GuacamoleClient", ServerProfile.Id);
-            return _temporaryCacheDirectory;
+            return _temporaryBrowserProfile!.DirectoryPath;
+        }
+
+        private MainForm CreateWindowForCurrentProfile(Uri startUrl)
+        {
+            TemporaryBrowserProfileLease? sharedProfile = _temporaryBrowserProfile?.Share();
+            try
+            {
+                return new MainForm(_settings, ServerProfile, startUrl, sharedProfile, _secureWebViewEnvironment);
+            }
+            catch
+            {
+                sharedProfile?.Dispose();
+                throw;
+            }
         }
 
         /// <summary>
@@ -728,7 +774,7 @@ namespace GuacamoleClient.WinForms
             Uri? url = await urlTask;
             if (url == null)
                 return;
-            var form = new MainForm(_settings, this.ServerProfile, new Uri(url.ToString()));
+            var form = CreateWindowForCurrentProfile(new Uri(url.ToString()));
             form.Show();
         }
 
@@ -739,7 +785,7 @@ namespace GuacamoleClient.WinForms
         /// <param name="e"></param>
         private void guacamoleUserSettingsToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            var form = new MainForm(_settings, this.ServerProfile, new Uri(this.GuacamoleSettingsUrl.ToString()));
+            var form = CreateWindowForCurrentProfile(new Uri(this.GuacamoleSettingsUrl.ToString()));
             form.Show();
         }
 
@@ -750,7 +796,7 @@ namespace GuacamoleClient.WinForms
         /// <param name="e"></param>
         private void newWindowToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            var form = new MainForm(_settings, this.ServerProfile, this.StartUrl);
+            var form = CreateWindowForCurrentProfile(this.StartUrl);
             form.Show();
         }
 
