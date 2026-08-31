@@ -1,4 +1,5 @@
-using Microsoft.Win32;
+﻿using Microsoft.Win32;
+using GuacamoleClient.Common.Updates;
 using System;
 using System.IO;
 using System.Linq;
@@ -103,9 +104,8 @@ namespace GuacamoleClient.WinForms
                 if (sourceShortcut == null)
                     return;
 
-                string targetShortcutName = deploymentInfo.Channel.Equals("dev", StringComparison.OrdinalIgnoreCase)
-                    ? "GuacamoleClient Dev (WinForms).appref-ms"
-                    : "GuacamoleClient (WinForms).appref-ms";
+                string displayName = AppDisplayName.Create("winforms", "clickonce", deploymentInfo.Channel);
+                string targetShortcutName = $"{displayName}.appref-ms";
 
                 string targetShortcut = Path.Combine(programsDirectory, targetShortcutName);
                 File.Copy(sourceShortcut, targetShortcut, overwrite: true);
@@ -128,7 +128,9 @@ namespace GuacamoleClient.WinForms
                 if (string.IsNullOrWhiteSpace(executablePath) || !File.Exists(executablePath))
                     return;
 
-                string targetShortcut = Path.Combine(programsDirectory, "GuacamoleClient Local Dev (WinForms).lnk");
+                string displayName = AppDisplayName.Create("winforms", "local-dev", "dev");
+                string targetShortcut = Path.Combine(programsDirectory, $"{displayName}.lnk");
+                string legacyShortcut = Path.Combine(programsDirectory, "GuacamoleClient Local Dev (WinForms).lnk");
                 string iconPath = Path.Combine(AppContext.BaseDirectory, "guac.ico");
                 string workingDirectory = Path.GetDirectoryName(executablePath) ?? AppContext.BaseDirectory;
 
@@ -143,10 +145,13 @@ namespace GuacamoleClient.WinForms
                 dynamic shortcut = shell.CreateShortcut(targetShortcut);
                 shortcut.TargetPath = executablePath;
                 shortcut.WorkingDirectory = workingDirectory;
-                shortcut.Description = "GuacamoleClient Local Dev (WinForms)";
+                shortcut.Description = displayName;
                 if (File.Exists(iconPath))
                     shortcut.IconLocation = iconPath;
                 shortcut.Save();
+
+                if (!string.Equals(legacyShortcut, targetShortcut, StringComparison.OrdinalIgnoreCase))
+                    File.Delete(legacyShortcut);
             }
             catch
             {

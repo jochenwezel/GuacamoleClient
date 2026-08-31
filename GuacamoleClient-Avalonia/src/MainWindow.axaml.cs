@@ -647,7 +647,7 @@ namespace GuacClient
         {
             _web.IsVisible = false;
             _emptyStateOverlay.IsVisible = true;
-            Title = $"GuacamoleClient v{VersionUtil.InformationalVersion()}";
+            Title = $"{GetApplicationDisplayName()} v{VersionUtil.InformationalVersion()}";
         }
 
         private void HideEmptyState()
@@ -1261,10 +1261,13 @@ namespace GuacClient
         private void UpdateWindowTitle(string currentUrl, string? documentTitle)
         {
             if (string.IsNullOrWhiteSpace(documentTitle))
-                Title = $"{currentUrl} - GuacamoleClient v{VersionUtil.InformationalVersion()}";
+                Title = $"{currentUrl} - {GetApplicationDisplayName()} v{VersionUtil.InformationalVersion()}";
             else
-                Title = $"{documentTitle} - {currentUrl} - GuacamoleClient v{VersionUtil.InformationalVersion()}";
+                Title = $"{documentTitle} - {currentUrl} - {GetApplicationDisplayName()} v{VersionUtil.InformationalVersion()}";
         }
+
+        private string GetApplicationDisplayName()
+            => AppDisplayName.Create(_appInfo.AppId, _appInfo.DeploymentType, _appInfo.Channel);
 
         private void UpdateWindowTitleFromWebView()
         {
