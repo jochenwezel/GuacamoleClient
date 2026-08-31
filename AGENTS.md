@@ -36,6 +36,11 @@
 - Prefer one `dotnet build GuacamoleClient.sln` when the local SDK supports all projects. If the MSIX packaging project cannot build locally because DesktopBridge targets are missing, build the affected app projects sequentially instead.
 - When helping with an official/stable release, check for older Dev Preview releases that are no longer needed and ask for explicit confirmation before deleting them or their assets. Treat this as regular release cleanup follow-up work.
 
+## Branch Cleanup
+
+- After a pull request has been merged and all required pipelines have completed successfully, delete its feature branch both locally and on the remote. If either branch has already been deleted, clean up the remaining branch.
+- Do not delete branches for open pull requests or branches whose required pipelines are still running or have failed.
+
 ## File Encoding and Line Endings
 
 - Save text files as UTF-8 with BOM and CRLF line endings, matching `.editorconfig`.
