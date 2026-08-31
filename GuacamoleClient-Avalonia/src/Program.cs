@@ -1,4 +1,4 @@
-using Avalonia;
+﻿using Avalonia;
 using Avalonia.Media;
 using GuacamoleClient.Common.Localization;
 using GuacamoleClient.Common.Settings;
@@ -55,6 +55,8 @@ internal static class Program
     public static int Main(string[] args)
     {
         RegisterGlobalExceptionHandlers();
+        if (OperatingSystem.IsWindows())
+            WindowsAppIntegration.ApplyBestEffortFixes();
 
         try
         {

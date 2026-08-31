@@ -6,8 +6,11 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
 
-    <!-- Optional: Ihr App-Icon -->
-    <ApplicationIcon>guac.ico</ApplicationIcon>
+    <GuacamoleAppChannel Condition="'$(GuacamoleAppChannel)' == '' and '$(Configuration)' == 'Debug'">debug</GuacamoleAppChannel>
+    <GuacamoleAppChannel Condition="'$(GuacamoleAppChannel)' == ''">stable</GuacamoleAppChannel>
+    <GuacamoleIconChannel Condition="'$(GuacamoleAppChannel)' == 'test'">dev</GuacamoleIconChannel>
+    <GuacamoleIconChannel Condition="'$(GuacamoleIconChannel)' == ''">$(GuacamoleAppChannel)</GuacamoleIconChannel>
+    <ApplicationIcon>icons\guac-avalonia-$(GuacamoleIconChannel).ico</ApplicationIcon>
 
     <!-- Versionsinfos -->
     <IncludeSourceRevisionInInformationalVersion>false</IncludeSourceRevisionInInformationalVersion>
@@ -20,7 +23,6 @@
     <Product>GuacamoleClient</Product>
     <Copyright>2025-2026 CompuMaster GmbH</Copyright>
     <GeneratePackageOnBuild>False</GeneratePackageOnBuild>
-    <ApplicationIcon>guac.ico</ApplicationIcon>
     <PackageIcon>apple-touch-icon.png</PackageIcon>
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <RepositoryUrl>https://github.com/jochenwezel/GuacamoleClient</RepositoryUrl>
@@ -45,7 +47,8 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Content Include="guac.ico">
+    <Content Include="$(ApplicationIcon)">
+      <Link>guac.ico</Link>
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
     </Content>

@@ -156,7 +156,8 @@ jobs:
             -p:Version=${{ env.VERSION }} `
             -p:FileVersion=${{ env.VERSION }} `
             -p:AssemblyVersion=${{ env.VERSION }} `
-            -p:InformationalVersion=${{ env.VERSION }}
+            -p:InformationalVersion=${{ env.VERSION }} `
+            -p:GuacamoleAppChannel=$env:CLICKONCE_CHANNEL
 
           $appInfo = [ordered]@{
             schemaVersion = 1
@@ -378,10 +379,13 @@ jobs:
           $devAppManifestRelativePath = "$($env:CLICKONCE_APP_SUBDIR)\$exe.manifest"
           $deployManifest = Join-Path $devOut "${{ env.CLICKONCE_APP_NAME }}.application"
           $iconFile = Join-Path $appOut "guac.ico"
+          $devIconFile = Join-Path $env:GITHUB_WORKSPACE "GuacamoleClient-Avalonia\icons\guac-avalonia-dev.ico"
           $providerUrl = "https://jochenwezel.github.io/GuacamoleClient/clickonce/avalonia/dev/${{ env.CLICKONCE_APP_NAME }}.application"
           $pfxPath = Join-Path $env:RUNNER_TEMP "clickonce-signing.pfx"
 
           if (-not (Test-Path $iconFile)) { throw "ClickOnce icon file not found: $iconFile" }
+          if (-not (Test-Path $devIconFile)) { throw "Dev icon file not found: $devIconFile" }
+          Copy-Item -LiteralPath $devIconFile -Destination $iconFile -Force
           if (-not (Test-Path $pfxPath)) {
             [IO.File]::WriteAllBytes($pfxPath, [Convert]::FromBase64String($env:CLICKONCE_SIGNING_PFX_BASE64))
           }

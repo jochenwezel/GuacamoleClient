@@ -50,6 +50,7 @@ namespace GuacamoleClient.WinForms
         private readonly AppInfo _appInfo = AppInfo.Load(CreateFallbackAppInfo());
         private readonly AppUpdateChecker _appUpdateChecker;
         private readonly ClickOnceCleanupManager _clickOnceCleanupManager;
+        private Icon? _applicationIcon;
 
         public MainForm(GuacamoleClient.Common.Settings.GuacamoleSettingsManager settings, GuacamoleClient.Common.Settings.GuacamoleServerProfile serverProfile) : this(settings, serverProfile, new Uri(serverProfile.Url))
         { }
@@ -108,6 +109,7 @@ namespace GuacamoleClient.WinForms
                 _temporaryBrowserProfile?.Dispose();
                 if (!ServerProfile.LocalCacheEnabled)
                     GuacamoleBrowserCache.DeleteProfileCacheDirectory("GuacamoleClient", ServerProfile.Id);
+                _applicationIcon?.Dispose();
             };
 
             //Tooltip
@@ -271,6 +273,7 @@ namespace GuacamoleClient.WinForms
         /// <param name="documentTitle">The title of the current document. If null or empty, the form title will use the URL instead.</param>
         public void UpdateFormTitle(Uri currentUrl, string documentTitle)
         {
+            string appDisplayName = AppDisplayName.Create(_appInfo.AppId, _appInfo.DeploymentType, _appInfo.Channel);
             string focusWarning = String.Empty;
             if (TEST_CONTROL_FOCUS_INFO_IN_FORM_TITLE && System.Diagnostics.Debugger.IsAttached)
             {
@@ -280,12 +283,12 @@ namespace GuacamoleClient.WinForms
 
             if (string.IsNullOrEmpty(documentTitle))
             {
-                this.Text = $"{currentUrl.ToString()}{focusWarning} - GuacamoleClient v{Application.ProductVersion}";
+                this.Text = $"{currentUrl.ToString()}{focusWarning} - {appDisplayName} v{Application.ProductVersion}";
                 this.connectionNameInFullScreenModeToolStripMenuItem.Text = currentUrl.ToString();
             }
             else
             {
-                this.Text = $"{documentTitle}{focusWarning} - {currentUrl.ToString()} - GuacamoleClient v{Application.ProductVersion}";
+                this.Text = $"{documentTitle}{focusWarning} - {currentUrl.ToString()} - {appDisplayName} v{Application.ProductVersion}";
                 this.connectionNameInFullScreenModeToolStripMenuItem.Text = documentTitle;
             }
         }
@@ -330,8 +333,17 @@ namespace GuacamoleClient.WinForms
             else
                 _previousBounds = new Rectangle(0, 0, 1280, 800);
             SwitchFullScreenMode(fullScreenToolStripMenuItem.Checked);
-            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(MainForm));
-            Icon = (Icon)resources.GetObject("$this.Icon")!;
+            string iconPath = Path.Combine(AppContext.BaseDirectory, "guac.ico");
+            if (File.Exists(iconPath))
+            {
+                _applicationIcon = new Icon(iconPath, 64, 64);
+                Icon = (Icon)_applicationIcon.Clone();
+            }
+            else
+            {
+                System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(MainForm));
+                Icon = (Icon)resources.GetObject("$this.Icon")!;
+            }
             await InitWebView2Async();
             _webview2_core!.PermissionRequested += CoreWebView2_PermissionRequested;
             _webview2_core!.NavigationStarting += NavigationStarting;
@@ -457,12 +469,18 @@ namespace GuacamoleClient.WinForms
         {
             try
             {
-                Stream iconStream = await _webview2_core!.GetFaviconAsync(CoreWebView2FaviconImageFormat.Png);
+                using Stream iconStream = await _webview2_core!.GetFaviconAsync(CoreWebView2FaviconImageFormat.Png);
                 if (iconStream != null && iconStream.Length > 0)
                 {
-                    Icon? icon = IconTools.CreateIconFromPngStream(iconStream);
+                    Icon? icon = _applicationIcon == null
+                        ? IconTools.CreateIconFromPngStream(iconStream)
+                        : IconTools.CreateBadgedIconFromPngStream(iconStream, _applicationIcon);
                     if (icon != null)
+                    {
+                        Icon? previousIcon = this.Icon;
                         this.Icon = icon;
+                        previousIcon?.Dispose();
+                    }
                 }
             }
             catch
