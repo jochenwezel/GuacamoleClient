@@ -30,6 +30,7 @@ namespace GuacamoleClient.WinForms
         private const string SetupGuideUrl = "https://github.com/jochenwezel/GuacamoleClient/blob/main/docs/SetupTestGuacamoleServer.md";
         private const string UpdateWebsiteBaseUrl = "https://jochenwezel.github.io/GuacamoleClient/";
         private static readonly Guid TaskbarListClassId = new("56FDF344-FD6D-11d0-958A-006097C9A090");
+        private static readonly AutomaticUpdateCheckSession AutomaticUpdateCheckSession = new();
 
 
         [Obsolete("For designer support only", true)]
@@ -878,6 +879,9 @@ namespace GuacamoleClient.WinForms
                 if (string.Equals(_appInfo.DeploymentType, "local-dev", StringComparison.OrdinalIgnoreCase))
                     return;
 
+                if (!AutomaticUpdateCheckSession.TryStart())
+                    return;
+
                 await Task.Delay(TimeSpan.FromSeconds(3)).ConfigureAwait(true);
                 AppUpdateCheckResult result = await _appUpdateChecker.CheckAsync().ConfigureAwait(true);
                 if (!result.IsUpdateAvailable || await _appUpdateChecker.IsSkippedAsync(result.LatestVersion).ConfigureAwait(true))
@@ -906,6 +910,7 @@ namespace GuacamoleClient.WinForms
                     LocalizationProvider.Get(
                         LocalizationKeys.UpdateCheck_NoUpdate_Text,
                         result.AppInfo.CurrentVersion,
+                        AppDisplayName.GetVariant(result.AppInfo.AppId),
                         result.AppInfo.Channel),
                     LocalizationProvider.Get(LocalizationKeys.UpdateCheck_Title),
                     InformationBoxButtons.OK,
@@ -941,6 +946,7 @@ namespace GuacamoleClient.WinForms
                     LocalizationKeys.UpdateCheck_UpdateAvailable_Text,
                     result.AppInfo.CurrentVersion,
                     result.LatestVersion,
+                    AppDisplayName.GetVariant(result.AppInfo.AppId),
                     result.AppInfo.Channel),
                 AutoSize = false,
                 Dock = DockStyle.Fill,

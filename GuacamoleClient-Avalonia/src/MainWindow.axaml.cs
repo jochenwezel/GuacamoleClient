@@ -26,6 +26,7 @@ namespace GuacClient
     {
         private const int RemoteShortcutHintDurationMs = 3000;
         private static bool s_browserCacheConfigured;
+        private static readonly AutomaticUpdateCheckSession AutomaticUpdateCheckSession = new();
         private const string ProjectWebsiteUrl = "https://github.com/jochenwezel/GuacamoleClient";
         private const string ProjectIssuesUrl = "https://github.com/jochenwezel/GuacamoleClient/issues";
         private const string RdpResizeDetailsUrl = "https://github.com/jochenwezel/GuacamoleClient/blob/main/README.md#faq-known-issues-typical-trouble-shooting";
@@ -859,6 +860,9 @@ namespace GuacClient
                     || _appInfo.SuppressAutomaticUpdateChecks)
                     return;
 
+                if (!AutomaticUpdateCheckSession.TryStart())
+                    return;
+
                 await Task.Delay(TimeSpan.FromSeconds(3)).ConfigureAwait(true);
                 AppUpdateCheckResult result = await _appUpdateChecker.CheckAsync().ConfigureAwait(true);
                 if (!result.IsUpdateAvailable || await _appUpdateChecker.IsSkippedAsync(result.LatestVersion).ConfigureAwait(true))
@@ -889,6 +893,7 @@ namespace GuacClient
                     LocalizationProvider.Get(
                         LocalizationKeys.UpdateCheck_NoUpdate_Text,
                         result.AppInfo.CurrentVersion,
+                        AppDisplayName.GetVariant(result.AppInfo.AppId),
                         result.AppInfo.Channel));
             }
             catch
@@ -957,6 +962,7 @@ namespace GuacClient
                             LocalizationKeys.UpdateCheck_UpdateAvailable_Text,
                             result.AppInfo.CurrentVersion,
                             result.LatestVersion,
+                            AppDisplayName.GetVariant(result.AppInfo.AppId),
                             result.AppInfo.Channel),
                         TextWrapping = TextWrapping.Wrap
                     },

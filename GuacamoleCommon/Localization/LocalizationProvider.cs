@@ -211,9 +211,9 @@ namespace GuacamoleClient.Common.Localization
                     case LocalizationKeys.UpdateCheck_Title:
                         return "Updates";
                     case LocalizationKeys.UpdateCheck_UpdateAvailable_Text:
-                        return "Eine neue Version ist verfügbar.\n\nInstalliert: {0}\nVerfügbar: {1}\nChannel: {2}\n\nJetzt aktualisieren?";
+                        return "Eine neue Version ist verfügbar.\n\nInstalliert: {0}\nVerfügbar: {1}\nVariante: {2}\nChannel: {3}\n\nJetzt aktualisieren?";
                     case LocalizationKeys.UpdateCheck_NoUpdate_Text:
-                        return "Du hast bereits die aktuelle Version.\n\nInstalliert: {0}\nChannel: {1}";
+                        return "Du hast bereits die aktuelle Version.\n\nInstalliert: {0}\nVariante: {1}\nChannel: {2}";
                     case LocalizationKeys.UpdateCheck_Failed_Text:
                         return "Die Update-Prüfung ist fehlgeschlagen. Bitte später erneut versuchen.";
                     case LocalizationKeys.UpdateCheck_Button_UpdateNow:
@@ -522,9 +522,9 @@ namespace GuacamoleClient.Common.Localization
                 case LocalizationKeys.UpdateCheck_Title:
                     return "Updates";
                 case LocalizationKeys.UpdateCheck_UpdateAvailable_Text:
-                    return "A new version is available.\n\nInstalled: {0}\nAvailable: {1}\nChannel: {2}\n\nUpdate now?";
+                    return "A new version is available.\n\nInstalled: {0}\nAvailable: {1}\nVariant: {2}\nChannel: {3}\n\nUpdate now?";
                 case LocalizationKeys.UpdateCheck_NoUpdate_Text:
-                    return "You've got the latest version.\n\nInstalled: {0}\nChannel: {1}";
+                    return "You've got the latest version.\n\nInstalled: {0}\nVariant: {1}\nChannel: {2}";
                 case LocalizationKeys.UpdateCheck_Failed_Text:
                     return "Update check failed. Please try again later.";
                 case LocalizationKeys.UpdateCheck_Button_UpdateNow:

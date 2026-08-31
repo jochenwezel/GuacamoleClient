@@ -5,6 +5,15 @@ namespace GuacamoleCommon.Tests;
 
 public class AppDisplayNameTests
 {
+    [TestCase("winforms", "WinForms")]
+    [TestCase("WINFORMS", "WinForms")]
+    [TestCase("avalonia", "Avalonia")]
+    [TestCase("AVALONIA", "Avalonia")]
+    public void GetVariant_ReturnsFrontendName(string appId, string expected)
+    {
+        Assert.That(AppDisplayName.GetVariant(appId), Is.EqualTo(expected));
+    }
+
     [TestCase("winforms", "clickonce", "stable", "GuacamoleClient (WinForms)")]
     [TestCase("winforms", "clickonce", "dev", "GuacamoleClient Dev (WinForms)")]
     [TestCase("avalonia", "clickonce", "stable", "GuacamoleClient (Avalonia)")]

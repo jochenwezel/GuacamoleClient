@@ -4,11 +4,14 @@ namespace GuacamoleClient.Common.Updates
 {
     internal static class AppDisplayName
     {
-        internal static string Create(string appId, string deploymentType, string channel)
-        {
-            string platform = appId.Equals("avalonia", StringComparison.OrdinalIgnoreCase)
+        internal static string GetVariant(string appId)
+            => appId.Equals("avalonia", StringComparison.OrdinalIgnoreCase)
                 ? "Avalonia"
                 : "WinForms";
+
+        internal static string Create(string appId, string deploymentType, string channel)
+        {
+            string platform = GetVariant(appId);
 
             string edition = deploymentType.Equals("local-dev", StringComparison.OrdinalIgnoreCase)
                 ? " Local Debug"
