@@ -104,8 +104,9 @@ namespace GuacamoleClient.WinForms
             this.FormClosed += (_, __) =>
             {
                 RemoveKeyboardHook();
-                _webview2_controller?.Close();
+                CoreWebView2Controller? controller = _webview2_controller;
                 _webview2_controller = null;
+                controller?.Close();
                 _temporaryBrowserProfile?.Dispose();
                 if (!ServerProfile.LocalCacheEnabled)
                     GuacamoleBrowserCache.DeleteProfileCacheDirectory("GuacamoleClient", ServerProfile.Id);

@@ -7,6 +7,18 @@ namespace GuacamoleClient.WinForms
 {
     public partial class MainForm
     {
+        private bool _isClosing;
+
+        /// <inheritdoc/>
+        protected override void OnFormClosing(FormClosingEventArgs e)
+        {
+            _isClosing = true;
+            base.OnFormClosing(e);
+
+            if (e.Cancel)
+                _isClosing = false;
+        }
+
         /// <summary>
         /// Switch keyboard capturing mode when clicking the hint label
         /// </summary>
@@ -103,9 +115,20 @@ namespace GuacamoleClient.WinForms
         /// </summary>
         public void SetFocusToWebview2Control()
         {
+            if (_isClosing || IsDisposed || Disposing || !IsHandleCreated || WebBrowserHostPanel.IsDisposed)
+                return;
+
+            CoreWebView2Controller? controller = _webview2_controller;
+            if (controller == null)
+                return;
+
             // Wenn Sie danach zurück in WebView wollen:
             WebBrowserHostPanel.Focus();
-            _webview2_controller?.MoveFocus(CoreWebView2MoveFocusReason.Programmatic);
+
+            if (_isClosing || IsDisposed || Disposing || !ReferenceEquals(controller, _webview2_controller))
+                return;
+
+            controller.MoveFocus(CoreWebView2MoveFocusReason.Programmatic);
             IsKeyboardFocusBoundToWebview2Control = KeyboardCaptureMode.GrabbingEnabled_ShowKeyboardShortcutInfo;
             UpdateKeyboardHookState();
         }
