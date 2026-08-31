@@ -69,7 +69,7 @@ namespace GuacClient
         private Separator _connectionSeparatorBottom = default!;
         private MenuItem _newWindowMenuItem = default!;
         private MenuItem _viewMenuItem = default!;
-        private MenuItem _sendKeyCombinationMenuItem = default!;
+        private MenuItem _actionsMenuItem = default!;
         private MenuItem _quitMenuItem = default!;
         private MenuItem _enterFullScreenMenuItem = default!;
         private MenuItem _exitFullScreenMenuItem = default!;
@@ -150,7 +150,7 @@ namespace GuacClient
             _connectionSeparatorBottom = this.FindControl<Separator>("ConnectionSeparatorBottom")!;
             _newWindowMenuItem = this.FindControl<MenuItem>("NewWindowMenuItem")!;
             _viewMenuItem = this.FindControl<MenuItem>("ViewMenuItem")!;
-            _sendKeyCombinationMenuItem = this.FindControl<MenuItem>("SendKeyCombinationMenuItem")!;
+            _actionsMenuItem = this.FindControl<MenuItem>("ActionsMenuItem")!;
             _quitMenuItem = this.FindControl<MenuItem>("QuitMenuItem")!;
             _enterFullScreenMenuItem = this.FindControl<MenuItem>("EnterFullScreenMenuItem")!;
             _exitFullScreenMenuItem = this.FindControl<MenuItem>("ExitFullScreenMenuItem")!;
@@ -174,6 +174,7 @@ namespace GuacClient
             _web.TitleChanged += UpdateWindowTitleFromWebView;
             _web.Navigated += Web_Navigated;
             InitializeMonitorLayoutPrototypeBridge();
+            InitializeScreenshotActions();
 
             InitializeLocalization();
 
@@ -216,7 +217,7 @@ namespace GuacClient
                     RefreshTrackedModifierStateFromPhysicalKeyboard();
                     UpdateKeyboardHookState();
                     _ = SyncHostClipboardToWebViewSafeAsync();
-                    if (_keyboardCaptureEnabled)
+                    if (_keyboardCaptureEnabled && !_screenshotInProgress)
                         FocusKeyboardCaptureTarget();
                 }, DispatcherPriority.Input);
             };
@@ -265,7 +266,9 @@ namespace GuacClient
                 LocalizationProvider.Get(LocalizationKeys.ShortcutKeystroke_NewWindowToolStripMenuItem));
             _newWindowMenuItem.InputGesture = null;
             _viewMenuItem.Header = LocalizationProvider.Get(LocalizationKeys.Menu_View);
-            _sendKeyCombinationMenuItem.Header = LocalizationProvider.Get(LocalizationKeys.Menu_SendKeyCombination);
+            _actionsMenuItem.Header = LocalizationProvider.Get(LocalizationKeys.Menu_Actions);
+            _saveScreenshotMenuItem.Header = LocalizationProvider.Get(LocalizationKeys.Menu_SaveScreenshotAs);
+            _copyScreenshotMenuItem.Header = LocalizationProvider.Get(LocalizationKeys.Menu_CopyScreenshotToClipboard);
             _quitMenuItem.Header = BuildMenuHeaderWithShortcut(
                 LocalizationProvider.Get(LocalizationKeys.Menu_Quit),
                 LocalizationProvider.Get(LocalizationKeys.ShortcutKeystroke_QuitToolStripMenuItem));
@@ -368,7 +371,7 @@ namespace GuacClient
             if (!OperatingSystem.IsWindows())
                 return;
 
-            if (IsActive)
+            if (IsActive && !_screenshotInProgress)
                 EnsureKeyboardHookInstalled();
             else
                 RemoveKeyboardHook();
@@ -647,6 +650,7 @@ namespace GuacClient
         {
             _web.IsVisible = false;
             _emptyStateOverlay.IsVisible = true;
+            UpdateScreenshotMenuState();
             Title = $"{GetApplicationDisplayName()} v{VersionUtil.InformationalVersion()}";
         }
 
@@ -654,6 +658,7 @@ namespace GuacClient
         {
             _emptyStateOverlay.IsVisible = false;
             _web.IsVisible = true;
+            UpdateScreenshotMenuState();
         }
 
         private void ConfigureBrowserCacheBeforeWebViewCreation()
@@ -1020,6 +1025,8 @@ namespace GuacClient
 
         private void OnWindowKeyDown(object? sender, KeyEventArgs e)
         {
+            if (_screenshotInProgress)
+                return;
             _ = SyncHostClipboardToWebViewSafeAsync();
 
             if (_hookHandledKeyDowns.Remove(e.Key))
@@ -1060,7 +1067,7 @@ namespace GuacClient
 
         private async Task SyncHostClipboardToWebViewAsync()
         {
-            if (!_web.IsVisible || !_web.IsBrowserInitialized)
+            if (_screenshotInProgress || !_web.IsVisible || !_web.IsBrowserInitialized)
                 return;
 
             var clipboard = TopLevel.GetTopLevel(this)?.Clipboard;
@@ -1080,6 +1087,8 @@ namespace GuacClient
 
         private void OnWindowKeyUp(object? sender, KeyEventArgs e)
         {
+            if (_screenshotInProgress)
+                return;
             if (_hookHandledKeyUps.Remove(e.Key))
             {
                 e.Handled = true;

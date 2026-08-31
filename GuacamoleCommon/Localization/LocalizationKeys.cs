@@ -191,5 +191,26 @@
         /// Suffix appended to default server profile names to indicate that they are the default choice.
         /// </summary>
         Common_Suffix_Default,
+
+        /// <summary>
+        /// Gets the actions menu title.
+        /// </summary>
+        Menu_Actions,
+        /// <summary>
+        /// Gets the menu text for saving a screenshot.
+        /// </summary>
+        Menu_SaveScreenshotAs,
+        /// <summary>
+        /// Gets the menu text for copying a screenshot to the clipboard.
+        /// </summary>
+        Menu_CopyScreenshotToClipboard,
+        /// <summary>
+        /// Gets the screenshot error dialog title.
+        /// </summary>
+        Screenshot_Failed_Title,
+        /// <summary>
+        /// Gets the screenshot error message with an error details placeholder.
+        /// </summary>
+        Screenshot_Failed_Text,
     }
 }

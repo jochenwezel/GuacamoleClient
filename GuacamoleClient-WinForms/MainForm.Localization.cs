@@ -12,7 +12,9 @@ namespace GuacamoleClient.WinForms
             this.openAnotherGuacamoleServerToolStripMenuItem.Text = LocalizationProvider.Get(LocalizationKeys.Menu_OpenAnotherGuacamoleServer);
             this.fileToolStripMenuItem.Text = LocalizationProvider.Get(LocalizationKeys.Menu_Connection);
             this.viewToolStripMenuItem.Text = LocalizationProvider.Get(LocalizationKeys.Menu_View);
-            this.sendKeyCombinationToolStripMenuItem.Text = LocalizationProvider.Get(LocalizationKeys.Menu_SendKeyCombination);
+            this.actionsToolStripMenuItem.Text = LocalizationProvider.Get(LocalizationKeys.Menu_Actions);
+            this.saveScreenshotToolStripMenuItem.Text = LocalizationProvider.Get(LocalizationKeys.Menu_SaveScreenshotAs);
+            this.copyScreenshotToolStripMenuItem.Text = LocalizationProvider.Get(LocalizationKeys.Menu_CopyScreenshotToClipboard);
             this.fullScreenToolStripMenuItem.Text = LocalizationProvider.Get(LocalizationKeys.Menu_ViewFullScreen);
             this.stopFullScreenModeToolStripMenuItem.Text = LocalizationProvider.Get(LocalizationKeys.Menu_ViewWindowMode);
             this.quitToolStripMenuItem.Text = LocalizationProvider.Get(LocalizationKeys.Menu_Quit);

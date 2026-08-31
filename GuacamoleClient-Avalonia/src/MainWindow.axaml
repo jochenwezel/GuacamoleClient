@@ -42,12 +42,15 @@
         <MenuItem x:Name="EnterFullScreenMenuItem" />
         <MenuItem x:Name="ExitFullScreenMenuItem" />
       </MenuItem>
-      <MenuItem x:Name="SendKeyCombinationMenuItem">
+      <MenuItem x:Name="ActionsMenuItem">
         <MenuItem x:Name="SendRemoteCtrlAltDelMenuItem" />
         <MenuItem x:Name="SendRemoteCtrlAltEndMenuItem" />
         <MenuItem x:Name="SendRemoteCtrlAltBackspaceMenuItem" />
         <Separator />
         <MenuItem x:Name="OpenGuacamoleMenuMenuItem" />
+        <Separator />
+        <MenuItem x:Name="SaveScreenshotMenuItem" IsEnabled="False" />
+        <MenuItem x:Name="CopyScreenshotMenuItem" IsEnabled="False" />
       </MenuItem>
       <MenuItem x:Name="SettingsMenuItem">
         <MenuItem x:Name="GpuHardwareAccelerationMenuItem">

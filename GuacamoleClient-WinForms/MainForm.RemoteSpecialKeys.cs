@@ -42,7 +42,7 @@ namespace GuacamoleClient.WinForms
 
         private void UpdateKeyboardHookState()
         {
-            bool shouldBeActive = IsKeyboardFocusBoundToWebview2Control == KeyboardCaptureMode.GrabbingEnabled_ShowKeyboardShortcutInfo;
+            bool shouldBeActive = !_screenshotInProgress && IsKeyboardFocusBoundToWebview2Control == KeyboardCaptureMode.GrabbingEnabled_ShowKeyboardShortcutInfo;
             if (shouldBeActive)
                 EnsureKeyboardHookInstalled();
             else
