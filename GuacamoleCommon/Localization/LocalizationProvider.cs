@@ -130,6 +130,16 @@ namespace GuacamoleClient.Common.Localization
                         return "Ansicht";
                     case LocalizationKeys.Menu_SendKeyCombination:
                         return "Tasten-Kombination senden";
+                    case LocalizationKeys.Menu_Actions:
+                        return "Aktionen";
+                    case LocalizationKeys.Menu_SaveScreenshotAs:
+                        return "Screenshot speichern unter …";
+                    case LocalizationKeys.Menu_CopyScreenshotToClipboard:
+                        return "Screenshot in Zwischenablage kopieren";
+                    case LocalizationKeys.Screenshot_Failed_Title:
+                        return "Screenshot fehlgeschlagen";
+                    case LocalizationKeys.Screenshot_Failed_Text:
+                        return "Der Screenshot konnte nicht erstellt oder übertragen werden.\n\n{0}";
                     case LocalizationKeys.Menu_ViewFullScreen:
                         return "Vollbild-Modus";
                     case LocalizationKeys.Menu_ViewWindowMode:
@@ -431,6 +441,16 @@ namespace GuacamoleClient.Common.Localization
                     return "View";
                 case LocalizationKeys.Menu_SendKeyCombination:
                     return "Send key combination";
+                case LocalizationKeys.Menu_Actions:
+                    return "Actions";
+                case LocalizationKeys.Menu_SaveScreenshotAs:
+                    return "Save screenshot as …";
+                case LocalizationKeys.Menu_CopyScreenshotToClipboard:
+                    return "Copy screenshot to clipboard";
+                case LocalizationKeys.Screenshot_Failed_Title:
+                    return "Screenshot failed";
+                case LocalizationKeys.Screenshot_Failed_Text:
+                    return "The screenshot could not be captured or transferred.\n\n{0}";
                 case LocalizationKeys.Menu_ViewFullScreen:
                     return "Full-Screen";
                 case LocalizationKeys.Menu_ViewWindowMode:

@@ -385,6 +385,8 @@ namespace GuacamoleClient.WinForms
         /// <param name="e"></param>
         private async void NavigationCompleted(object? sender, CoreWebView2NavigationCompletedEventArgs e)
         {
+            _screenshotContentReady = e.IsSuccess;
+            UpdateScreenshotMenuState();
             string? authToken = await this.GetGuacamoleAuthTokenAsync();
             if (string.IsNullOrEmpty(authToken) || this._lastUserLoginContext == null || this._lastUserLoginContext.AuthToken != authToken)
                 this._lastUserLoginContext = await this.GetLoginContextAsync();
@@ -460,6 +462,8 @@ namespace GuacamoleClient.WinForms
         /// <param name="e"></param>
         private void NavigationStarting(object? sender, CoreWebView2NavigationStartingEventArgs e)
         {
+            _screenshotContentReady = false;
+            UpdateScreenshotMenuState();
             UpdateLocationUrl(new Uri(e.Uri));
         }
 

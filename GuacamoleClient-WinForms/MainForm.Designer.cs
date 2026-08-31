@@ -14,7 +14,10 @@ namespace GuacamoleClient.WinForms
         private ToolStripSeparator toolStripSeparator1;
         private ToolStripMenuItem testToolStripMenuItem;
         private ToolStripMenuItem viewToolStripMenuItem;
-        private ToolStripMenuItem sendKeyCombinationToolStripMenuItem;
+        private ToolStripMenuItem actionsToolStripMenuItem;
+        private ToolStripSeparator screenshotToolStripSeparator;
+        private ToolStripMenuItem saveScreenshotToolStripMenuItem;
+        private ToolStripMenuItem copyScreenshotToolStripMenuItem;
         private ToolStripMenuItem fullScreenToolStripMenuItem;
         private Panel WebBrowserHostPanel;
         private ToolStripMenuItem stopFullScreenModeToolStripMenuItem;
@@ -77,7 +80,10 @@ namespace GuacamoleClient.WinForms
             viewToolStripMenuItem = new ToolStripMenuItem();
             fullScreenToolStripMenuItem = new ToolStripMenuItem();
             stopFullScreenModeToolStripMenuItem = new ToolStripMenuItem();
-            sendKeyCombinationToolStripMenuItem = new ToolStripMenuItem();
+            actionsToolStripMenuItem = new ToolStripMenuItem();
+            screenshotToolStripSeparator = new ToolStripSeparator();
+            saveScreenshotToolStripMenuItem = new ToolStripMenuItem();
+            copyScreenshotToolStripMenuItem = new ToolStripMenuItem();
             sendRemoteCtrlAltDelToolStripMenuItem = new ToolStripMenuItem();
             sendRemoteCtrlAltEndToolStripMenuItem = new ToolStripMenuItem();
             sendRemoteCtrlAltBackspaceToolStripMenuItem = new ToolStripMenuItem();
@@ -101,7 +107,7 @@ namespace GuacamoleClient.WinForms
             // 
             // mainMenuStrip
             // 
-            mainMenuStrip.Items.AddRange(new ToolStripItem[] { fileToolStripMenuItem, testToolStripMenuItem, viewToolStripMenuItem, sendKeyCombinationToolStripMenuItem, helpToolStripMenuItem, connectionNameInFullScreenModeToolStripMenuItem, HintStopWebcontrol2FocusShortcut });
+            mainMenuStrip.Items.AddRange(new ToolStripItem[] { fileToolStripMenuItem, testToolStripMenuItem, viewToolStripMenuItem, actionsToolStripMenuItem, helpToolStripMenuItem, connectionNameInFullScreenModeToolStripMenuItem, HintStopWebcontrol2FocusShortcut });
             mainMenuStrip.Location = new Point(0, 0);
             mainMenuStrip.Name = "mainMenuStrip";
             mainMenuStrip.Size = new Size(1264, 24);
@@ -220,12 +226,25 @@ namespace GuacamoleClient.WinForms
             stopFullScreenModeToolStripMenuItem.Text = "Stop Full-Screen Mode";
             stopFullScreenModeToolStripMenuItem.Click += stopFullScreenModeToolStripMenuItem_Click;
             // 
-            // sendKeyCombinationToolStripMenuItem
+            // actionsToolStripMenuItem
             // 
-            sendKeyCombinationToolStripMenuItem.DropDownItems.AddRange(new ToolStripItem[] { sendRemoteCtrlAltDelToolStripMenuItem, sendRemoteCtrlAltEndToolStripMenuItem, sendRemoteCtrlAltBackspaceToolStripMenuItem, toolStripSeparator4, openGuacamoleMenuToolStripMenuItem });
-            sendKeyCombinationToolStripMenuItem.Name = "sendKeyCombinationToolStripMenuItem";
-            sendKeyCombinationToolStripMenuItem.Size = new Size(137, 20);
-            sendKeyCombinationToolStripMenuItem.Text = "Send key combination";
+            actionsToolStripMenuItem.DropDownItems.AddRange(new ToolStripItem[] { sendRemoteCtrlAltDelToolStripMenuItem, sendRemoteCtrlAltEndToolStripMenuItem, sendRemoteCtrlAltBackspaceToolStripMenuItem, toolStripSeparator4, openGuacamoleMenuToolStripMenuItem, screenshotToolStripSeparator, saveScreenshotToolStripMenuItem, copyScreenshotToolStripMenuItem });
+            actionsToolStripMenuItem.Name = "actionsToolStripMenuItem";
+            actionsToolStripMenuItem.Size = new Size(59, 20);
+            actionsToolStripMenuItem.Text = "Actions";
+            actionsToolStripMenuItem.DropDownOpening += (_, _) => UpdateScreenshotMenuState();
+            //
+            // Screenshot actions
+            //
+            screenshotToolStripSeparator.Name = "screenshotToolStripSeparator";
+            saveScreenshotToolStripMenuItem.Name = "saveScreenshotToolStripMenuItem";
+            saveScreenshotToolStripMenuItem.Text = "Save screenshot as …";
+            saveScreenshotToolStripMenuItem.Enabled = false;
+            saveScreenshotToolStripMenuItem.Click += SaveScreenshotToolStripMenuItem_Click;
+            copyScreenshotToolStripMenuItem.Name = "copyScreenshotToolStripMenuItem";
+            copyScreenshotToolStripMenuItem.Text = "Copy screenshot to clipboard";
+            copyScreenshotToolStripMenuItem.Enabled = false;
+            copyScreenshotToolStripMenuItem.Click += CopyScreenshotToolStripMenuItem_Click;
             // 
             // sendRemoteCtrlAltDelToolStripMenuItem
             // 
