@@ -14,6 +14,16 @@ public class BrowserScreenshotTests
     private static readonly DateTime CaptureTime = new(2026, 8, 31, 16, 50, 28);
     private const string FileNameSuffix = "-2026-08-31_16-50-28.png";
 
+    [TestCase("https://guacamole.example/#/client/connection-id", true)]
+    [TestCase("https://guacamole.example/#/client/", false)]
+    [TestCase("https://guacamole.example/#/", false)]
+    [TestCase("not a URL", false)]
+    [TestCase(null, false)]
+    public void IsConnectionPage_RecognizesOnlyConnectionRoutes(string? url, bool expected)
+    {
+        Assert.That(BrowserScreenshot.IsConnectionPage(url), Is.EqualTo(expected));
+    }
+
     [TestCase("beiweb01", "beiweb01")]
     [TestCase("beiweb01.ad.example.org", "beiweb01.ad.example.org")]
     [TestCase("München 東京 🖥", "München 東京 🖥")]
