@@ -1,0 +1,64 @@
+﻿name: NativeWebView migration probe
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [prototype/avalonia12-nativewebview-tests]
+    paths:
+      - tools/NativeWebViewProbe/**
+      - .github/workflows/NativeWebViewProbe.yml
+  pull_request:
+    paths:
+      - tools/NativeWebViewProbe/**
+      - .github/workflows/NativeWebViewProbe.yml
+
+permissions:
+  contents: read
+
+jobs:
+  browser-probe:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-latest, ubuntu-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: 8.0.x
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+      - name: Install Linux browser prerequisites
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y xvfb xauth dbus-x11 fonts-liberation libwebkit2gtk-4.1-0
+      - name: Build isolated probe
+        run: dotnet build tools/NativeWebViewProbe/NativeWebViewProbe.csproj -c Debug --nologo
+      - name: Run real macOS browser phases
+        if: runner.os == 'macOS'
+        run: >-
+          python tools/NativeWebViewProbe/run-probe.py
+          tools/NativeWebViewProbe/bin/Debug/net8.0/NativeWebViewProbe.dll
+          --output artifacts/nativewebview-probe/macos
+      - name: Run real Linux browser phases on virtual X11 display
+        if: runner.os == 'Linux'
+        run: >-
+          dbus-run-session -- xvfb-run -a
+          python tools/NativeWebViewProbe/run-probe.py
+          tools/NativeWebViewProbe/bin/Debug/net8.0/NativeWebViewProbe.dll
+          --output artifacts/nativewebview-probe/linux
+      - name: Save synthetic test evidence
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: nativewebview-probe-${{ runner.os }}
+          path: |
+            artifacts/nativewebview-probe/**/results-*.json
+            artifacts/nativewebview-probe/**/browser-*.png
+            artifacts/nativewebview-probe/**/desktop-*.png
+            artifacts/nativewebview-probe/**/*.log
+            artifacts/nativewebview-probe/**/crash.txt

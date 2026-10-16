@@ -1,0 +1,13 @@
+﻿FROM mcr.microsoft.com/dotnet/runtime:8.0-bookworm-slim
+
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends \
+        xvfb xauth dbus-x11 fonts-liberation libwebkit2gtk-4.1-0 \
+        libfontconfig1 libxcursor1 libxi6 libxrandr2 libgl1 libice6 libsm6 \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /probe
+COPY linux-publish/ /probe/
+ENV HOME=/tmp/probe-home
+USER 1000:1000
+ENTRYPOINT ["dbus-run-session", "--", "xvfb-run", "-a", "dotnet", "/probe/NativeWebViewProbe.dll"]

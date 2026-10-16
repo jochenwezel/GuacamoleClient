@@ -1,0 +1,23 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <ApplicationManifest>../../GuacamoleClient-Avalonia/app.manifest</ApplicationManifest>
+    <DefineConstants Condition="'$(OS)' == 'Windows_NT'">$(DefineConstants);PROBE_WINDOWS</DefineConstants>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Avalonia.Desktop" Version="12.1.4" />
+    <PackageReference Include="Avalonia.Themes.Fluent" Version="12.1.4" />
+    <PackageReference Include="Avalonia.Controls.WebView" Version="12.1.1" />
+    <PackageReference Include="Microsoft.Web.WebView2" Version="1.0.4258.31" Condition="'$(OS)' == 'Windows_NT'" />
+    <EmbeddedResource Include="fixture.html" />
+  </ItemGroup>
+  <!-- Only the core COM projection is used; this probe does not host WPF or WinForms. -->
+  <Target Name="RemoveUnusedWebViewDesktopReferences" BeforeTargets="ResolveAssemblyReferences">
+    <ItemGroup>
+      <Reference Remove="@(Reference)" Condition="'%(Reference.Filename)' == 'Microsoft.Web.WebView2.Wpf' or '%(Reference.Filename)' == 'Microsoft.Web.WebView2.WinForms'" />
+    </ItemGroup>
+  </Target>
+</Project>
