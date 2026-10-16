@@ -1,0 +1,15 @@
+﻿<Styles xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+  <!-- Separator.Background paints only the stroke. Fluent's popup presenter paints
+       the surrounding margins and padding using MenuFlyoutPresenterBackground. -->
+  <Style Selector="Menu.profile-colors Separator">
+    <Setter Property="Background" Value="{DynamicResource ProfileMenuSeparatorBrush}" />
+  </Style>
+  <!-- Fluent's :open chevron rule otherwise takes precedence over :selected. -->
+  <Style Selector="Menu.profile-colors MenuItem:open:selected /template/ Path#PART_ChevronPath">
+    <Setter Property="Fill" Value="{DynamicResource MenuFlyoutSubItemChevronPointerOver}" />
+  </Style>
+  <Style Selector="Menu.profile-colors MenuItem:open:pressed /template/ Border#PART_LayoutRoot:pointerover Path#PART_ChevronPath">
+    <Setter Property="Fill" Value="{DynamicResource MenuFlyoutSubItemChevronPressed}" />
+  </Style>
+</Styles>
