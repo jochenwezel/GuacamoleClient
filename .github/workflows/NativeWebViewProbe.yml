@@ -35,7 +35,7 @@ jobs:
         if: runner.os == 'Linux'
         run: |
           sudo apt-get update
-          sudo apt-get install -y xvfb xauth dbus-x11 fonts-liberation libwebkit2gtk-4.1-0
+          sudo apt-get install -y xvfb xauth dbus-x11 fonts-liberation libwebkit2gtk-4.1-0 imagemagick
       - name: Build isolated probe
         run: dotnet build tools/NativeWebViewProbe/NativeWebViewProbe.csproj -c Debug --nologo
       - name: Run real macOS browser phases

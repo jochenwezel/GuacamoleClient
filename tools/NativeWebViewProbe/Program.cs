@@ -132,6 +132,22 @@ internal sealed class ProbeApp : Application
         catch (Exception e) { Record(name, false, e.ToString()); }
     }
 
+    private async Task CheckProfileAsync(string name, ProbeWindow window, string? expected)
+    {
+        try
+        {
+            string state = await window.ScriptAsync("JSON.stringify(probeState())");
+            using var json = JsonDocument.Parse(state);
+            string? storage = json.RootElement.GetProperty("storage").GetString();
+            string cookie = json.RootElement.GetProperty("cookie").GetString() ?? "";
+            bool matches = storage == expected && (expected is null
+                ? !cookie.Split(';').Any(c => c.TrimStart().StartsWith("probe=", StringComparison.Ordinal))
+                : cookie.Split(';').Any(c => c.Trim() == "probe=" + expected));
+            Record(name, matches, JsonSerializer.Serialize(new { expected, storage, cookie }));
+        }
+        catch (Exception e) { Record(name, false, e.ToString()); }
+    }
+
     private void SaveReport() => File.WriteAllText(
         Path.Combine(Program.Output, $"results-{Program.Phase}.json"),
         JsonSerializer.Serialize(new
@@ -175,39 +191,35 @@ internal sealed class ProbeApp : Application
             if (Program.Phase == "seed")
                 await _main.ScriptAsync("localStorage.setItem('probe','persistent-marker'); document.cookie='probe=persistent-marker; max-age=3600; path=/'; 'seeded'");
             else
-                await CheckAsync("persistent-state-after-process-restart", async () =>
-                    await _main.ScriptAsync("String(localStorage.getItem('probe')==='persistent-marker' && document.cookie.includes('probe=persistent-marker'))") == "true");
+                await CheckProfileAsync("persistent-state-after-process-restart", _main, "persistent-marker");
 
             var sibling = NewWindow("persistent-a", false);
             sibling.Show();
             await sibling.Ready.Task.WaitAsync(TimeSpan.FromSeconds(30));
-            await CheckAsync("same-profile-shared-state", async () =>
-                await sibling.ScriptAsync("localStorage.getItem('probe')") == "persistent-marker");
+            await CheckProfileAsync("same-profile-shared-state", sibling, "persistent-marker");
             var other = NewWindow("persistent-b", false);
             other.Show();
             await other.Ready.Task.WaitAsync(TimeSpan.FromSeconds(30));
-            await CheckAsync("different-profile-isolation", async () =>
-                await other.ScriptAsync("String(localStorage.getItem('probe')===null && !document.cookie.includes('probe='))") == "true");
+            await CheckProfileAsync("different-profile-isolation", other, null);
             other.Close();
             sibling.Close();
 
             var secure = NewWindow("secure", true);
             secure.Show();
             await secure.Ready.Task.WaitAsync(TimeSpan.FromSeconds(30));
-            await CheckAsync("private-state-empty", async () =>
-                await secure.ScriptAsync("String(localStorage.getItem('probe')===null && !document.cookie.includes('probe='))") == "true");
+            await CheckProfileAsync("private-state-empty", secure, null);
             await secure.ScriptAsync("localStorage.setItem('probe','private-marker'); document.cookie='probe=private-marker; path=/'; 'seeded'");
             var secureSibling = NewWindow("secure", true);
             secureSibling.Show();
             await secureSibling.Ready.Task.WaitAsync(TimeSpan.FromSeconds(30));
-            await CheckAsync("private-sibling-shares-session", async () =>
-                await secureSibling.ScriptAsync("String(localStorage.getItem('probe')==='private-marker' && document.cookie.includes('private-marker'))") == "true");
+            await CheckProfileAsync("private-sibling-shares-session", secureSibling, "private-marker");
+            // Give the sibling its own marker so this check measures closing/lifetime
+            // separately from whether the two private views shared their initial state.
+            await secureSibling.ScriptAsync("localStorage.setItem('probe','private-sibling-marker'); document.cookie='probe=private-sibling-marker; path=/'; 'seeded'");
             secure.Close();
-            await CheckAsync("private-sibling-survives-owner-close", async () =>
-                await secureSibling.ScriptAsync("localStorage.getItem('probe')") == "private-marker");
+            await CheckProfileAsync("private-sibling-retains-state-after-owner-close", secureSibling, "private-sibling-marker");
             secureSibling.Close();
-            await CheckAsync("private-marker-not-in-persistent-profile", async () =>
-                await _main.ScriptAsync("localStorage.getItem('probe')") == "persistent-marker");
+            await CheckProfileAsync("private-marker-not-in-persistent-profile", _main, "persistent-marker");
 
 #if PROBE_WINDOWS
             await CheckAsync("windows-screenshot", async () =>

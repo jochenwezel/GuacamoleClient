@@ -5,6 +5,7 @@ import json
 import os
 from pathlib import Path
 import platform
+import shutil
 import subprocess
 import sys
 import time
@@ -36,8 +37,12 @@ def run_phase(dll, output, port, phase):
                     raise TimeoutError(f"{phase}: no result within 150 seconds")
                 time.sleep(0.5)
             report = json.loads(report_path.read_text(encoding="utf-8-sig"))
+            time.sleep(1)
             if platform.system() == "Darwin":
                 subprocess.run(["screencapture", "-x", str(output / f"desktop-{phase}.png")],
+                               timeout=10, check=False)
+            elif platform.system() == "Linux" and shutil.which("import"):
+                subprocess.run(["import", "-window", "root", str(output / f"desktop-{phase}.png")],
                                timeout=10, check=False)
             failures = [r for r in report["results"] if not r["passed"]]
             print(f"{phase}: {len(report['results']) - len(failures)} passed, {len(failures)} failed", flush=True)
