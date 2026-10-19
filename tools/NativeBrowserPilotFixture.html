@@ -1,0 +1,29 @@
+﻿<!doctype html>
+<html lang="en"><meta charset="utf-8"><title>NativeWebView local test fixture</title>
+<style>
+body { margin: 28px; color: #e2e8f0; background: #172033; font: 18px system-ui; }
+textarea { display:block; width:88%; height:100px; padding:12px; font:22px monospace; }
+pre { white-space:pre-wrap; font:16px monospace; }
+canvas { margin-top:16px; }
+</style>
+<h1>NativeWebView local test fixture</h1>
+<p>This page stays on loopback. Click the input to test physical keyboard delivery.</p>
+<textarea id="input" aria-label="Keyboard test input" placeholder="Type test characters here"></textarea>
+<canvas id="remote-display" width="560" height="90"></canvas>
+<pre id="events">No keyboard events yet.</pre>
+<script>
+window.probeEvents = [];
+for (const type of ['keydown','keyup','input','focus','blur']) {
+  document.getElementById('input').addEventListener(type, e => {
+    window.probeEvents.push({type:e.type,key:e.key,code:e.code,ctrl:e.ctrlKey,
+      alt:e.altKey,shift:e.shiftKey,meta:e.metaKey,trusted:e.isTrusted});
+    document.getElementById('events').textContent = JSON.stringify(window.probeEvents.slice(-12),null,2);
+  });
+}
+window.probeState = () => ({cookie:document.cookie,storage:localStorage.getItem('probe'),
+  value:document.getElementById('input').value,events:window.probeEvents,agent:navigator.userAgent});
+const context = document.getElementById('remote-display').getContext('2d');
+context.fillStyle='#22c55e'; context.fillRect(0,0,560,90);
+context.fillStyle='#102030'; context.font='24px sans-serif';
+context.fillText('Canvas capture marker 2026',20,55);
+</script></html>

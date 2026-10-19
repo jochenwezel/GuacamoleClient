@@ -1,4 +1,4 @@
-using Avalonia;
+﻿using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
@@ -15,7 +15,9 @@ public partial class App : Application
 
     public override void OnFrameworkInitializationCompleted()
     {
+#if !NATIVE_BROWSER_PILOT
         WorkAroundLinuxCefGlueTextShapingCrash();
+#endif
 
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
@@ -33,6 +35,7 @@ public partial class App : Application
         return File.Exists(iconPath) ? new WindowIcon(iconPath) : null;
     }
 
+#if !NATIVE_BROWSER_PILOT
     private static void WorkAroundLinuxCefGlueTextShapingCrash()
     {
         if (!OperatingSystem.IsLinux())
@@ -41,4 +44,5 @@ public partial class App : Application
         var options = new TextShaperOptions(Typeface.Default.GlyphTypeface, 12, 0, CultureInfo.CurrentCulture, 100);
         TextShaper.Current.ShapeText("GuacamoleClient".AsMemory(), options);
     }
+#endif
 }

@@ -1,0 +1,18 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="../GuacamoleCommon/GuacamoleCommon.csproj" />
+    <Compile Include="../GuacamoleClient-NativeBrowserPilot/NativeKeyEventBuilder.cs" Link="NativeKeyEventBuilder.cs" />
+    <Compile Include="../GuacamoleClient-NativeBrowserPilot/NativeBridgeOrigin.cs" Link="NativeBridgeOrigin.cs" />
+    <Compile Include="../GuacamoleClient-NativeBrowserPilot/NativeProfileSessions.cs" Link="NativeProfileSessions.cs" />
+    <PackageReference Include="Avalonia" Version="12.1.4" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="18.4.0" />
+    <PackageReference Include="NUnit" Version="4.5.1" />
+    <PackageReference Include="NUnit3TestAdapter" Version="6.2.0" />
+  </ItemGroup>
+</Project>

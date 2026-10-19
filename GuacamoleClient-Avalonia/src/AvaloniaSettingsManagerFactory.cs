@@ -8,6 +8,10 @@ internal static class AvaloniaSettingsManagerFactory
 {
     public static async Task<GuacamoleSettingsManager> LoadAsync()
     {
+#if NATIVE_BROWSER_PILOT
+        var store = new JsonFileGuacamoleSettingsStore(PilotPaths.SettingsFile);
+        return await GuacamoleSettingsManager.LoadAsync(store).ConfigureAwait(false);
+#else
         var store = new JsonFileGuacamoleSettingsStore(GuacamoleSettingsPaths.GetSettingsFilePath("GuacamoleClient"));
         var manager = await GuacamoleSettingsManager.LoadAsync(store).ConfigureAwait(false);
 
@@ -26,6 +30,7 @@ internal static class AvaloniaSettingsManagerFactory
 
         GuacamoleBrowserCache.DeleteDisabledProfileCaches("GuacamoleClient-Avalonia", manager.ServerProfiles);
         return manager;
+#endif
     }
 
     public static GuacamoleServerProfile? FindById(GuacamoleSettingsManager manager, System.Guid? profileId)

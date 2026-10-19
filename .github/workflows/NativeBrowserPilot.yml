@@ -1,0 +1,44 @@
+﻿name: Windows native browser pilot
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [codex/avalonia12-windows-native-browser]
+  pull_request:
+    paths:
+      - GuacamoleClient-NativeBrowserPilot/**
+      - GuacamoleClient.NativeBrowserPilot.Tests/**
+      - GuacamoleClient-Avalonia/src/**
+      - GuacamoleCommon/**
+      - .github/workflows/NativeBrowserPilot.yml
+
+permissions:
+  contents: read
+
+jobs:
+  build-and-test:
+    runs-on: windows-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: 8.0.x
+      - name: Build Windows pilot
+        run: dotnet build GuacamoleClient-NativeBrowserPilot/GuacamoleClient-NativeBrowserPilot.csproj -c Debug --nologo
+      - name: Verify browser dependencies
+        shell: pwsh
+        run: |
+          $deps = Get-Content GuacamoleClient-NativeBrowserPilot/bin/Debug/net8.0-windows/GuacamoleClient-NativeBrowserPilot.deps.json -Raw | ConvertFrom-Json
+          $legacy = $deps.libraries.PSObject.Properties.Name | Where-Object { $_ -match 'CefGlue|WebViewControl|cef.redist' }
+          if ($legacy) { throw "Unexpected CEF dependencies: $legacy" }
+      - name: Test native browser policy and protocol mapping
+        run: dotnet test GuacamoleClient.NativeBrowserPilot.Tests/GuacamoleClient.NativeBrowserPilot.Tests.csproj --nologo --logger trx --results-directory artifacts/pilot-tests
+      - name: Test shared behavior
+        run: dotnet test GuacamoleCommon.Tests/GuacamoleCommon.Tests.csproj --nologo
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: native-browser-pilot-tests
+          path: artifacts/pilot-tests/*.trx

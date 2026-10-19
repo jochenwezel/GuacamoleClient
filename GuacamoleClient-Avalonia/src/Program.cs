@@ -11,7 +11,9 @@ using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text.Json;
 using System.Threading.Tasks;
+#if !NATIVE_BROWSER_PILOT
 using WebViewControl;
+#endif
 
 namespace GuacClient;
 internal static class Program
@@ -54,9 +56,15 @@ internal static class Program
     [STAThread]
     public static int Main(string[] args)
     {
+#if NATIVE_BROWSER_PILOT
+        if (!OperatingSystem.IsWindows())
+            throw new PlatformNotSupportedException("The native browser pilot currently targets Windows only.");
+#endif
         RegisterGlobalExceptionHandlers();
+#if !NATIVE_BROWSER_PILOT
         if (OperatingSystem.IsWindows())
             WindowsAppIntegration.ApplyBestEffortFixes();
+#endif
 
         try
         {
@@ -348,7 +356,9 @@ internal static class Program
         if (FindBrowserCommandLineSwitch(args, switchName) != null)
             return;
 
+#if !NATIVE_BROWSER_PILOT
         WebView.Settings.AddCommandLineSwitch(switchName, value);
+#endif
     }
 
     private static void AddOptionalBrowserCommandLineSwitches(string[] args, params string[] switchNames)
@@ -368,7 +378,9 @@ internal static class Program
         if (equalsIndex >= 0)
             value = argument[(equalsIndex + 1)..];
 
+#if !NATIVE_BROWSER_PILOT
         WebView.Settings.AddCommandLineSwitch(switchName, value);
+#endif
     }
 
     private static string? FindBrowserCommandLineSwitch(string[] args, string switchName)

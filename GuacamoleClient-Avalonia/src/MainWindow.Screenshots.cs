@@ -10,7 +10,9 @@ using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
 using System.Threading.Tasks;
+#if !NATIVE_BROWSER_PILOT
 using Xilium.CefGlue;
+#endif
 
 namespace GuacClient;
 
@@ -55,12 +57,16 @@ public partial class MainWindow
         try
         {
             string fileName = BrowserScreenshot.CreateFileName(_web.Title, _web.Address, DateTime.Now);
+#if NATIVE_BROWSER_PILOT
+            byte[] png = await _web.CaptureAsync();
+#else
             object? wrapper = GetUnderlyingBrowser();
             // The WebView wrapper exposes its CEF browser only through an internal method.
             var browser = wrapper?.GetType().GetMethod("GetBrowser", BindingFlags.Instance | BindingFlags.NonPublic)
                 ?.Invoke(wrapper, null) as CefBrowser
                 ?? throw new InvalidOperationException("The browser is unavailable.");
             byte[] png = await CefScreenshotCapture.CaptureAsync(browser);
+#endif
             if (_screenshotWindowClosed)
                 return;
 
