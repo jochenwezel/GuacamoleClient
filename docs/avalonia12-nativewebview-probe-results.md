@@ -1,5 +1,7 @@
 ﻿# Avalonia 12 / NativeWebView migration probe — 2026-10-16
 
+Windows desktop follow-up completed on 2026-10-19; see the additional observations below.
+
 ## Decision
 
 Keep the shipping CEF application unchanged while addressing the browser-context
@@ -89,21 +91,58 @@ and intentional persistent-cookie storage before relying on saved logins.
 The probe places a crimson Avalonia `Border` labeled `OVERLAY TEST` above the
 browser in the same `Grid`. It is absent in the inspected macOS and Linux desktop
 screenshots, while the menu and status area outside the browser remain visible.
+The same missing overlay was confirmed in the Windows desktop follow-up on
+2026-10-19.
 
 The default native embedding therefore does not preserve our in-browser-area
 modifier hints. Options to evaluate include placing the hints outside the
 browser area, a suitable separate popup, or rendering them within web content.
-Experimental offscreen rendering was not tested. Windows window-composition
-behavior was not visually verified in this run.
+Experimental offscreen rendering was not tested. A Windows menu popup did render
+above the browser, so a separate native popup is worth investigating for hints;
+this does not establish that the existing in-grid overlay can be retained.
+
+## Windows desktop follow-up — 2026-10-19
+
+The desktop was available for automation on this attempt. The probe was rebuilt
+without warnings or errors and launched visibly through the supported Windows
+computer-use API. Its eleven seed-phase integration checks passed again. The
+shipping application and production browser profiles were not opened or changed.
+
+The following checks used Windows input injection through the computer-use tool,
+not JavaScript-generated events or DevTools keyboard injection:
+
+| Action | Observed result |
+| --- | --- |
+| `a`, then Shift+A | The browser textarea contained `aA`; matching key events were logged. |
+| Right Alt+Q on the current keyboard layout | The textarea contained `aA@`; `AltGraph` and the character input were logged. |
+| Ctrl+F4 | The page received trusted F4 down/up events with Ctrl set; the probe remained open. |
+| Open menu, Escape, refocus browser, type `b` | Blur and focus events were logged; the value became `aA@b`, with Ctrl/Alt/Shift/Meta false on the `b` events. |
+| Ctrl+Alt+End | The page received End down/up events with Ctrl and Alt set, followed by modifier release events. |
+| Menu popup overlapping the browser | The popup was visible above browser content. |
+| Crimson `OVERLAY TEST` border in the same Grid | The marker remained hidden behind the native browser. |
+| Alt+F4 | The probe window closed and its process exited. No OS shortcut hook is implemented in the probe. |
+
+These observations establish the basic local Windows input path and confirm that
+an application-level system-shortcut protection/forwarding implementation is
+still needed. They do not prove that the captured shortcuts reach an actual
+remote Guacamole session. The automation's character input produced empty
+`KeyboardEvent.code` values for several keys, so this test is not a substitute
+for hardware scancode, IME, or all-keyboard-layout coverage.
+
+Local synthetic evidence is preserved under
+`artifacts/nativewebview-probe/windows-ui-20261019/`: the seed report and
+`input-before-altf4.json` contain the browser state before the final close test.
+The final recorded textarea value was `aA@b`. No probe process was left running.
 
 ## Outstanding validation
 
 - A real authenticated Guacamole/RDP session was not exercised. All test content
   and state markers were local and synthetic; no production login was modified.
-- Actual OS-level shortcut capture, Windows-key combinations, AltGr/IME,
-  modifier release after focus changes, and end-to-end remote key delivery remain
-  open. Windows desktop automation could not activate the probe during the local
-  run; lock-screen processes were present. No further input was attempted.
+- Windows-key combinations, IME, modifier release while focus changes during a
+  held chord, and end-to-end remote key delivery remain open. Basic local Ctrl+F4,
+  Ctrl+Alt+End, AltGr character input, and a focus round trip were exercised on
+  2026-10-19 as documented above. The earlier 2026-10-16 desktop activation failure
+  no longer blocks these completed checks.
 - Screenshot-to-clipboard, native browser screenshots on macOS/Linux, full-screen
   transitions, WebSocket remote sessions, downloads, and audio need coverage.
 - The private-state checks do not prove absence of sensitive disk artifacts.
