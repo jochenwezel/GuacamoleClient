@@ -1261,14 +1261,7 @@ namespace GuacClient
             var scheme = _activeProfile.LookupColorScheme();
             Background = Brush.Parse(scheme.PrimaryColorHexValue);
             Foreground = Brush.Parse(scheme.TextColorHexValue);
-            _mainMenu.Background = Brush.Parse(scheme.PrimaryColorHexValue);
-            _mainMenu.Foreground = Brush.Parse(scheme.TextColorHexValue);
-            Resources["ProfileMenuBackgroundBrush"] = Brush.Parse(scheme.PrimaryColorHexValue);
-            Resources["ProfileMenuForegroundBrush"] = Brush.Parse(scheme.TextColorHexValue);
-            Resources["ProfileMenuHoverBackgroundBrush"] = Brush.Parse(scheme.HoverBackgroundColorHexValue);
-            Resources["ProfileMenuHoverForegroundBrush"] = Brush.Parse(scheme.HoverTextColorHexValue);
-            Resources["ProfileMenuSelectedBackgroundBrush"] = Brush.Parse(scheme.SelectedItemBackgroundColorHexValue);
-            Resources["ProfileMenuSelectedForegroundBrush"] = Brush.Parse(scheme.SelectedItemTextColorHexValue);
+            ProfileMenuAppearance.Apply(_mainMenu, scheme);
             TitleBarHelper.ApplyTitleBarColors(this, scheme);
             UpdateConnectionMenuState();
         }
