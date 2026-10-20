@@ -58,6 +58,59 @@ public class NativeBrowserPolicyTests
         Assert.That(reopened.DirectoryPath, Is.EqualTo(persistent.DirectoryPath));
     }
 
+    [Test]
+    public void StartupCleanup_KeepsAnotherOwnersActivePrivateSession()
+    {
+        // A second process must not erase browser data still leased by the first.
+        var firstOwner = new NativeProfileSessions(_root);
+        using var first = firstOwner.Acquire(Guid.NewGuid(), false);
+        File.WriteAllText(Path.Combine(first.DirectoryPath, "active-data.txt"), "synthetic");
+        var secondOwner = new NativeProfileSessions(_root);
+        using var second = secondOwner.Acquire(Guid.NewGuid(), false);
+        Assert.That(File.Exists(Path.Combine(first.DirectoryPath, "active-data.txt")), Is.True);
+        Assert.That(second.DirectoryPath, Is.Not.EqualTo(first.DirectoryPath));
+    }
+
+    [Test]
+    public void StartupCleanup_RemovesMarkedAbandonedSession_AndKeepsOtherData()
+    {
+        // Process termination releases the marker handle even when browser files
+        // prevented final-window deletion. Only marked GUID directories are ours.
+        string abandoned = Path.Combine(_root, "Private", Guid.NewGuid().ToString("N"));
+        string legacy = Path.Combine(_root, "Private", Guid.NewGuid().ToString("N"));
+        string unrelated = Path.Combine(_root, "Private", "unrelated");
+        string persistent = Path.Combine(_root, "Persistent", Guid.NewGuid().ToString("N"));
+        foreach (string path in new[] { abandoned, legacy, unrelated, persistent })
+        {
+            Directory.CreateDirectory(path);
+            File.WriteAllText(Path.Combine(path, "synthetic-data.txt"), "synthetic");
+        }
+        foreach (string path in new[] { abandoned, unrelated, persistent })
+            File.WriteAllText(Path.Combine(path, NativeProfileSessions.SessionLockFileName), "");
+        _ = new NativeProfileSessions(_root);
+        Assert.That(Directory.Exists(abandoned), Is.False);
+        foreach (string path in new[] { legacy, unrelated, persistent })
+            Assert.That(File.Exists(Path.Combine(path, "synthetic-data.txt")), Is.True);
+    }
+
+    [Test]
+    public void StartupCleanup_RetriesAbandonedFilesAfterBrowserLockDisappears()
+    {
+        // A browser may outlive its parent briefly. Failure to delete must leave
+        // the marker available so the next launch can try the same orphan again.
+        string abandoned = Path.Combine(_root, "Private", Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(abandoned);
+        File.WriteAllText(Path.Combine(abandoned, NativeProfileSessions.SessionLockFileName), "");
+        using (var browser = new FileStream(Path.Combine(abandoned, "browser-data"), FileMode.CreateNew, FileAccess.ReadWrite, FileShare.None))
+        {
+            _ = new NativeProfileSessions(_root);
+            Assert.That(Directory.Exists(abandoned), Is.True);
+            Assert.That(File.Exists(Path.Combine(abandoned, NativeProfileSessions.SessionLockFileName)), Is.True);
+        }
+        _ = new NativeProfileSessions(_root);
+        Assert.That(Directory.Exists(abandoned), Is.False);
+    }
+
     [TestCase(Key.LeftCtrl, 162, "ControlLeft", 1)]
     [TestCase(Key.RightCtrl, 163, "ControlRight", 2)]
     [TestCase(Key.LeftAlt, 164, "AltLeft", 1)]
