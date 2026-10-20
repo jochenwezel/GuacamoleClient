@@ -67,13 +67,13 @@ Eight checks passed using the actual linked MainWindow and native adapter agains
 
 The user then completed the interactive NLA authentication for DEV-HHBUDGETWEB. The embedded client reported CONNECTED and displayed the real Windows desktop. The connection configuration contains no saved Windows credentials. Keyboard and clipboard checks are pending while the user prepares the language settings in that session.
 
-The private-session cleanup follow-up passes 21 policy/protocol tests, including active-owner protection, abandoned-directory cleanup and retry after a browser file lock. An additional real-process probe confirms that an independent live process protects its directory and that process termination releases the marker for cleanup on the next startup. Real browser shutdown/restart testing with the new marker rule remains pending; the user's active RDP process still runs the earlier binary.
+The private-session cleanup follow-up passes 21 policy/protocol tests, including active-owner protection, abandoned-directory cleanup and retry after a browser file lock. An additional real-process probe confirms that an independent live process protects its directory and that process termination releases the marker for cleanup on the next startup. A separate test with a real WebView2 instance also left one private directory at process exit and removed it successfully at the next startup (one directory before, zero afterward). This test used the new marker rule without interrupting the user's active RDP process, which still runs the earlier binary.
 
 Local test evidence and the integration harness are under `artifacts/native-browser-pilot/services10-20261020`. Test browser data uses a separate short directory under the pilot data root. The initial deeply nested test data path failed native browser initialization; the shorter path passed repeated runs. The exact path-length constraint has not been isolated.
 
 ## Remaining migration gates
 
-Check real Windows remote shortcuts, AltGr/layout/IME input, clipboard in both directions, monitor bridge behavior, reconnect and RDP-session lifetime before proposing a production switch. A connected desktop alone does not verify these behaviors. Verify final-process browser cleanup/restart with the new marker rule; legacy unmarked directories require separate cleanup after older pilot processes have closed.
+Check real Windows remote shortcuts, AltGr/layout/IME input, clipboard in both directions, monitor bridge behavior, reconnect and RDP-session lifetime before proposing a production switch. A connected desktop alone does not verify these behaviors. Legacy unmarked directories require separate cleanup after older pilot processes have closed.
 
 The earlier cross-platform probe is retained on branch `prototype/avalonia12-nativewebview-tests`, including its report at `docs/avalonia12-nativewebview-probe-results.md`. Its private-session sharing failures on macOS/Linux require separate platform implementations and tests. This Windows pilot does not enable those platforms.
 
