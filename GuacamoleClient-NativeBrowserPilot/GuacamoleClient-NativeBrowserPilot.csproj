@@ -1,0 +1,33 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <EnableWindowsTargeting>true</EnableWindowsTargeting>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <DefineConstants>$(DefineConstants);NATIVE_BROWSER_PILOT</DefineConstants>
+    <AvaloniaUseCompiledBindingsByDefault>false</AvaloniaUseCompiledBindingsByDefault>
+    <ApplicationManifest>../GuacamoleClient-Avalonia/app.manifest</ApplicationManifest>
+    <ApplicationIcon>../GuacamoleClient-Avalonia/icons/guac-avalonia-debug.ico</ApplicationIcon>
+    <AssemblyName>GuacamoleClient-NativeBrowserPilot</AssemblyName>
+    <RootNamespace>GuacClient</RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="../GuacamoleClient-Avalonia/src/**/*.cs" Exclude="../GuacamoleClient-Avalonia/src/CefScreenshotCapture.cs" Link="src/%(RecursiveDir)%(Filename)%(Extension)" />
+    <AvaloniaXaml Include="../GuacamoleClient-Avalonia/src/**/*.axaml" Exclude="../GuacamoleClient-Avalonia/src/MainWindow.axaml" Link="src/%(RecursiveDir)%(Filename)%(Extension)" />
+    <Content Include="../GuacamoleClient-Avalonia/icons/guac-avalonia-debug.ico" Link="guac.ico" CopyToOutputDirectory="PreserveNewest" />
+    <ProjectReference Include="../GuacamoleCommon/GuacamoleCommon.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Avalonia.Desktop" Version="12.1.4" />
+    <PackageReference Include="Avalonia.Themes.Fluent" Version="12.1.4" />
+    <PackageReference Include="Avalonia.Controls.WebView" Version="12.1.1" />
+    <PackageReference Include="Microsoft.Web.WebView2" Version="1.0.4258.31" />
+    <PackageReference Include="System.Text.Json" Version="10.0.7" />
+  </ItemGroup>
+  <Target Name="RemoveUnusedWebViewDesktopReferences" BeforeTargets="ResolveAssemblyReferences">
+    <ItemGroup>
+      <Reference Remove="@(Reference)" Condition="'%(Reference.Filename)' == 'Microsoft.Web.WebView2.Wpf' or '%(Reference.Filename)' == 'Microsoft.Web.WebView2.WinForms'" />
+    </ItemGroup>
+  </Target>
+</Project>

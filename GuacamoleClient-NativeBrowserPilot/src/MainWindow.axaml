@@ -1,0 +1,104 @@
+﻿<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="GuacClient.MainWindow"
+        x:Name="MainWindowRoot"
+        Width="1280" Height="800"
+        Title="GuacamoleClient">
+
+  <DockPanel>
+    <Menu x:Name="MainMenu"
+          DockPanel.Dock="Top">
+      <Menu.Styles>
+        <StyleInclude Source="/src/ProfileMenuStyles.axaml" />
+      </Menu.Styles>
+      <MenuItem x:Name="ConnectionMenuItem">
+        <MenuItem x:Name="ConnectionHomeMenuItem" />
+        <MenuItem x:Name="NewWindowMenuItem" />
+        <Separator x:Name="ConnectionSeparatorTop" />
+        <MenuItem x:Name="GuacamoleUserSettingsMenuItem" />
+        <MenuItem x:Name="GuacamoleConnectionConfigurationsMenuItem" />
+        <Separator x:Name="ConnectionSeparatorMiddle" />
+        <MenuItem x:Name="ManageServersMenuItem" />
+        <Separator x:Name="ConnectionSeparatorBottom" />
+        <MenuItem x:Name="QuitMenuItem" />
+      </MenuItem>
+      <MenuItem x:Name="ViewMenuItem">
+        <MenuItem x:Name="EnterFullScreenMenuItem" />
+        <MenuItem x:Name="ExitFullScreenMenuItem" />
+      </MenuItem>
+      <MenuItem x:Name="ActionsMenuItem">
+        <MenuItem x:Name="SendRemoteCtrlAltDelMenuItem" />
+        <MenuItem x:Name="SendRemoteCtrlAltEndMenuItem" />
+        <MenuItem x:Name="SendRemoteCtrlAltBackspaceMenuItem" />
+        <Separator />
+        <MenuItem x:Name="OpenGuacamoleMenuMenuItem" />
+        <Separator />
+        <MenuItem x:Name="SaveScreenshotMenuItem" IsEnabled="False" />
+        <MenuItem x:Name="CopyScreenshotMenuItem" IsEnabled="False" />
+      </MenuItem>
+      <MenuItem x:Name="SettingsMenuItem">
+        <MenuItem x:Name="GpuHardwareAccelerationMenuItem">
+          <MenuItem x:Name="GpuHardwareAccelerationEnabledMenuItem" />
+          <MenuItem x:Name="GpuHardwareAccelerationDisabledMenuItem" />
+        </MenuItem>
+      </MenuItem>
+      <MenuItem x:Name="HelpMenuItem">
+        <MenuItem x:Name="SetupGuideHelpMenuItem" />
+        <MenuItem x:Name="RdpSessionResizeHelpMenuItem" />
+        <Separator />
+        <MenuItem x:Name="ProjectWebsiteHelpMenuItem" />
+        <MenuItem x:Name="CheckForUpdatesHelpMenuItem" />
+        <MenuItem x:Name="AboutMenuItem" />
+      </MenuItem>
+      <MenuItem x:Name="KeyboardCaptureStatusMenuItem" />
+      <MenuItem x:Name="KeyboardHintMenuItem" />
+    </Menu>
+
+    <Border DockPanel.Dock="Bottom" Height="36">
+      <Border x:Name="HintOverlay"
+              IsVisible="False"
+              HorizontalAlignment="Left"
+              VerticalAlignment="Center"
+              Margin="8,2"
+              Padding="10,4"
+              CornerRadius="6"
+              Background="#CC1F2937">
+        <TextBlock x:Name="HintOverlayText"
+                   Foreground="White"
+                   TextWrapping="Wrap" />
+      </Border>
+    </Border>
+
+    <Grid>
+      <ContentControl x:Name="NativeBrowserHost" />
+
+      <Border x:Name="EmptyStateOverlay"
+              IsVisible="False"
+              Background="#FFF8FAFC"
+              Padding="32">
+        <StackPanel HorizontalAlignment="Center"
+                    VerticalAlignment="Center"
+                    MaxWidth="560"
+                    Spacing="16">
+          <TextBlock x:Name="EmptyStateTitleTextBlock"
+                     HorizontalAlignment="Center"
+                     FontSize="24"
+                     FontWeight="SemiBold"
+                     Foreground="#111827"
+                     TextAlignment="Center" />
+          <TextBlock x:Name="EmptyStateMessageTextBlock"
+                     HorizontalAlignment="Center"
+                     FontSize="15"
+                     Foreground="#4B5563"
+                     TextAlignment="Center"
+                     TextWrapping="Wrap" />
+          <Button x:Name="EmptyStateAddProfileButton"
+                  HorizontalAlignment="Center"
+                  MinWidth="220" />
+        </StackPanel>
+      </Border>
+
+
+    </Grid>
+  </DockPanel>
+</Window>
