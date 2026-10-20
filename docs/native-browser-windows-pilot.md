@@ -51,9 +51,27 @@ The recorder writes only synthetic textarea contents and browser keyboard events
 - Ctrl+Alt+Insert enters and exits fullscreen. The Actions screenshot flow saves a valid PNG containing the fixture canvas.
 - Transient shortcut hints remain visible in the menu and dedicated footer. Profile-colored menus render with the shared separator styles.
 
+## Real Guacamole checks, 2026-10-20
+
+The services10 VM was intentionally powered off rather than unavailable because of a host outage. It was started on SRVM11 following the user's instruction. Its separately stopped Portainer demo stack was reactivated after adding the required ownership header and separating conflicting Guacamole/Termix Traefik router names. The guacd service also needed an outbound-capable network to reach external RDP targets; it remains explicitly disabled for Traefik routing. No Windows target credentials are stored in the temporary test connection.
+
+Eight checks passed using the actual linked MainWindow and native adapter against the real Guacamole 1.6.0 frontend:
+
+- Frontend navigation and authentication using the test server's REST API.
+- Private sibling windows share the Guacamole authentication state.
+- Closing the original window leaves the sibling authenticated against the server API.
+- A fresh private session has no token from the previous session.
+- A real Guacamole SSH connection reaches its sandbox and renders a display.
+- The browser captures that frontend as a PNG.
+- Persistent authentication survives a fresh client process.
+
+The user then completed the interactive NLA authentication for DEV-HHBUDGETWEB. The embedded client reported CONNECTED and displayed the real Windows desktop. The connection configuration contains no saved Windows credentials. Keyboard and clipboard checks are pending while the user prepares the language settings in that session.
+
+Local test evidence and the integration harness are under `artifacts/native-browser-pilot/services10-20261020`. Test browser data uses a separate short directory under the pilot data root. The initial deeply nested test data path failed native browser initialization; the shorter path passed repeated runs. The exact path-length constraint has not been isolated.
+
 ## Remaining migration gates
 
-An actual Guacamole/RDP session has not been validated: the existing services10 test endpoint timed out from both the workstation and development server. Browser event delivery is not proof of remote desktop behavior. Check real remote shortcuts, AltGr/layout/IME input, clipboard in both directions, monitor bridge behavior, reconnect, and private/persistent authentication across window close/restart before proposing a production switch.
+Check real Windows remote shortcuts, AltGr/layout/IME input, clipboard in both directions, monitor bridge behavior, reconnect and RDP-session lifetime before proposing a production switch. A connected desktop alone does not verify these behaviors. Private directory cleanup on final process exit also remains a gate.
 
 The earlier cross-platform probe is retained on branch `prototype/avalonia12-nativewebview-tests`, including its report at `docs/avalonia12-nativewebview-probe-results.md`. Its private-session sharing failures on macOS/Linux require separate platform implementations and tests. This Windows pilot does not enable those platforms.
 
