@@ -463,6 +463,7 @@ namespace GuacamoleClient.WinForms
         /// <param name="e"></param>
         private void NavigationStarting(object? sender, CoreWebView2NavigationStartingEventArgs e)
         {
+            CancelPendingClipboardPastes("navigation");
             _screenshotContentReady = false;
             UpdateScreenshotMenuState();
             UpdateLocationUrl(new Uri(e.Uri));
@@ -550,6 +551,7 @@ namespace GuacamoleClient.WinForms
             _webview2_core.Settings.AreDevToolsEnabled = false;
 
             InitializeMonitorLayoutPrototypeBridge();
+            await InitializeClipboardForwardingBridgeAsync();
             InitializeLoginRequestCapture();
 
             _webview2_core.Navigate(StartUrl.ToString());
@@ -652,6 +654,9 @@ namespace GuacamoleClient.WinForms
             // Nur für vertrauenswürdige Origins und nur für die Zwischenablage erlauben
             var uri = new Uri(e.Uri);
             bool isTrusted = uri.Scheme == Uri.UriSchemeHttps && _trustedHosts.Contains(uri.Host);
+
+            if (e.PermissionKind == CoreWebView2PermissionKind.ClipboardRead)
+                Trace.TraceInformation("WebView2 requested clipboard-read permission for {0}; trusted={1}.", uri.GetLeftPart(UriPartial.Authority), isTrusted);
 
             if (isTrusted && (
                 e.PermissionKind == CoreWebView2PermissionKind.ClipboardRead

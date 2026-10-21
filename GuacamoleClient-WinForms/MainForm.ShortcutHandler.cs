@@ -1,4 +1,5 @@
-﻿using GuacamoleClient.Common.Localization;
+﻿using GuacamoleClient.Common;
+using GuacamoleClient.Common.Localization;
 using Microsoft.Web.WebView2.Core;
 using System.Diagnostics;
 using System.Windows.Forms;
@@ -44,6 +45,15 @@ namespace GuacamoleClient.WinForms
             bool rwin = (Control.ModifierKeys & Keys.RWin) == Keys.RWin;
             bool win = (lwin || rwin);
             bool hostCtrlAlt = ctrl && alt && !altGr;
+
+            if (e.VirtualKey == (uint)Keys.V
+                && ctrl
+                && !alt
+                && !win
+                && _webview2_core != null
+                && IsTrustedClipboardBridgeSource(_webview2_core.Source)
+                && BrowserScreenshot.IsConnectionPage(_webview2_core.Source))
+                RecordNativeClipboardPasteGesture();
 
             // --- App-Policy: Ctrl+Alt+F4 schließt die App ---
             if (e.VirtualKey == VK_F4 && hostCtrlAlt)

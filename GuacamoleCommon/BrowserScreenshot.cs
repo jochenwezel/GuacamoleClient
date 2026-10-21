@@ -20,6 +20,14 @@ public static class BrowserScreenshot
     /// </summary>
     public const string CaptureParameters = "{\"format\":\"png\",\"fromSurface\":true,\"captureBeyondViewport\":false}";
 
+    internal static bool IsConnectionPage(string? currentUrl)
+    {
+        const string connectionRoute = "#/client/";
+        return Uri.TryCreate(currentUrl, UriKind.Absolute, out var uri)
+            && uri.Fragment.StartsWith(connectionRoute, StringComparison.Ordinal)
+            && uri.Fragment.Length > connectionRoute.Length;
+    }
+
     /// <summary>
     /// Creates a portable screenshot filename from the current connection title.
     /// </summary>
@@ -35,10 +43,7 @@ public static class BrowserScreenshot
     /// </remarks>
     public static string CreateFileName(string? documentTitle, string? currentUrl, DateTime capturedAt)
     {
-        const string connectionRoute = "#/client/";
-        bool isConnection = Uri.TryCreate(currentUrl, UriKind.Absolute, out var uri)
-            && uri.Fragment.StartsWith(connectionRoute, StringComparison.Ordinal)
-            && uri.Fragment.Length > connectionRoute.Length;
+        bool isConnection = IsConnectionPage(currentUrl);
         string title = isConnection ? documentTitle?.Trim() ?? string.Empty : string.Empty;
         var prefix = new StringBuilder();
         int byteCount = 0;
